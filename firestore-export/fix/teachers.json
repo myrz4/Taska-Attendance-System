@@ -1,0 +1,46 @@
+{
+  "sofea": {
+    "name": "Teacher Sofea",
+    "username": "sofea",
+    "email": "nienasofea@gmail.com",
+    "phone": "0112345678",
+    "class": "Mawar",
+    "experience": "5 years",
+    "base_salary": 1800,
+    "tips_total": 400,
+    "join_date": 1457539200,
+    "image": "https://firebasestorage.googleapis.com/v0/b/taskazurah.firebasestorage.app/o/teacher_image%2Fteacher_sofia.jpg?alt=media&token=c77dd884-4bae-4be7-a73c-a698ae16afe3",
+    "password_hash": "1",
+    "fcmToken": "f1I22Fv4QPycCMCIu_MF0s:APA91bEp92BkhSJ8suoKfx-pL5SefzB1qS8MIfTEZN4OWc0Rv9zzYdWq7x_WS_HGTDzKQC2zEGjIGweCc4v-BVbQ2m0UXRRXHjWCvF5VEACvBZ3GTYARBMM"
+  },
+
+  "aina": {
+    "name": "Teacher Aina",
+    "username": "aina",
+    "email": "ainazolkefli@gmail.com",
+    "phone": "01112577356",
+    "class": "Rose",
+    "experience": "3 years",
+    "base_salary": 1800,
+    "tips_total": 100,
+    "join_date": 1731600000,
+    "image": "https://firebasestorage.googleapis.com/v0/b/taskazurah.firebasestorage.app/o/teacher_image%2Fteacher_aina.jpg?alt=media&token=60a7eba0-1806-4950-a295-0a8b55e3b3b2",
+    "password_hash": "4321",
+    "fcmToken": "di_qweSmS_-WgXGGjUsu0G:APA91bGAOUgbs7u1ECDCj3GM84VBvwaMgHGUsPrjp2jtoVF6LdRcMeZPYptTJFO8csFhwANtWCBPZaM--kwkhs0WDUwRTJPb7qmb95Jy62uJOZzxH0YOgGA"
+  },
+
+  "amirul": {
+    "name": "Ustaz Amirul",
+    "username": "amirul",
+    "email": "amirulaiman@gmail.com",
+    "phone": "01927834612",
+    "class": "Cendekia",
+    "experience": "2 years",
+    "base_salary": 2100,
+    "tips_total": 0,
+    "join_date": 1698768000,
+    "image": "https://firebasestorage.googleapis.com/v0/b/taskazurah.firebasestorage.app/o/teacher_image%2Famirul.png?alt=media&token=35640f73-b4a1-4a3e-811c-c4eabc02ab1e",
+    "password_hash": "2222",
+    "fcmToken": "di_qweSmS_-WgXGGjUsu0G:APA91bGAOUgbs7u1ECDCj3GM84VBvwaMgHGUsPrjp2jtoVF6LdRcMeZPYptTJFO8csFhwANtWCBPZaM--kwkhs0WDUwRTJPb7qmb95Jy62uJOZzxH0YOgGA"
+  }
+}

@@ -1,0 +1,50 @@
+[
+  {
+    "id": "teacher_sofea_parent_ezham",
+    "parentUsername": "ezham",
+    "teacherUsername": "sofea",
+    "teacherRef": "/teachers/sofea",
+    "parentRef": "/parents/ezham",
+    "lastMessage": "Saya on the way pickup 🚗",
+    "lastTimestamp": {
+      "_seconds": 1762151824,
+      "_nanoseconds": 264000000
+    }
+  },
+  {
+    "id": "teacher_teacher aina_parent_ezham",
+    "parentUsername": "ezham",
+    "teacherUsername": "teacher aina",
+    "teacherRef": "/teachers/teacher aina",
+    "parentRef": "/parents/ezham",
+    "lastTimestamp": {
+      "_seconds": 1762136030,
+      "_nanoseconds": 609000000
+    },
+    "lastMessage": "Saya on the way pickup 🚗"
+  },
+  {
+    "id": "teacher_teacher sofea_parent_ezham",
+    "parentUsername": "ezham",
+    "teacherUsername": "teacher sofea",
+    "teacherRef": "/teachers/teacher sofea",
+    "parentRef": "/parents/ezham",
+    "lastTimestamp": {
+      "_seconds": 1762136044,
+      "_nanoseconds": 96000000
+    },
+    "lastMessage": "Saya on the way pickup 🚗"
+  },
+  {
+    "id": "teacher_ustaz amirul_parent_ezham",
+    "parentUsername": "ezham",
+    "lastMessage": "",
+    "teacherUsername": "ustaz amirul",
+    "teacherRef": "/teachers/ustaz amirul",
+    "parentRef": "/parents/ezham",
+    "lastTimestamp": {
+      "_seconds": 1762127268,
+      "_nanoseconds": 503000000
+    }
+  }
+]

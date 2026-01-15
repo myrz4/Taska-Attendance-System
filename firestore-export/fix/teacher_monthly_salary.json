@@ -1,0 +1,32 @@
+[
+  {
+    "id": "2025-11_sofea",
+    "teacherUsername": "sofea",
+    "teacherName": "Teacher Sofea",
+    "month": "2025-11",
+    "base_salary": 1800,
+    "overtime_days": 3,
+    "overtime_pay": 90,
+    "total_salary": 1890,
+    "calculation_status": "COMPLETED",
+    "generated_at": {
+      "_seconds": 1764547200,
+      "_nanoseconds": 0
+    }
+  },
+  {
+    "id": "2025-11_aina",
+    "teacherUsername": "aina",
+    "teacherName": "Teacher Aina",
+    "month": "2025-11",
+    "base_salary": 1800,
+    "overtime_days": 1,
+    "overtime_pay": 30,
+    "total_salary": 1830,
+    "calculation_status": "COMPLETED",
+    "generated_at": {
+      "_seconds": 1764547200,
+      "_nanoseconds": 0
+    }
+  }
+]

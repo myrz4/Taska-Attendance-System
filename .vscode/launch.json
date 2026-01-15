@@ -1,0 +1,16 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "java",
+      "name": "Run LoginView (JavaFX + Firestore)",
+      "request": "launch",
+      "mainClass": "nfc.LoginView",
+      "classPaths": [
+        "bin",
+        "C:/Users/zafri/Downloads/Taska Attendance System/jar_files/*"
+      ],
+      "vmArgs": "--module-path \"C:/Users/zafri/Downloads/Taska Attendance System/jar_files\" --add-modules javafx.controls,javafx.fxml,javafx.graphics,javafx.base -Dprism.order=sw -Dprism.verbose=true -Djavafx.platform=offscreen -Dprism.forceGPU=false -Dprism.text=t2k"
+    }
+  ]
+}

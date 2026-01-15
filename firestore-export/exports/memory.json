@@ -1,0 +1,287 @@
+[
+  {
+    "id": "0ZJcyZgxeLz9NzICCCBk",
+    "parent_name": "lizam",
+    "date_str": "3 Nov 2025, 05:08 AM",
+    "teacher_name": "Ustaz Amirul",
+    "teacher_ref": "/teachers/amirul",
+    "child_ref": "children/34323434324130330D0A",
+    "description": "Hakimi belajar buat sandwich 🥪",
+    "child_name": "hakimi",
+    "parent_contact": "999",
+    "child_id": "34323434324130330D0A",
+    "teacher_username": "amirul",
+    "photo_url": "https://firebasestorage.googleapis.com/v0/b/taskazurah.firebasestorage.app/o/memory_photos%2Famirul_1762117728836.jpg?alt=media&token=600133f7-6c26-4e48-8b5e-2c115c11579b",
+    "category": "Meal",
+    "timestamp": {
+      "_seconds": 1762117728,
+      "_nanoseconds": 836000000
+    }
+  },
+  {
+    "id": "ElwHb8uC37fHKBTMZtHK",
+    "parent_name": "Jalal",
+    "date_str": "3 Nov 2025, 11:13 AM",
+    "teacher_name": "Teacher Sofea",
+    "teacher_ref": "/teachers/sofea",
+    "child_ref": "children/04B13D152B0289",
+    "description": "uh",
+    "child_name": "Amirul",
+    "parent_contact": "012345678",
+    "child_id": "04B13D152B0289",
+    "teacher_username": "sofea",
+    "photo_url": "https://firebasestorage.googleapis.com/v0/b/taskazurah.firebasestorage.app/o/memory_photos%2Fsofea_1762139627329.jpg?alt=media&token=b3a63b75-6658-40c8-94a5-05247a08eecb",
+    "category": "Learning",
+    "timestamp": {
+      "_seconds": 1762139627,
+      "_nanoseconds": 329000000
+    }
+  },
+  {
+    "id": "R0Rnw5q9Etgr100c1fqA",
+    "parent_name": "Jalal",
+    "date_str": "3 Nov 2025, 05:12 AM",
+    "teacher_name": "Teacher Aina",
+    "teacher_ref": "/teachers/aina",
+    "child_ref": "children/04B13D152B0289",
+    "description": "Amirul ade bakat terpendam ni.🤔🤔",
+    "child_name": "Amirul",
+    "parent_contact": "012345678",
+    "child_id": "04B13D152B0289",
+    "teacher_username": "aina",
+    "photo_url": "https://firebasestorage.googleapis.com/v0/b/taskazurah.firebasestorage.app/o/memory_photos%2Faina_1762117934120.jpg?alt=media&token=1ee1e9ee-6030-4a82-a02e-58a2a6f12495",
+    "category": "Art",
+    "timestamp": {
+      "_seconds": 1762117934,
+      "_nanoseconds": 120000000
+    }
+  },
+  {
+    "id": "VcfaViCBvuV73K69AGCE",
+    "parent_name": "lizam",
+    "date_str": "3 Nov 2025, 11:30 AM",
+    "teacher_name": "Teacher Sofea",
+    "teacher_ref": "/teachers/sofea",
+    "child_ref": "children/34323434324130330D0A",
+    "description": "vgvf",
+    "child_name": "hakimi",
+    "parent_contact": "0123456789",
+    "child_id": "34323434324130330D0A",
+    "teacher_username": "sofea",
+    "photo_url": "https://firebasestorage.googleapis.com/v0/b/taskazurah.firebasestorage.app/o/memory_photos%2Fsofea_1762140630737.jpg?alt=media&token=a9d073c2-4410-4751-8780-efdfdf70059a",
+    "category": "Nap",
+    "timestamp": {
+      "_seconds": 1762140630,
+      "_nanoseconds": 737000000
+    }
+  },
+  {
+    "id": "ZPZdjQkNEniEeIj17gFw",
+    "parent_name": "Rosli",
+    "date_str": "19 Dec 2025, 12:04 AM",
+    "teacher_name": "Teacher Sofea",
+    "teacher_ref": "/teachers/sofea",
+    "child_ref": "children/30314543323930330D0A",
+    "description": "bulat",
+    "child_name": "Mirza",
+    "parent_contact": "011-65066294",
+    "child_id": "30314543323930330D0A",
+    "teacher_username": "sofea",
+    "photo_url": "https://firebasestorage.googleapis.com/v0/b/taskazurah.firebasestorage.app/o/memory_photos%2Fsofea_1766073879680.jpg?alt=media&token=63a9d3ef-4d30-4dd9-86ab-3ffc392a6717",
+    "category": "Learning",
+    "timestamp": {
+      "_seconds": 1766073879,
+      "_nanoseconds": 680000000
+    }
+  },
+  {
+    "id": "eG3MljlWl8Fn248Wjutf",
+    "parent_name": "Rozaimi",
+    "date_str": "3 Nov 2025, 05:20 AM",
+    "teacher_name": "Teacher Aina",
+    "teacher_ref": "/teachers/aina",
+    "child_ref": "children/38423437324230330D0A",
+    "description": "Main masak masak bersama puteri,🫢",
+    "child_name": "Puteri",
+    "parent_contact": "014-3021456",
+    "child_id": "38423437324230330D0A",
+    "teacher_username": "aina",
+    "photo_url": "https://firebasestorage.googleapis.com/v0/b/taskazurah.firebasestorage.app/o/memory_photos%2Faina_1762118440576.jpg?alt=media&token=8efd2ffb-4090-46a2-8f1c-3bc43556a69b",
+    "category": "Learning",
+    "timestamp": {
+      "_seconds": 1762118440,
+      "_nanoseconds": 576000000
+    }
+  },
+  {
+    "id": "hAQzkNrSlOMq9nwPbtVj",
+    "parent_name": "Ramli",
+    "date_str": "19 Dec 2025, 12:05 AM",
+    "teacher_name": "Teacher Sofea",
+    "teacher_ref": "/teachers/sofea",
+    "child_ref": "children/1EDB303E",
+    "description": "paip",
+    "child_name": "Qistina",
+    "parent_contact": "0107036422",
+    "child_id": "1EDB303E",
+    "teacher_username": "sofea",
+    "photo_url": "https://firebasestorage.googleapis.com/v0/b/taskazurah.firebasestorage.app/o/memory_photos%2Fsofea_1766073949769.jpg?alt=media&token=42341ab7-2450-4fa2-94f4-5869b2a24ce4",
+    "category": "Learning",
+    "timestamp": {
+      "_seconds": 1766073949,
+      "_nanoseconds": 769000000
+    }
+  },
+  {
+    "id": "i9JZULhuLBScuH1Giwac",
+    "parent_name": "Ali",
+    "date_str": "3 Nov 2025, 05:02 AM",
+    "teacher_name": "Teacher Sofea",
+    "teacher_ref": "/teachers/sofea",
+    "child_ref": "children/01EC2903",
+    "description": "Mirza kalau bab main tak ingat dunia 🤣🤣",
+    "child_name": "Mirza Zafri",
+    "parent_contact": "0123456789",
+    "child_id": "01EC2903",
+    "teacher_username": "sofea",
+    "photo_url": "https://firebasestorage.googleapis.com/v0/b/taskazurah.firebasestorage.app/o/memory_photos%2Fsofea_1762117378127.jpg?alt=media&token=1a8a3e9c-fc18-46d1-9309-877d21473f99",
+    "category": "Play",
+    "timestamp": {
+      "_seconds": 1762117378,
+      "_nanoseconds": 127000000
+    }
+  },
+  {
+    "id": "izSFCp0jsiOhSuBk5Og1",
+    "parent_name": "Rosli",
+    "date_str": "3 Nov 2025, 12:05 PM",
+    "teacher_name": "Teacher Sofea",
+    "teacher_ref": "/teachers/sofea",
+    "child_ref": "children/30314543323930330D0A",
+    "description": "gjj",
+    "child_name": "Mirza",
+    "parent_contact": "011-65066294",
+    "child_id": "30314543323930330D0A",
+    "teacher_username": "sofea",
+    "photo_url": "https://firebasestorage.googleapis.com/v0/b/taskazurah.firebasestorage.app/o/memory_photos%2Fsofea_1762142736175.jpg?alt=media&token=7dc39fa4-c131-451a-ab34-8610bc7d0e87",
+    "category": "Meal",
+    "timestamp": {
+      "_seconds": 1762142736,
+      "_nanoseconds": 175000000
+    }
+  },
+  {
+    "id": "oQ3RZgOavQ59kys6n0Zs",
+    "parent_name": "ezham",
+    "date_str": "3 Nov 2025, 05:07 AM",
+    "teacher_name": "Ustaz Amirul",
+    "teacher_ref": "/teachers/amirul",
+    "child_ref": "children/805E303E",
+    "description": "Sedap tidor ye kairi😌😌",
+    "child_name": "Kairi",
+    "parent_contact": "0194965099",
+    "child_id": "805E303E",
+    "teacher_username": "amirul",
+    "photo_url": "https://firebasestorage.googleapis.com/v0/b/taskazurah.firebasestorage.app/o/memory_photos%2Famirul_1762117658665.jpg?alt=media&token=02b51fb1-fd23-42a8-ada8-ce569aba698f",
+    "category": "Nap",
+    "timestamp": {
+      "_seconds": 1762117658,
+      "_nanoseconds": 665000000
+    }
+  },
+  {
+    "id": "pHQayR6HhpPG46tGtMh5",
+    "parent_name": "Bahrin",
+    "date_str": "3 Nov 2025, 05:09 AM",
+    "teacher_name": "Ustaz Amirul",
+    "teacher_ref": "/teachers/amirul",
+    "child_ref": "children/37354542334630350D0A",
+    "description": "Luqman suka makan🥰",
+    "child_name": "Luqman",
+    "parent_contact": "017-1111111",
+    "child_id": "37354542334630350D0A",
+    "teacher_username": "amirul",
+    "photo_url": "https://firebasestorage.googleapis.com/v0/b/taskazurah.firebasestorage.app/o/memory_photos%2Famirul_1762117787323.jpg?alt=media&token=97b7f3ce-6c87-49df-9a37-5a4e11ebc367",
+    "category": "Learning",
+    "timestamp": {
+      "_seconds": 1762117787,
+      "_nanoseconds": 323000000
+    }
+  },
+  {
+    "id": "q5icIiuwU6K0r1WzAldH",
+    "parent_name": "Ramli",
+    "date_str": "3 Nov 2025, 03:48 PM",
+    "teacher_name": "Teacher Sofea",
+    "teacher_ref": "/teachers/sofea",
+    "child_ref": "children/1EDB303E",
+    "description": "ggg",
+    "child_name": "Qistina",
+    "parent_contact": "0107036422",
+    "child_id": "1EDB303E",
+    "teacher_username": "sofea",
+    "photo_url": "https://firebasestorage.googleapis.com/v0/b/taskazurah.firebasestorage.app/o/memory_photos%2Fsofea_1762156113976.jpg?alt=media&token=63542b54-cde4-44d9-8331-f8451bff6ad9",
+    "category": "Meal",
+    "timestamp": {
+      "_seconds": 1762156113,
+      "_nanoseconds": 976000000
+    }
+  },
+  {
+    "id": "ujXCoeRJAZXW4MauFb5p",
+    "parent_name": "Rosli",
+    "date_str": "3 Nov 2025, 11:46 AM",
+    "teacher_name": "Teacher Aina",
+    "teacher_ref": "/teachers/aina",
+    "child_ref": "children/30314543323930330D0A",
+    "description": "thb",
+    "child_name": "Mirza",
+    "parent_contact": "011-65066294",
+    "child_id": "30314543323930330D0A",
+    "teacher_username": "aina",
+    "photo_url": "https://firebasestorage.googleapis.com/v0/b/taskazurah.firebasestorage.app/o/memory_photos%2Faina_1762141582834.jpg?alt=media&token=20f865ac-446f-4f2c-a7d6-edbafec1bfd2",
+    "category": "Art",
+    "timestamp": {
+      "_seconds": 1762141582,
+      "_nanoseconds": 834000000
+    }
+  },
+  {
+    "id": "wALJiH22W4dx4jJ0vR1O",
+    "parent_name": "Yusuf",
+    "date_str": "3 Nov 2025, 05:11 AM",
+    "teacher_name": "Teacher Aina",
+    "teacher_ref": "/teachers/aina",
+    "child_ref": "children/33394541323930330D0A",
+    "description": "Annisya tertidur time belajar melukis😆😆",
+    "child_name": "Annisya",
+    "parent_contact": "012-2801120",
+    "child_id": "33394541323930330D0A",
+    "teacher_username": "aina",
+    "photo_url": "https://firebasestorage.googleapis.com/v0/b/taskazurah.firebasestorage.app/o/memory_photos%2Faina_1762117877427.jpg?alt=media&token=334edb98-5ab8-46fa-be97-c1be7692a62a",
+    "category": "Nap",
+    "timestamp": {
+      "_seconds": 1762117877,
+      "_nanoseconds": 427000000
+    }
+  },
+  {
+    "id": "zUDpwjVCq9JdH7Fvwgo3",
+    "parent_name": "Ramli",
+    "date_str": "3 Nov 2025, 05:06 AM",
+    "teacher_name": "Teacher Sofea",
+    "teacher_ref": "/teachers/sofea",
+    "child_ref": "children/1EDB303E",
+    "description": "Qistina sangat focus bila tngah belajar👍🏻👍🏻",
+    "child_name": "Qistina",
+    "parent_contact": "0107036422",
+    "child_id": "1EDB303E",
+    "teacher_username": "sofea",
+    "photo_url": "https://firebasestorage.googleapis.com/v0/b/taskazurah.firebasestorage.app/o/memory_photos%2Fsofea_1762117580001.jpg?alt=media&token=18a8f977-1801-4705-a871-56fc25062925",
+    "category": "Learning",
+    "timestamp": {
+      "_seconds": 1762117580,
+      "_nanoseconds": 1000000
+    }
+  }
+]

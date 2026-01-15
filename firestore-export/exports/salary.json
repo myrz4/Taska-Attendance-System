@@ -1,0 +1,38 @@
+[
+  {
+    "id": "V8eFyDHTQ5JzGvHA81gi",
+    "base_salary": 2000,
+    "bonus": 100,
+    "pay_date": {
+      "_seconds": 1762185600,
+      "_nanoseconds": 71000000
+    },
+    "teacher_name": "Teacher Aina",
+    "teacher_username": "aina",
+    "total": 2100
+  },
+  {
+    "id": "o9QOKp5XCOD0LI1NvhVc",
+    "base_salary": 2000,
+    "bonus": 0,
+    "pay_date": {
+      "_seconds": 1762128124,
+      "_nanoseconds": 50000000
+    },
+    "teacher_name": "Ustaz Amirul",
+    "teacher_username": "amirul",
+    "total": 2000
+  },
+  {
+    "id": "uLTnlwr9QGIU2cK8xx0T",
+    "base_salary": 1800,
+    "bonus": 400,
+    "pay_date": {
+      "_seconds": 1759307237,
+      "_nanoseconds": 95000000
+    },
+    "teacher_name": "Teacher Sofea",
+    "teacher_username": "sofea",
+    "total": "2200"
+  }
+]

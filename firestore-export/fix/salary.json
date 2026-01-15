@@ -1,0 +1,28 @@
+{
+  "V8eFyDHTQ5JzGvHA81gi": {
+    "teacher_username": "aina",
+    "teacher_name": "Teacher Aina",
+    "base_salary": 2000,
+    "bonus": 100,
+    "total": 2100,
+    "pay_date": 1762185600
+  },
+
+  "o9QOKp5XCOD0LI1NvhVc": {
+    "teacher_username": "amirul",
+    "teacher_name": "Ustaz Amirul",
+    "base_salary": 2000,
+    "bonus": 0,
+    "total": 2000,
+    "pay_date": 1762128124
+  },
+
+  "uLTnlwr9QGIU2cK8xx0T": {
+    "teacher_username": "sofea",
+    "teacher_name": "Teacher Sofea",
+    "base_salary": 1800,
+    "bonus": 400,
+    "total": 2200,
+    "pay_date": 1759307237
+  }
+}

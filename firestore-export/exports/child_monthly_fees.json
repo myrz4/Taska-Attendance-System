@@ -1,0 +1,34 @@
+[
+  {
+    "id": "2025-11_01EC2903",
+    "childId": "01EC2903",
+    "childName": "Mirza Zafri",
+    "parentId": "ali_0123456789",
+    "month": "2025-11",
+    "base_fee": 500,
+    "late_days_count": 4,
+    "late_fee_total": 80,
+    "total_fee": 580,
+    "calculation_status": "COMPLETED",
+    "generated_at": {
+      "_seconds": 1764547200,
+      "_nanoseconds": 0
+    }
+  },
+  {
+    "id": "2025-11_04B13D152B0289",
+    "childId": "04B13D152B0289",
+    "childName": "Amirul",
+    "parentId": "jalal_012345678",
+    "month": "2025-11",
+    "base_fee": 500,
+    "late_days_count": 2,
+    "late_fee_total": 40,
+    "total_fee": 540,
+    "calculation_status": "COMPLETED",
+    "generated_at": {
+      "_seconds": 1764547200,
+      "_nanoseconds": 0
+    }
+  }
+]

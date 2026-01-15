@@ -1,0 +1,64 @@
+{
+  "2025-10": {
+    "01EC2903": {
+      "date": "2025-10-28",
+      "name": "Mirza Zafri",
+      "isPresent": true,
+      "reason": "Default"
+    },
+    "04B13D152B0289": {
+      "date": "2025-10-28",
+      "name": "Amirul",
+      "isPresent": true,
+      "reason": "Default"
+    },
+    "1EDB303E": {
+      "date": "2025-10-28",
+      "name": "Qistina",
+      "isPresent": false,
+      "reason": "Default"
+    }
+  },
+
+  "2025-11": {
+    "01EC2903": {
+      "date": "2025-11-01",
+      "name": "Mirza Zafri",
+      "isPresent": false,
+      "reason": "Default"
+    },
+    "04B13D152B0289": {
+      "date": "2025-11-01",
+      "name": "Amirul",
+      "isPresent": true,
+      "reason": "Default"
+    },
+    "1EDB303E": {
+      "date": "2025-11-01",
+      "name": "Qistina",
+      "isPresent": true,
+      "reason": "Default"
+    }
+  },
+
+  "2025-12": {
+    "01EC2903": {
+      "date": "2025-12-18",
+      "name": "Mirza Zafri",
+      "isPresent": false,
+      "reason": "Default"
+    },
+    "04B13D152B0289": {
+      "date": "2025-12-18",
+      "name": "Amirul",
+      "isPresent": false,
+      "reason": "Default"
+    },
+    "1EDB303E": {
+      "date": "2025-12-18",
+      "name": "Qistina",
+      "isPresent": true,
+      "reason": "Default"
+    }
+  }
+}

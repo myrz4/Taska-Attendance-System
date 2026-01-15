@@ -1,0 +1,2344 @@
+[
+  {
+    "id": "2025-10-28_01EC2903",
+    "date": "Tue Oct 28 2025 00:00:00 GMT+0800 (Malaysia Time)",
+    "reason": "Default",
+    "check_in_time": {
+      "_seconds": 1762100066,
+      "_nanoseconds": 986000000
+    },
+    "manual_out": true,
+    "check_out_time": {
+      "_seconds": 1762100066,
+      "_nanoseconds": 986000000
+    },
+    "name": "Mirza Zafri",
+    "isPresent": true,
+    "childId": "01EC2903",
+    "manual_in": true,
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "01EC2903"
+        ]
+      },
+      "_converter": {}
+    }
+  },
+  {
+    "id": "2025-10-28_04B13D152B0289",
+    "date": "Tue Oct 28 2025 00:00:00 GMT+0800 (Malaysia Time)",
+    "reason": "Default",
+    "check_in_time": {
+      "_seconds": 1762100066,
+      "_nanoseconds": 988000000
+    },
+    "manual_out": true,
+    "check_out_time": {
+      "_seconds": 1762100066,
+      "_nanoseconds": 988000000
+    },
+    "name": "Amirul",
+    "isPresent": true,
+    "childId": "04B13D152B0289",
+    "manual_in": true,
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "04B13D152B0289"
+        ]
+      },
+      "_converter": {}
+    }
+  },
+  {
+    "id": "2025-10-28_1EDB303E",
+    "date": "Tue Oct 28 2025 00:00:00 GMT+0800 (Malaysia Time)",
+    "reason": "Default",
+    "check_in_time": null,
+    "manual_out": false,
+    "check_out_time": null,
+    "name": "Qistina",
+    "isPresent": false,
+    "childId": "1EDB303E",
+    "manual_in": false,
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "1EDB303E"
+        ]
+      },
+      "_converter": {}
+    }
+  },
+  {
+    "id": "2025-10-28_30314543323930330D0A",
+    "date": "Tue Oct 28 2025 00:00:00 GMT+0800 (Malaysia Time)",
+    "reason": "Default",
+    "check_in_time": null,
+    "manual_out": false,
+    "check_out_time": null,
+    "name": "Mirza",
+    "isPresent": false,
+    "childId": "30314543323930330D0A",
+    "manual_in": false,
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "30314543323930330D0A"
+        ]
+      },
+      "_converter": {}
+    }
+  },
+  {
+    "id": "2025-10-28_33394541323930330D0A",
+    "date": "Tue Oct 28 2025 00:00:00 GMT+0800 (Malaysia Time)",
+    "reason": "Default",
+    "check_in_time": null,
+    "manual_out": false,
+    "check_out_time": null,
+    "name": "Annisya",
+    "isPresent": false,
+    "childId": "33394541323930330D0A",
+    "manual_in": false,
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "33394541323930330D0A"
+        ]
+      },
+      "_converter": {}
+    }
+  },
+  {
+    "id": "2025-10-28_34323434324130330D0A",
+    "date": "Tue Oct 28 2025 00:00:00 GMT+0800 (Malaysia Time)",
+    "reason": "Default",
+    "check_in_time": null,
+    "manual_out": false,
+    "check_out_time": null,
+    "name": "hakimi",
+    "isPresent": false,
+    "childId": "34323434324130330D0A",
+    "manual_in": false,
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "34323434324130330D0A"
+        ]
+      },
+      "_converter": {}
+    }
+  },
+  {
+    "id": "2025-10-28_37354542334630350D0A",
+    "date": "Tue Oct 28 2025 00:00:00 GMT+0800 (Malaysia Time)",
+    "reason": "Default",
+    "check_in_time": null,
+    "manual_out": false,
+    "check_out_time": null,
+    "name": "Luqman",
+    "isPresent": false,
+    "childId": "37354542334630350D0A",
+    "manual_in": false,
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "37354542334630350D0A"
+        ]
+      },
+      "_converter": {}
+    }
+  },
+  {
+    "id": "2025-10-28_38423437324230330D0A",
+    "date": "Tue Oct 28 2025 00:00:00 GMT+0800 (Malaysia Time)",
+    "reason": "Default",
+    "check_in_time": null,
+    "manual_out": false,
+    "check_out_time": null,
+    "name": "Puteri",
+    "isPresent": false,
+    "childId": "38423437324230330D0A",
+    "manual_in": false,
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "38423437324230330D0A"
+        ]
+      },
+      "_converter": {}
+    }
+  },
+  {
+    "id": "2025-10-28_805E303E",
+    "date": "Tue Oct 28 2025 00:00:00 GMT+0800 (Malaysia Time)",
+    "reason": "Default",
+    "check_in_time": null,
+    "manual_out": false,
+    "check_out_time": null,
+    "name": "Kairi",
+    "isPresent": false,
+    "childId": "805E303E\n\n",
+    "manual_in": false,
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "805E303E\n\n"
+        ]
+      },
+      "_converter": {}
+    }
+  },
+  {
+    "id": "2025-10-28_A3AC2903",
+    "date": "Tue Oct 28 2025 00:00:00 GMT+0800 (Malaysia Time)",
+    "reason": "Default",
+    "check_in_time": null,
+    "manual_out": false,
+    "check_out_time": null,
+    "name": "Hajar",
+    "isPresent": false,
+    "childId": "A3AC2903",
+    "manual_in": false,
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "A3AC2903"
+        ]
+      },
+      "_converter": {}
+    }
+  },
+  {
+    "id": "2025-10-31_01EC2903",
+    "reason": "Default",
+    "name": "Mirza Zafri",
+    "childId": "01EC2903",
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "01EC2903"
+        ]
+      },
+      "_converter": {}
+    },
+    "date": {
+      "_seconds": 1761840000,
+      "_nanoseconds": 0
+    },
+    "check_in_time": null,
+    "isPresent": false,
+    "manual_in": false,
+    "manual_out": false,
+    "check_out_time": null
+  },
+  {
+    "id": "2025-10-31_04B13D152B0289",
+    "reason": "Default",
+    "name": "Amirul",
+    "childId": "04B13D152B0289",
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "04B13D152B0289"
+        ]
+      },
+      "_converter": {}
+    },
+    "date": {
+      "_seconds": 1761840000,
+      "_nanoseconds": 0
+    },
+    "check_in_time": null,
+    "manual_out": false,
+    "check_out_time": null,
+    "isPresent": false,
+    "manual_in": false
+  },
+  {
+    "id": "2025-10-31_1EDB303E",
+    "reason": "Default",
+    "name": "Qistina",
+    "childId": "1EDB303E",
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "1EDB303E"
+        ]
+      },
+      "_converter": {}
+    },
+    "check_in_time": null,
+    "isPresent": false,
+    "manual_in": false,
+    "date": {
+      "_seconds": 1761840000,
+      "_nanoseconds": 0
+    },
+    "manual_out": true,
+    "check_out_time": {
+      "_seconds": 1762101004,
+      "_nanoseconds": 474000000
+    }
+  },
+  {
+    "id": "2025-10-31_30314543323930330D0A",
+    "reason": "Default",
+    "check_in_time": null,
+    "manual_out": false,
+    "check_out_time": null,
+    "name": "Mirza",
+    "isPresent": false,
+    "childId": "30314543323930330D0A",
+    "manual_in": false,
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "30314543323930330D0A"
+        ]
+      },
+      "_converter": {}
+    },
+    "date": {
+      "_seconds": 1761840000,
+      "_nanoseconds": 0
+    }
+  },
+  {
+    "id": "2025-10-31_33394541323930330D0A",
+    "reason": "Default",
+    "check_in_time": null,
+    "manual_out": false,
+    "check_out_time": null,
+    "name": "Annisya",
+    "isPresent": false,
+    "childId": "33394541323930330D0A",
+    "manual_in": false,
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "33394541323930330D0A"
+        ]
+      },
+      "_converter": {}
+    },
+    "date": {
+      "_seconds": 1761840000,
+      "_nanoseconds": 0
+    }
+  },
+  {
+    "id": "2025-10-31_34323434324130330D0A",
+    "reason": "Default",
+    "check_in_time": null,
+    "manual_out": false,
+    "check_out_time": null,
+    "name": "hakimi",
+    "isPresent": false,
+    "childId": "34323434324130330D0A",
+    "manual_in": false,
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "34323434324130330D0A"
+        ]
+      },
+      "_converter": {}
+    },
+    "date": {
+      "_seconds": 1761840000,
+      "_nanoseconds": 0
+    }
+  },
+  {
+    "id": "2025-10-31_37354542334630350D0A",
+    "reason": "Default",
+    "check_in_time": null,
+    "manual_out": false,
+    "check_out_time": null,
+    "name": "Luqman",
+    "isPresent": false,
+    "childId": "37354542334630350D0A",
+    "manual_in": false,
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "37354542334630350D0A"
+        ]
+      },
+      "_converter": {}
+    },
+    "date": {
+      "_seconds": 1761840000,
+      "_nanoseconds": 0
+    }
+  },
+  {
+    "id": "2025-10-31_38423437324230330D0A",
+    "reason": "Default",
+    "check_in_time": null,
+    "manual_out": false,
+    "check_out_time": null,
+    "name": "Puteri",
+    "isPresent": false,
+    "childId": "38423437324230330D0A",
+    "manual_in": false,
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "38423437324230330D0A"
+        ]
+      },
+      "_converter": {}
+    },
+    "date": {
+      "_seconds": 1761840000,
+      "_nanoseconds": 0
+    }
+  },
+  {
+    "id": "2025-10-31_805E303E",
+    "reason": "Default",
+    "check_in_time": null,
+    "manual_out": false,
+    "check_out_time": null,
+    "name": "Kairi",
+    "isPresent": false,
+    "childId": "805E303E\n\n",
+    "manual_in": false,
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "805E303E\n\n"
+        ]
+      },
+      "_converter": {}
+    },
+    "date": {
+      "_seconds": 1761840000,
+      "_nanoseconds": 0
+    }
+  },
+  {
+    "id": "2025-10-31_A3AC2903",
+    "reason": "Default",
+    "check_in_time": null,
+    "manual_out": false,
+    "check_out_time": null,
+    "name": "Hajar",
+    "isPresent": false,
+    "childId": "A3AC2903",
+    "manual_in": false,
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "A3AC2903"
+        ]
+      },
+      "_converter": {}
+    },
+    "date": {
+      "_seconds": 1761840000,
+      "_nanoseconds": 0
+    }
+  },
+  {
+    "id": "2025-11-01_01EC2903",
+    "date": "Sat Nov 01 2025 00:00:00 GMT+0800 (Malaysia Time)",
+    "reason": "Default",
+    "name": "Mirza Zafri",
+    "childId": "01EC2903",
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "01EC2903"
+        ]
+      },
+      "_converter": {}
+    },
+    "check_in_time": null,
+    "manual_out": false,
+    "check_out_time": null,
+    "isPresent": false,
+    "manual_in": false
+  },
+  {
+    "id": "2025-11-01_04B13D152B0289",
+    "name": "Amirul",
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "04B13D152B0289"
+        ]
+      },
+      "_converter": {}
+    },
+    "parentName": "Jalal",
+    "isPresent": true,
+    "reason": "Default",
+    "manualCheckout": false,
+    "childId": "04B13D152B0289",
+    "teacher": "Aina",
+    "date": "Sat Nov 01 2025 00:00:00 GMT+0800 (Malaysia Time)",
+    "manual_out": true,
+    "manual_in": true,
+    "check_in_time": {
+      "_seconds": 1762099084,
+      "_nanoseconds": 822000000
+    },
+    "check_out_time": {
+      "_seconds": 1762099084,
+      "_nanoseconds": 822000000
+    }
+  },
+  {
+    "id": "2025-11-01_1515558071",
+    "date": "Sat Nov 01 2025 00:00:00 GMT+0800 (Malaysia Time)",
+    "reason": "Default",
+    "manual_out": false,
+    "name": "Kairi",
+    "isPresent": false,
+    "manualCheckout": false,
+    "childId": "1515558071",
+    "manual_in": false,
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "805E303E\n\n"
+        ]
+      },
+      "_converter": {}
+    }
+  },
+  {
+    "id": "2025-11-01_1555886142",
+    "date": "Sat Nov 01 2025 00:00:00 GMT+0800 (Malaysia Time)",
+    "reason": "Default",
+    "manual_out": false,
+    "name": "Hajar",
+    "isPresent": false,
+    "manualCheckout": false,
+    "childId": "1555886142",
+    "manual_in": false,
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "A3AC2903"
+        ]
+      },
+      "_converter": {}
+    }
+  },
+  {
+    "id": "2025-11-01_1641658978",
+    "date": "Sat Nov 01 2025 00:00:00 GMT+0800 (Malaysia Time)",
+    "reason": "Default",
+    "name": "Mirza",
+    "childId": "1641658978",
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "30314543323930330D0A"
+        ]
+      },
+      "_converter": {}
+    },
+    "check_out_time": {
+      "_seconds": 1761989025,
+      "_nanoseconds": 19000000
+    },
+    "isPresent": true,
+    "manual_in": true,
+    "manual_out": false,
+    "manualCheckout": false,
+    "check_in_time": {
+      "_seconds": 1762011366,
+      "_nanoseconds": 404000000
+    }
+  },
+  {
+    "id": "2025-11-01_1737750759",
+    "date": "Sat Nov 01 2025 00:00:00 GMT+0800 (Malaysia Time)",
+    "reason": "Default",
+    "manual_out": false,
+    "name": "Puteri",
+    "isPresent": false,
+    "manualCheckout": false,
+    "childId": "1737750759",
+    "manual_in": false,
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "38423437324230330D0A"
+        ]
+      },
+      "_converter": {}
+    }
+  },
+  {
+    "id": "2025-11-01_1931592363",
+    "date": "Sat Nov 01 2025 00:00:00 GMT+0800 (Malaysia Time)",
+    "reason": "Default",
+    "manual_out": false,
+    "name": "Annisya",
+    "isPresent": false,
+    "manualCheckout": false,
+    "childId": "1931592363",
+    "manual_in": false,
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "33394541323930330D0A"
+        ]
+      },
+      "_converter": {}
+    }
+  },
+  {
+    "id": "2025-11-01_1EDB303E",
+    "reason": "Default",
+    "parentName": "Ramli",
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "1EDB303E"
+        ]
+      },
+      "_converter": {}
+    },
+    "teacher": "Sofea",
+    "isPresent": true,
+    "name": "Qistina",
+    "manualCheckout": false,
+    "childId": "1EDB303E",
+    "date": "Sat Nov 01 2025 00:00:00 GMT+0800 (Malaysia Time)",
+    "manual_out": true,
+    "manual_in": true,
+    "check_in_time": {
+      "_seconds": 1762099084,
+      "_nanoseconds": 823000000
+    },
+    "check_out_time": {
+      "_seconds": 1762099084,
+      "_nanoseconds": 823000000
+    }
+  },
+  {
+    "id": "2025-11-01_210439488",
+    "date": "Sat Nov 01 2025 00:00:00 GMT+0800 (Malaysia Time)",
+    "reason": "Default",
+    "manual_out": false,
+    "name": "hakimi",
+    "isPresent": false,
+    "manualCheckout": false,
+    "childId": "210439488",
+    "manual_in": false,
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "34323434324130330D0A"
+        ]
+      },
+      "_converter": {}
+    }
+  },
+  {
+    "id": "2025-11-01_30314543323930330D0A",
+    "date": "Sat Nov 01 2025 00:00:00 GMT+0800 (Malaysia Time)",
+    "reason": "Default",
+    "check_in_time": null,
+    "manual_out": false,
+    "check_out_time": null,
+    "name": "Mirza",
+    "isPresent": false,
+    "childId": "30314543323930330D0A",
+    "manual_in": false,
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "30314543323930330D0A"
+        ]
+      },
+      "_converter": {}
+    }
+  },
+  {
+    "id": "2025-11-01_33394541323930330D0A",
+    "date": "Sat Nov 01 2025 00:00:00 GMT+0800 (Malaysia Time)",
+    "reason": "Default",
+    "check_in_time": null,
+    "manual_out": false,
+    "check_out_time": null,
+    "name": "Annisya",
+    "isPresent": false,
+    "childId": "33394541323930330D0A",
+    "manual_in": false,
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "33394541323930330D0A"
+        ]
+      },
+      "_converter": {}
+    }
+  },
+  {
+    "id": "2025-11-01_34323434324130330D0A",
+    "date": "Sat Nov 01 2025 00:00:00 GMT+0800 (Malaysia Time)",
+    "reason": "Default",
+    "check_in_time": null,
+    "manual_out": false,
+    "check_out_time": null,
+    "name": "hakimi",
+    "isPresent": false,
+    "childId": "34323434324130330D0A",
+    "manual_in": false,
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "34323434324130330D0A"
+        ]
+      },
+      "_converter": {}
+    }
+  },
+  {
+    "id": "2025-11-01_37354542334630350D0A",
+    "date": "Sat Nov 01 2025 00:00:00 GMT+0800 (Malaysia Time)",
+    "reason": "Default",
+    "check_in_time": null,
+    "manual_out": false,
+    "check_out_time": null,
+    "name": "Luqman",
+    "isPresent": false,
+    "childId": "37354542334630350D0A",
+    "manual_in": false,
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "37354542334630350D0A"
+        ]
+      },
+      "_converter": {}
+    }
+  },
+  {
+    "id": "2025-11-01_38423437324230330D0A",
+    "date": "Sat Nov 01 2025 00:00:00 GMT+0800 (Malaysia Time)",
+    "reason": "Default",
+    "check_in_time": null,
+    "manual_out": false,
+    "check_out_time": null,
+    "name": "Puteri",
+    "isPresent": false,
+    "childId": "38423437324230330D0A",
+    "manual_in": false,
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "38423437324230330D0A"
+        ]
+      },
+      "_converter": {}
+    }
+  },
+  {
+    "id": "2025-11-01_572775947",
+    "date": "Sat Nov 01 2025 00:00:00 GMT+0800 (Malaysia Time)",
+    "reason": "Default",
+    "manual_out": false,
+    "name": "Luqman",
+    "isPresent": false,
+    "manualCheckout": false,
+    "childId": "572775947",
+    "manual_in": false,
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "37354542334630350D0A"
+        ]
+      },
+      "_converter": {}
+    }
+  },
+  {
+    "id": "2025-11-01_805E303E",
+    "manualCheckout": false,
+    "parentName": "rosli",
+    "name": "Kairi",
+    "teacher": "sofea",
+    "reason": "Default",
+    "manual_out": false,
+    "manual_in": false,
+    "date": "Sat Nov 01 2025 00:00:00 GMT+0800 (Malaysia Time)",
+    "check_in_time": null,
+    "check_out_time": null,
+    "isPresent": false,
+    "childId": "805E303E\n\n",
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "805E303E\n\n"
+        ]
+      },
+      "_converter": {}
+    }
+  },
+  {
+    "id": "2025-11-01_A3AC2903",
+    "date": "Sat Nov 01 2025 00:00:00 GMT+0800 (Malaysia Time)",
+    "reason": "Default",
+    "check_in_time": null,
+    "manual_out": false,
+    "check_out_time": null,
+    "name": "Hajar",
+    "isPresent": false,
+    "childId": "A3AC2903",
+    "manual_in": false,
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "A3AC2903"
+        ]
+      },
+      "_converter": {}
+    }
+  },
+  {
+    "id": "2025-11-02_01EC2903",
+    "checkin_method": "NFC",
+    "manualCheckout": false,
+    "name": "Mirza Zafri",
+    "childId": "01EC2903",
+    "teacher": "Ali",
+    "parentName": "Ali",
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "01EC2903"
+        ]
+      },
+      "_converter": {}
+    },
+    "reason": "Default",
+    "isPresent": true,
+    "checkout_method": "NFC",
+    "date": "Sun Nov 02 2025 00:00:00 GMT+0800 (Malaysia Time)",
+    "manual_out": true,
+    "manual_in": true,
+    "check_in_time": {
+      "_seconds": 1762099072,
+      "_nanoseconds": 176000000
+    },
+    "check_out_time": {
+      "_seconds": 1762099072,
+      "_nanoseconds": 177000000
+    }
+  },
+  {
+    "id": "2025-11-02_04B13D152B0289",
+    "parentName": "Jalal",
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "04B13D152B0289"
+        ]
+      },
+      "_converter": {}
+    },
+    "childId": "04B13D152B0289",
+    "checkin_method": "NFC",
+    "reason": "Default",
+    "manualCheckout": false,
+    "name": "Amirul",
+    "checkout_method": "NFC",
+    "date": "Sun Nov 02 2025 00:00:00 GMT+0800 (Malaysia Time)",
+    "teacher": "Sofea",
+    "check_in_time": null,
+    "manual_out": false,
+    "isPresent": false,
+    "manual_in": false,
+    "check_out_time": {
+      "_seconds": 1762099120,
+      "_nanoseconds": 0
+    }
+  },
+  {
+    "id": "2025-11-02_1EDB303E",
+    "teacher": "aina",
+    "manualCheckout": false,
+    "reason": "Default",
+    "parentName": "Ramli",
+    "checkin_method": "NFC",
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "1EDB303E"
+        ]
+      },
+      "_converter": {}
+    },
+    "childId": "1EDB303E",
+    "name": "Qistina",
+    "checkout_method": "NFC",
+    "date": "Sun Nov 02 2025 00:00:00 GMT+0800 (Malaysia Time)",
+    "manual_out": true,
+    "isPresent": true,
+    "manual_in": true,
+    "check_in_time": {
+      "_seconds": 1762099072,
+      "_nanoseconds": 178000000
+    },
+    "check_out_time": {
+      "_seconds": 1762099072,
+      "_nanoseconds": 178000000
+    }
+  },
+  {
+    "id": "2025-11-02_30314543323930330D0A",
+    "date": "Sun Nov 02 2025 00:00:00 GMT+0800 (Malaysia Time)",
+    "reason": "Default",
+    "check_in_time": null,
+    "manual_out": false,
+    "check_out_time": null,
+    "name": "Mirza",
+    "isPresent": false,
+    "childId": "30314543323930330D0A",
+    "manual_in": false,
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "30314543323930330D0A"
+        ]
+      },
+      "_converter": {}
+    }
+  },
+  {
+    "id": "2025-11-02_33394541323930330D0A",
+    "date": "Sun Nov 02 2025 00:00:00 GMT+0800 (Malaysia Time)",
+    "reason": "Default",
+    "name": "Annisya",
+    "childId": "33394541323930330D0A",
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "33394541323930330D0A"
+        ]
+      },
+      "_converter": {}
+    },
+    "check_in_time": {
+      "_seconds": 1762099072,
+      "_nanoseconds": 178000000
+    },
+    "manual_out": true,
+    "check_out_time": {
+      "_seconds": 1762099072,
+      "_nanoseconds": 178000000
+    },
+    "isPresent": true,
+    "manual_in": true
+  },
+  {
+    "id": "2025-11-02_34323434324130330D0A",
+    "date": "Sun Nov 02 2025 00:00:00 GMT+0800 (Malaysia Time)",
+    "reason": "Default",
+    "check_in_time": null,
+    "manual_out": false,
+    "check_out_time": null,
+    "name": "hakimi",
+    "isPresent": false,
+    "childId": "34323434324130330D0A",
+    "manual_in": false,
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "34323434324130330D0A"
+        ]
+      },
+      "_converter": {}
+    }
+  },
+  {
+    "id": "2025-11-02_37354542334630350D0A",
+    "date": "Sun Nov 02 2025 00:00:00 GMT+0800 (Malaysia Time)",
+    "reason": "Default",
+    "check_in_time": null,
+    "manual_out": false,
+    "check_out_time": null,
+    "name": "Luqman",
+    "isPresent": false,
+    "childId": "37354542334630350D0A",
+    "manual_in": false,
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "37354542334630350D0A"
+        ]
+      },
+      "_converter": {}
+    }
+  },
+  {
+    "id": "2025-11-02_38423437324230330D0A",
+    "date": "Sun Nov 02 2025 00:00:00 GMT+0800 (Malaysia Time)",
+    "reason": "Default",
+    "check_in_time": null,
+    "manual_out": false,
+    "check_out_time": null,
+    "name": "Puteri",
+    "isPresent": false,
+    "childId": "38423437324230330D0A",
+    "manual_in": false,
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "38423437324230330D0A"
+        ]
+      },
+      "_converter": {}
+    }
+  },
+  {
+    "id": "2025-11-02_805E303E",
+    "date": "Sun Nov 02 2025 00:00:00 GMT+0800 (Malaysia Time)",
+    "reason": "Default",
+    "name": "Kairi",
+    "childId": "805E303E\n\n",
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "805E303E\n\n"
+        ]
+      },
+      "_converter": {}
+    },
+    "check_in_time": null,
+    "manual_out": false,
+    "check_out_time": null,
+    "isPresent": false,
+    "manual_in": false
+  },
+  {
+    "id": "2025-11-02_A3AC2903",
+    "date": "Sun Nov 02 2025 00:00:00 GMT+0800 (Malaysia Time)",
+    "reason": "Default",
+    "check_in_time": null,
+    "manual_out": false,
+    "check_out_time": null,
+    "name": "Hajar",
+    "isPresent": false,
+    "childId": "A3AC2903",
+    "manual_in": false,
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "A3AC2903"
+        ]
+      },
+      "_converter": {}
+    }
+  },
+  {
+    "id": "2025-11-03_01EC2903",
+    "date": {
+      "_seconds": 1762099200,
+      "_nanoseconds": 0
+    },
+    "reason": "Default",
+    "name": "Mirza Zafri",
+    "childId": "01EC2903",
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "01EC2903"
+        ]
+      },
+      "_converter": {}
+    },
+    "check_in_time": null,
+    "manual_out": false,
+    "check_out_time": null,
+    "isPresent": false,
+    "manual_in": false
+  },
+  {
+    "id": "2025-11-03_04B13D152B0289",
+    "date": {
+      "_seconds": 1762099200,
+      "_nanoseconds": 0
+    },
+    "reason": "Default",
+    "manual_out": false,
+    "name": "Amirul",
+    "childId": "04B13D152B0289",
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "04B13D152B0289"
+        ]
+      },
+      "_converter": {}
+    },
+    "checkin_method": "NFC",
+    "checkout_method": "NFC",
+    "manualCheckout": false,
+    "manual_in": false,
+    "check_out_time": null,
+    "check_in_time": null,
+    "isPresent": false
+  },
+  {
+    "id": "2025-11-03_1EDB303E",
+    "date": {
+      "_seconds": 1762099200,
+      "_nanoseconds": 0
+    },
+    "reason": "Default",
+    "name": "Qistina",
+    "childId": "1EDB303E",
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "1EDB303E"
+        ]
+      },
+      "_converter": {}
+    },
+    "checkin_method": "NFC",
+    "checkout_method": "NFC",
+    "manualCheckout": false,
+    "check_in_time": null,
+    "manual_out": false,
+    "check_out_time": null,
+    "isPresent": false,
+    "manual_in": false
+  },
+  {
+    "id": "2025-11-03_30314543323930330D0A",
+    "date": {
+      "_seconds": 1762099200,
+      "_nanoseconds": 0
+    },
+    "reason": "Default",
+    "manual_out": false,
+    "check_out_time": null,
+    "name": "Mirza",
+    "childId": "30314543323930330D0A",
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "30314543323930330D0A"
+        ]
+      },
+      "_converter": {}
+    },
+    "check_in_time": null,
+    "isPresent": false,
+    "manual_in": false
+  },
+  {
+    "id": "2025-11-03_33394541323930330D0A",
+    "date": {
+      "_seconds": 1762099200,
+      "_nanoseconds": 0
+    },
+    "reason": "Default",
+    "check_in_time": null,
+    "manual_out": false,
+    "check_out_time": null,
+    "name": "Annisya",
+    "isPresent": false,
+    "childId": "33394541323930330D0A",
+    "manual_in": false,
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "33394541323930330D0A"
+        ]
+      },
+      "_converter": {}
+    }
+  },
+  {
+    "id": "2025-11-03_34323434324130330D0A",
+    "date": {
+      "_seconds": 1762099200,
+      "_nanoseconds": 0
+    },
+    "reason": "Default",
+    "manual_out": false,
+    "check_out_time": null,
+    "name": "hakimi",
+    "childId": "34323434324130330D0A",
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "34323434324130330D0A"
+        ]
+      },
+      "_converter": {}
+    },
+    "check_in_time": null,
+    "isPresent": false,
+    "manual_in": false
+  },
+  {
+    "id": "2025-11-03_37354542334630350D0A",
+    "date": {
+      "_seconds": 1762099200,
+      "_nanoseconds": 0
+    },
+    "reason": "Default",
+    "check_in_time": null,
+    "manual_out": false,
+    "check_out_time": null,
+    "name": "Luqman",
+    "isPresent": false,
+    "childId": "37354542334630350D0A",
+    "manual_in": false,
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "37354542334630350D0A"
+        ]
+      },
+      "_converter": {}
+    }
+  },
+  {
+    "id": "2025-11-03_38423437324230330D0A",
+    "date": {
+      "_seconds": 1762099200,
+      "_nanoseconds": 0
+    },
+    "reason": "Default",
+    "check_in_time": null,
+    "manual_out": false,
+    "check_out_time": null,
+    "name": "Puteri",
+    "isPresent": false,
+    "childId": "38423437324230330D0A",
+    "manual_in": false,
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "38423437324230330D0A"
+        ]
+      },
+      "_converter": {}
+    }
+  },
+  {
+    "id": "2025-11-03_805E303E",
+    "name": "Kairi",
+    "childId": "805E303E",
+    "manualCheckout": false,
+    "checkin_method": "NFC",
+    "reason": "Default",
+    "date": {
+      "_seconds": 1762099200,
+      "_nanoseconds": 0
+    },
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "805E303E"
+        ]
+      },
+      "_converter": {}
+    },
+    "teacher": "sofea",
+    "parentName": "ezham",
+    "checkout_method": "NFC",
+    "manual_out": false,
+    "manual_in": false,
+    "check_in_time": {
+      "_seconds": 1762156054,
+      "_nanoseconds": 0
+    },
+    "isPresent": true,
+    "check_out_time": {
+      "_seconds": 1762156224,
+      "_nanoseconds": 0
+    }
+  },
+  {
+    "id": "2025-11-03_A3AC2903",
+    "date": {
+      "_seconds": 1762099200,
+      "_nanoseconds": 0
+    },
+    "reason": "Default",
+    "check_in_time": null,
+    "manual_out": false,
+    "check_out_time": null,
+    "name": "Hajar",
+    "isPresent": false,
+    "childId": "A3AC2903",
+    "manual_in": false,
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "A3AC2903"
+        ]
+      },
+      "_converter": {}
+    }
+  },
+  {
+    "id": "2025-11-07_01EC2903",
+    "date": {
+      "_seconds": 1762444800,
+      "_nanoseconds": 0
+    },
+    "reason": "Default",
+    "check_in_time": null,
+    "manual_out": false,
+    "check_out_time": null,
+    "name": "Mirza Zafri",
+    "isPresent": false,
+    "childId": "01EC2903",
+    "manual_in": false,
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "01EC2903"
+        ]
+      },
+      "_converter": {}
+    }
+  },
+  {
+    "id": "2025-11-07_04B13D152B0289",
+    "date": {
+      "_seconds": 1762444800,
+      "_nanoseconds": 0
+    },
+    "reason": "Default",
+    "check_in_time": null,
+    "manual_out": false,
+    "check_out_time": null,
+    "name": "Amirul",
+    "isPresent": false,
+    "childId": "04B13D152B0289",
+    "manual_in": false,
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "04B13D152B0289"
+        ]
+      },
+      "_converter": {}
+    }
+  },
+  {
+    "id": "2025-11-07_1EDB303E",
+    "date": {
+      "_seconds": 1762444800,
+      "_nanoseconds": 0
+    },
+    "reason": "Default",
+    "check_in_time": null,
+    "manual_out": false,
+    "check_out_time": null,
+    "name": "Qistina",
+    "isPresent": false,
+    "childId": "1EDB303E",
+    "manual_in": false,
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "1EDB303E"
+        ]
+      },
+      "_converter": {}
+    }
+  },
+  {
+    "id": "2025-11-07_30314543323930330D0A",
+    "date": {
+      "_seconds": 1762444800,
+      "_nanoseconds": 0
+    },
+    "reason": "Default",
+    "check_in_time": null,
+    "manual_out": false,
+    "check_out_time": null,
+    "name": "Mirza",
+    "isPresent": false,
+    "childId": "30314543323930330D0A",
+    "manual_in": false,
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "30314543323930330D0A"
+        ]
+      },
+      "_converter": {}
+    }
+  },
+  {
+    "id": "2025-11-07_33394541323930330D0A",
+    "date": {
+      "_seconds": 1762444800,
+      "_nanoseconds": 0
+    },
+    "reason": "Default",
+    "check_in_time": null,
+    "manual_out": false,
+    "check_out_time": null,
+    "name": "Annisya",
+    "isPresent": false,
+    "childId": "33394541323930330D0A",
+    "manual_in": false,
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "33394541323930330D0A"
+        ]
+      },
+      "_converter": {}
+    }
+  },
+  {
+    "id": "2025-11-07_34323434324130330D0A",
+    "date": {
+      "_seconds": 1762444800,
+      "_nanoseconds": 0
+    },
+    "reason": "Default",
+    "check_in_time": null,
+    "manual_out": false,
+    "check_out_time": null,
+    "name": "hakimi",
+    "isPresent": false,
+    "childId": "34323434324130330D0A",
+    "manual_in": false,
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "34323434324130330D0A"
+        ]
+      },
+      "_converter": {}
+    }
+  },
+  {
+    "id": "2025-11-07_37354542334630350D0A",
+    "date": {
+      "_seconds": 1762444800,
+      "_nanoseconds": 0
+    },
+    "reason": "Default",
+    "check_in_time": null,
+    "manual_out": false,
+    "check_out_time": null,
+    "name": "Luqman",
+    "isPresent": false,
+    "childId": "37354542334630350D0A",
+    "manual_in": false,
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "37354542334630350D0A"
+        ]
+      },
+      "_converter": {}
+    }
+  },
+  {
+    "id": "2025-11-07_38423437324230330D0A",
+    "date": {
+      "_seconds": 1762444800,
+      "_nanoseconds": 0
+    },
+    "reason": "Default",
+    "check_in_time": null,
+    "manual_out": false,
+    "check_out_time": null,
+    "name": "Puteri",
+    "isPresent": false,
+    "childId": "38423437324230330D0A",
+    "manual_in": false,
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "38423437324230330D0A"
+        ]
+      },
+      "_converter": {}
+    }
+  },
+  {
+    "id": "2025-11-07_805E303E",
+    "date": {
+      "_seconds": 1762444800,
+      "_nanoseconds": 0
+    },
+    "reason": "Default",
+    "check_in_time": null,
+    "manual_out": false,
+    "check_out_time": null,
+    "name": "Kairi",
+    "isPresent": false,
+    "childId": "805E303E",
+    "manual_in": false,
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "805E303E"
+        ]
+      },
+      "_converter": {}
+    }
+  },
+  {
+    "id": "2025-11-07_A3AC2903",
+    "date": {
+      "_seconds": 1762444800,
+      "_nanoseconds": 0
+    },
+    "reason": "Default",
+    "check_in_time": null,
+    "manual_out": false,
+    "check_out_time": null,
+    "name": "Hajar",
+    "isPresent": false,
+    "childId": "A3AC2903",
+    "manual_in": false,
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "A3AC2903"
+        ]
+      },
+      "_converter": {}
+    }
+  },
+  {
+    "id": "2025-12-18_01EC2903",
+    "date": {
+      "_seconds": 1765987200,
+      "_nanoseconds": 0
+    },
+    "reason": "Default",
+    "name": "Mirza Zafri",
+    "childId": "01EC2903",
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "01EC2903"
+        ]
+      },
+      "_converter": {}
+    },
+    "check_in_time": null,
+    "manual_out": false,
+    "check_out_time": null,
+    "isPresent": false,
+    "manual_in": false
+  },
+  {
+    "id": "2025-12-18_04B13D152B0289",
+    "date": {
+      "_seconds": 1765987200,
+      "_nanoseconds": 0
+    },
+    "reason": "Default",
+    "check_in_time": null,
+    "manual_out": false,
+    "check_out_time": null,
+    "name": "Amirul",
+    "isPresent": false,
+    "childId": "04B13D152B0289",
+    "manual_in": false,
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "04B13D152B0289"
+        ]
+      },
+      "_converter": {}
+    }
+  },
+  {
+    "id": "2025-12-18_1EDB303E",
+    "date": {
+      "_seconds": 1765987200,
+      "_nanoseconds": 0
+    },
+    "reason": "Default",
+    "name": "Qistina",
+    "childId": "1EDB303E",
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "1EDB303E"
+        ]
+      },
+      "_converter": {}
+    },
+    "manual_out": false,
+    "check_out_time": null,
+    "manual_in": false,
+    "checkin_method": "NFC",
+    "check_in_time": {
+      "_seconds": 1766072397,
+      "_nanoseconds": 0
+    },
+    "isPresent": true
+  },
+  {
+    "id": "2025-12-18_30314543323930330D0A",
+    "date": {
+      "_seconds": 1765987200,
+      "_nanoseconds": 0
+    },
+    "reason": "Default",
+    "check_in_time": null,
+    "manual_out": false,
+    "check_out_time": null,
+    "name": "Mirza",
+    "isPresent": false,
+    "childId": "30314543323930330D0A",
+    "manual_in": false,
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "30314543323930330D0A"
+        ]
+      },
+      "_converter": {}
+    }
+  },
+  {
+    "id": "2025-12-18_33394541323930330D0A",
+    "date": {
+      "_seconds": 1765987200,
+      "_nanoseconds": 0
+    },
+    "reason": "Default",
+    "name": "Annisya",
+    "childId": "33394541323930330D0A",
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "33394541323930330D0A"
+        ]
+      },
+      "_converter": {}
+    },
+    "check_in_time": null,
+    "manual_out": false,
+    "check_out_time": null,
+    "isPresent": false,
+    "manual_in": false
+  },
+  {
+    "id": "2025-12-18_34323434324130330D0A",
+    "date": {
+      "_seconds": 1765987200,
+      "_nanoseconds": 0
+    },
+    "reason": "Default",
+    "check_in_time": null,
+    "manual_out": false,
+    "check_out_time": null,
+    "name": "hakimi",
+    "isPresent": false,
+    "childId": "34323434324130330D0A",
+    "manual_in": false,
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "34323434324130330D0A"
+        ]
+      },
+      "_converter": {}
+    }
+  },
+  {
+    "id": "2025-12-18_37354542334630350D0A",
+    "date": {
+      "_seconds": 1765987200,
+      "_nanoseconds": 0
+    },
+    "reason": "Default",
+    "check_in_time": null,
+    "manual_out": false,
+    "check_out_time": null,
+    "name": "Luqman",
+    "isPresent": false,
+    "childId": "37354542334630350D0A",
+    "manual_in": false,
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "37354542334630350D0A"
+        ]
+      },
+      "_converter": {}
+    }
+  },
+  {
+    "id": "2025-12-18_38423437324230330D0A",
+    "date": {
+      "_seconds": 1765987200,
+      "_nanoseconds": 0
+    },
+    "reason": "Default",
+    "check_in_time": null,
+    "manual_out": false,
+    "check_out_time": null,
+    "name": "Puteri",
+    "isPresent": false,
+    "childId": "38423437324230330D0A",
+    "manual_in": false,
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "38423437324230330D0A"
+        ]
+      },
+      "_converter": {}
+    }
+  },
+  {
+    "id": "2025-12-18_805E303E",
+    "date": {
+      "_seconds": 1765987200,
+      "_nanoseconds": 0
+    },
+    "reason": "Default",
+    "check_in_time": null,
+    "manual_out": false,
+    "check_out_time": null,
+    "name": "Kairi",
+    "isPresent": false,
+    "childId": "805E303E",
+    "manual_in": false,
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "805E303E"
+        ]
+      },
+      "_converter": {}
+    }
+  },
+  {
+    "id": "2025-12-18_A3AC2903",
+    "date": {
+      "_seconds": 1765987200,
+      "_nanoseconds": 0
+    },
+    "reason": "Default",
+    "check_in_time": null,
+    "manual_out": false,
+    "check_out_time": null,
+    "name": "Hajar",
+    "isPresent": false,
+    "childId": "A3AC2903",
+    "manual_in": false,
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "A3AC2903"
+        ]
+      },
+      "_converter": {}
+    }
+  },
+  {
+    "id": "2025-12-19_01EC2903",
+    "date": {
+      "_seconds": 1766073600,
+      "_nanoseconds": 0
+    },
+    "reason": "Default",
+    "check_in_time": null,
+    "manual_out": false,
+    "check_out_time": null,
+    "name": "Mirza Zafri",
+    "isPresent": false,
+    "childId": "01EC2903",
+    "manual_in": false,
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "01EC2903"
+        ]
+      },
+      "_converter": {}
+    }
+  },
+  {
+    "id": "2025-12-19_04B13D152B0289",
+    "date": {
+      "_seconds": 1766073600,
+      "_nanoseconds": 0
+    },
+    "reason": "Default",
+    "check_in_time": null,
+    "manual_out": false,
+    "check_out_time": null,
+    "name": "Amirul",
+    "isPresent": false,
+    "childId": "04B13D152B0289",
+    "manual_in": false,
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "04B13D152B0289"
+        ]
+      },
+      "_converter": {}
+    }
+  },
+  {
+    "id": "2025-12-19_1EDB303E",
+    "date": {
+      "_seconds": 1766073600,
+      "_nanoseconds": 0
+    },
+    "reason": "Default",
+    "check_in_time": null,
+    "manual_out": false,
+    "check_out_time": null,
+    "name": "Qistina",
+    "isPresent": false,
+    "childId": "1EDB303E",
+    "manual_in": false,
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "1EDB303E"
+        ]
+      },
+      "_converter": {}
+    }
+  },
+  {
+    "id": "2025-12-19_30314543323930330D0A",
+    "date": {
+      "_seconds": 1766073600,
+      "_nanoseconds": 0
+    },
+    "reason": "Default",
+    "check_in_time": null,
+    "manual_out": false,
+    "check_out_time": null,
+    "name": "Mirza",
+    "isPresent": false,
+    "childId": "30314543323930330D0A",
+    "manual_in": false,
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "30314543323930330D0A"
+        ]
+      },
+      "_converter": {}
+    }
+  },
+  {
+    "id": "2025-12-19_33394541323930330D0A",
+    "date": {
+      "_seconds": 1766073600,
+      "_nanoseconds": 0
+    },
+    "reason": "Default",
+    "check_in_time": null,
+    "manual_out": false,
+    "check_out_time": null,
+    "name": "Annisya",
+    "isPresent": false,
+    "childId": "33394541323930330D0A",
+    "manual_in": false,
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "33394541323930330D0A"
+        ]
+      },
+      "_converter": {}
+    }
+  },
+  {
+    "id": "2025-12-19_34323434324130330D0A",
+    "date": {
+      "_seconds": 1766073600,
+      "_nanoseconds": 0
+    },
+    "reason": "Default",
+    "check_in_time": null,
+    "manual_out": false,
+    "check_out_time": null,
+    "name": "hakimi",
+    "isPresent": false,
+    "childId": "34323434324130330D0A",
+    "manual_in": false,
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "34323434324130330D0A"
+        ]
+      },
+      "_converter": {}
+    }
+  },
+  {
+    "id": "2025-12-19_37354542334630350D0A",
+    "date": {
+      "_seconds": 1766073600,
+      "_nanoseconds": 0
+    },
+    "reason": "Default",
+    "check_in_time": null,
+    "manual_out": false,
+    "check_out_time": null,
+    "name": "Luqman",
+    "isPresent": false,
+    "childId": "37354542334630350D0A",
+    "manual_in": false,
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "37354542334630350D0A"
+        ]
+      },
+      "_converter": {}
+    }
+  },
+  {
+    "id": "2025-12-19_38423437324230330D0A",
+    "date": {
+      "_seconds": 1766073600,
+      "_nanoseconds": 0
+    },
+    "reason": "Default",
+    "check_in_time": null,
+    "manual_out": false,
+    "check_out_time": null,
+    "name": "Puteri",
+    "isPresent": false,
+    "childId": "38423437324230330D0A",
+    "manual_in": false,
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "38423437324230330D0A"
+        ]
+      },
+      "_converter": {}
+    }
+  },
+  {
+    "id": "2025-12-19_805E303E",
+    "date": {
+      "_seconds": 1766073600,
+      "_nanoseconds": 0
+    },
+    "reason": "Default",
+    "check_in_time": null,
+    "manual_out": false,
+    "check_out_time": null,
+    "name": "Kairi",
+    "isPresent": false,
+    "childId": "805E303E",
+    "manual_in": false,
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "805E303E"
+        ]
+      },
+      "_converter": {}
+    }
+  },
+  {
+    "id": "2025-12-19_A3AC2903",
+    "date": {
+      "_seconds": 1766073600,
+      "_nanoseconds": 0
+    },
+    "reason": "Default",
+    "check_in_time": null,
+    "manual_out": false,
+    "check_out_time": null,
+    "name": "Hajar",
+    "isPresent": false,
+    "childId": "A3AC2903",
+    "manual_in": false,
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "A3AC2903"
+        ]
+      },
+      "_converter": {}
+    }
+  },
+  {
+    "id": "test",
+    "childName": "Sofea",
+    "parentName": "Hakimi",
+    "isPresent": true,
+    "check_in_time": {
+      "_seconds": 1762058688,
+      "_nanoseconds": 846000000
+    }
+  }
+]

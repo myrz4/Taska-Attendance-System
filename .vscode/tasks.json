@@ -1,0 +1,22 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Build (JavaFX + Firestore)",
+      "type": "shell",
+      "command": "javac",
+      "args": [
+        "--module-path", "C:/Users/zafri/Downloads/Taska Attendance System/jar_files",
+        "--add-modules", "javafx.controls,javafx.fxml,javafx.graphics,javafx.base",
+        "-cp", "src;bin;C:/Users/zafri/Downloads/Taska Attendance System/jar_files/*",
+        "-d", "bin",
+        "src/nfc/*.java"
+      ],
+      "options": {
+        "cwd": "C:/Users/zafri/Downloads/Taska Attendance System"
+      },
+      "group": "build",
+      "problemMatcher": "$javac"
+    }
+  ]
+}

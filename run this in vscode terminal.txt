@@ -1,0 +1,6 @@
+cd "C:\Users\zafri\Downloads\Taska Attendance System"
+javac --module-path "javafx-sdk-21.0.9\lib" --add-modules javafx.controls,javafx.fxml `
+      -cp "src;jar files/*" -d bin src/nfc/LoginView.java
+
+java --module-path "javafx-sdk-21.0.9\lib" --add-modules javafx.controls,javafx.fxml `
+     -cp "bin;jar files/*" nfc.LoginView

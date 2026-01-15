@@ -1,0 +1,70 @@
+[
+  {
+    "id": "teacher_sofea_parent_ezham",
+    "teacherUsername": "sofea",
+    "parentUsername": "ezham",
+    "teacherRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "teachers",
+          "t01"
+        ]
+      },
+      "_converter": {}
+    },
+    "parentRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "parents",
+          "ezham_0194965099"
+        ]
+      },
+      "_converter": {}
+    },
+    "lastMessage": "Hi, this is the first chat from Sofea & Ezham!",
+    "lastTimestamp": {
+      "_seconds": 1761947392,
+      "_nanoseconds": 46000000
+    }
+  },
+  {
+    "id": "teacher_sofea_parent_rosli",
+    "parentUsername": "rosli",
+    "teacherRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "teachers",
+          "t01"
+        ]
+      },
+      "_converter": {}
+    },
+    "parentRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "parents",
+          "rosli_01165066294"
+        ]
+      },
+      "_converter": {}
+    },
+    "lastMessage": "Hi, this is first message",
+    "lastTimestamp": {
+      "_seconds": 1762063381,
+      "_nanoseconds": 455000000
+    },
+    "teacherUsername": "sofea"
+  }
+]

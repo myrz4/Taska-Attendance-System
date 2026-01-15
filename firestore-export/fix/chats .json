@@ -1,0 +1,19 @@
+{
+  "teacher_sofea_parent_ezham": {
+    "teacherUsername": "sofea",
+    "parentUsername": "ezham",
+    "teacherId": "t01",
+    "parentId": "ezham_0194965099",
+    "lastMessage": "Hi, this is the first chat from Sofea & Ezham!",
+    "lastTimestamp": 1761947392
+  },
+
+  "teacher_sofea_parent_rosli": {
+    "teacherUsername": "sofea",
+    "parentUsername": "rosli",
+    "teacherId": "t01",
+    "parentId": "rosli_01165066294",
+    "lastMessage": "Hi, this is first message",
+    "lastTimestamp": 1762063381
+  }
+}

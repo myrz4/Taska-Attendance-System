@@ -1,0 +1,101 @@
+{
+  "01EC2903": {
+    "name": "Mirza Zafri",
+    "birthDate": "2003-02-07",
+    "parentName": "Ali",
+    "parentContact": "0123456789",
+    "teacher_username": "",
+    "nfc_uid": "01EC2903",
+    "photoUrl": ""
+  },
+
+  "04B13D152B0289": {
+    "name": "Amirul",
+    "birthDate": "2004-11-16",
+    "parentName": "Jalal",
+    "parentContact": "012345678",
+    "teacher_username": "",
+    "nfc_uid": "04B13D152B0289",
+    "photoUrl": ""
+  },
+
+  "1EDB303E": {
+    "name": "Qistina",
+    "birthDate": "2000-12-04",
+    "parentName": "Ramli",
+    "parentContact": "0107036422",
+    "teacher_username": "aina",
+    "nfc_uid": "1EDB303E",
+    "photoUrl": ""
+  },
+
+  "30314543323930330D0A": {
+    "name": "Mirza",
+    "birthDate": "2003-02-07",
+    "parentName": "Rosli",
+    "parentContact": "01165066294",
+    "teacher_username": "sofea",
+    "nfc_uid": "30314543323930330D0A",
+    "photoUrl": ""
+  },
+
+  "33394541323930330D0A": {
+    "name": "Annisya",
+    "birthDate": "2004-05-21",
+    "parentName": "Yusuf",
+    "parentContact": "0122801120",
+    "teacher_username": "sofea",
+    "nfc_uid": "33394541323930330D0A",
+    "photoUrl": ""
+  },
+
+  "34323434324130330D0A": {
+    "name": "hakimi",
+    "birthDate": "2025-09-10",
+    "parentName": "lizam",
+    "parentContact": "0123456789",
+    "teacher_username": "sofea",
+    "nfc_uid": "34323434324130330D0A",
+    "photoUrl": ""
+  },
+
+  "37354542334630350D0A": {
+    "name": "Luqman",
+    "birthDate": "2004-11-02",
+    "parentName": "Bahrin",
+    "parentContact": "0171111111",
+    "teacher_username": "sofea",
+    "nfc_uid": "37354542334630350D0A",
+    "photoUrl": ""
+  },
+
+  "38423437324230330D0A": {
+    "name": "Puteri",
+    "birthDate": "2004-09-18",
+    "parentName": "Rozaimi",
+    "parentContact": "0143021456",
+    "teacher_username": "sofea",
+    "nfc_uid": "38423437324230330D0A",
+    "photoUrl": ""
+  },
+
+  "41334143323930330D0A": {
+    "name": "Hajar",
+    "birthDate": "2004-04-07",
+    "parentName": "Shamsulbachry",
+    "parentContact": "01135873736",
+    "teacher_username": "sofea",
+    "nfc_uid": "A3AC2903",
+    "photoUrl": ""
+  },
+
+  "805E303E": {
+    "name": "Kairi",
+    "birthDate": "2003-02-07",
+    "parentName": "ezham",
+    "parentContact": "0194965099",
+    "teacher_username": "sofea",
+    "nfc_uid": "805E303E",
+    "photoUrl": "https://firebasestorage.googleapis.com/v0/b/taskazurah.appspot.com/o/children_image%2Fkhairi.jpg?alt=media&token=5e34c72e-a5aa-4bc2-a556-b6bba8bdba05"
+  }
+}

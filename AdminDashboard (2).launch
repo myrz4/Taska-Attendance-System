@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<launchConfiguration type="org.eclipse.jdt.launching.localJavaApplication">
+    <listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_PATHS">
+        <listEntry value="/Taska Attendance System/src/nfc/AdminDashboard.java"/>
+    </listAttribute>
+    <listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_TYPES">
+        <listEntry value="1"/>
+    </listAttribute>
+    <mapAttribute key="org.eclipse.debug.core.environmentVariables">
+        <mapEntry key="PATH" value="C:\dev\opencv\build\install\x64\vc17\bin;%PATH%"/>
+    </mapAttribute>
+    <booleanAttribute key="org.eclipse.jdt.launching.ATTR_ATTR_USE_ARGFILE" value="false"/>
+    <booleanAttribute key="org.eclipse.jdt.launching.ATTR_EXCLUDE_TEST_CODE" value="true"/>
+    <booleanAttribute key="org.eclipse.jdt.launching.ATTR_SHOW_CODEDETAILS_IN_EXCEPTION_MESSAGES" value="true"/>
+    <booleanAttribute key="org.eclipse.jdt.launching.ATTR_USE_CLASSPATH_ONLY_JAR" value="false"/>
+    <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="nfc.AdminDashboard"/>
+    <stringAttribute key="org.eclipse.jdt.launching.MODULE_NAME" value="Taska Attendance System"/>
+    <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="Taska Attendance System"/>
+    <stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="--module-path &quot;C:\Users\zafri\Downloads\openjfx-21.0.7_windows-x64_bin-sdk\javafx-sdk-21.0.7\lib&quot; --add-modules javafx.controls,javafx.fxml -Djava.library.path=C:\dev\opencv\build\install\java"/>
+</launchConfiguration>

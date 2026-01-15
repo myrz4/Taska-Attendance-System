@@ -1,0 +1,104 @@
+[
+  {
+    "id": "01EC2903",
+    "parentName": "Ali",
+    "parentContact": "0123456789",
+    "nfc_uid": "01EC2903",
+    "name": "Mirza Zafri",
+    "birthDate": "Fri Feb 07 2003 00:00:00 GMT+0800 (Malaysia Time)"
+  },
+  {
+    "id": "04B13D152B0289",
+    "parentName": "Jalal",
+    "parentContact": "012345678",
+    "nfc_uid": "04B13D152B0289",
+    "name": "Amirul",
+    "birthDate": "Tue Nov 16 2004 00:00:00 GMT+0800 (Malaysia Time)"
+  },
+  {
+    "id": "1EDB303E",
+    "parentName": "Ramli",
+    "parentContact": "0107036422",
+    "nfc_uid": "1EDB303E",
+    "name": "Qistina",
+    "birthDate": "Mon Dec 04 2000 00:00:00 GMT+0800 (Malaysia Time)",
+    "teacher_username": "aina"
+  },
+  {
+    "id": "30314543323930330D0A",
+    "parentName": "Rosli",
+    "parentContact": "011-65066294",
+    "nfc_uid": "30314543323930330D0A",
+    "name": "Mirza",
+    "birthDate": "Fri Feb 07 2003 00:00:00 GMT+0800 (Malaysia Time)",
+    "teacher_username": "sofea",
+    "guardianRefs": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "parents",
+          "rosli_01165066294"
+        ]
+      },
+      "_converter": {}
+    },
+    "photoUrl": ""
+  },
+  {
+    "id": "33394541323930330D0A",
+    "parentName": "Yusuf",
+    "parentContact": "012-2801120",
+    "nfc_uid": "33394541323930330D0A",
+    "name": "Annisya",
+    "birthDate": "Fri May 21 2004 00:00:00 GMT+0800 (Malaysia Time)",
+    "teacher_username": "sofea"
+  },
+  {
+    "id": "34323434324130330D0A",
+    "parentName": "lizam",
+    "nfc_uid": "34323434324130330D0A",
+    "name": "hakimi",
+    "birthDate": "Wed Sep 10 2025 00:00:00 GMT+0800 (Malaysia Time)",
+    "teacher_username": "sofea",
+    "parentContact": "0123456789"
+  },
+  {
+    "id": "37354542334630350D0A",
+    "parentName": "Bahrin",
+    "parentContact": "017-1111111",
+    "nfc_uid": "37354542334630350D0A",
+    "name": "Luqman",
+    "birthDate": "Tue Nov 02 2004 00:00:00 GMT+0800 (Malaysia Time)",
+    "teacher_username": "sofea"
+  },
+  {
+    "id": "38423437324230330D0A",
+    "parentName": "Rozaimi",
+    "parentContact": "014-3021456",
+    "nfc_uid": "38423437324230330D0A",
+    "name": "Puteri",
+    "birthDate": "Sat Sep 18 2004 00:00:00 GMT+0800 (Malaysia Time)",
+    "teacher_username": "sofea"
+  },
+  {
+    "id": "41334143323930330D0A",
+    "parentName": "Shamsulbachry",
+    "parentContact": "011-35873736",
+    "name": "Hajar",
+    "birthDate": "Wed Apr 07 2004 00:00:00 GMT+0800 (Malaysia Time)",
+    "teacher_username": "sofea",
+    "nfc_uid": "A3AC2903"
+  },
+  {
+    "id": "805E303E",
+    "birthDate": "Fri Feb 07 2003 00:00:00 GMT+0800 (Malaysia Time)",
+    "name": "Kairi",
+    "teacher_username": "sofea",
+    "parentContact": "0194965099",
+    "parentName": "ezham",
+    "photoUrl": "https://firebasestorage.googleapis.com/v0/b/taskazurah.appspot.com/o/children_image%2Fkhairi.jpg?alt=media&token=5e34c72e-a5aa-4bc2-a556-b6bba8bdba05\n",
+    "nfc_uid": "805E303E"
+  }
+]

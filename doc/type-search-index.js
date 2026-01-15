@@ -1,0 +1,1 @@
+typeSearchIndex = [{"p":"nfc","l":"AdminDashboard"},{"l":"All Classes and Interfaces","u":"allclasses-index.html"}];updateSearchResults();

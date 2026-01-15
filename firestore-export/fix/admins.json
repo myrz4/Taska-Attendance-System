@@ -1,0 +1,20 @@
+{
+  "LJSdYxDURhqmYhSxrViT": {
+    "email": "a",
+    "name": "Admin",
+    "password": "a",
+    "username": "a"
+  },
+  "admin": {
+    "username": "admin",
+    "password": "admin",
+    "name": "admin 2",
+    "profilePicture": "admin 2"
+  },
+  "uhh": {
+    "username": "uhh",
+    "password": "uhh",
+    "name": "uhh",
+    "profilePicture": "uhh"
+  }
+}

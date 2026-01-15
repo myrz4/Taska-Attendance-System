@@ -1,0 +1,53 @@
+{
+  "ezham_0194965099": {
+    "parentName": "ezham",
+    "phone": "0194965099",
+    "childId": "805E303E",
+    "childName": "Kairi",
+    "className": "Mawar",
+    "teacherName": "Teacher Sofea",
+    "status": "Representative",
+    "representativeName": "",
+    "passcode": "123456",
+    "passcode_expiry": 1767283200,
+    "qrData": "ezham_0194965099_1730532218194",
+    "qrExpiry": 1767110400,
+    "fcm_token": "cvUgNlBHQ9-voIataAfA0U:APA91bFy21CqKEz-UvcBp1tTIrkZ8voSOyX0EP60qDGZaWsSaK2VweULOA8P3YafHXRWhKgkZ4IXp-a3FDJTTDd9ZPamxWAslDvybJ-9UgcB9hJTuXeVEYA",
+    "dailyQrToken": "1766074013620",
+    "timestamp": 1764691200,
+    "settings": {
+      "notifications": {
+        "attendance": false,
+        "fees": true,
+        "emergency": false,
+        "activity": false
+      }
+    }
+  },
+
+  "rosli_01165066294": {
+    "parentName": "rosli",
+    "phone": "123456789",
+    "childId": "30314543323930330D0A",
+    "childName": "Mirza",
+    "className": "Class A",
+    "teacherName": "Teacher Aina",
+    "status": "Representative",
+    "representativeName": "Uncle Hafiz",
+    "passcode": "123456",
+    "passcode_expiry": 1767250800,
+    "qrData": "rosli_01165066294_1762017558987",
+    "qrExpiry": 1762300799,
+    "fcm_token": "dEytd0GDS6aZBv7lET1r77:APA91bFQbqLb4hzeBwIvTID2L5ug6WGce8BB8fA2mMEe9dlrZRJNTZac84nUt0tHh2zlvm7LWillfS8dnpNoAY2lrGYGxv3_UyHccRI3Wnzr8w_wX0LgCyA",
+    "dailyQrToken": "1762127430650",
+    "timestamp": 1761555638,
+    "settings": {
+      "notifications": {
+        "attendance": false,
+        "fees": true,
+        "emergency": false,
+        "activity": false
+      }
+    }
+  }
+}

@@ -1,0 +1,84 @@
+[
+  {
+    "id": "ezham_0194965099",
+    "childId": "805E303E",
+    "childName": "Kairi",
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "805E303E"
+        ]
+      },
+      "_converter": {}
+    },
+    "className": "Mawar",
+    "parentName": "ezham",
+    "passcode": "123456",
+    "passcode_expiry": {
+      "_seconds": 1767283200,
+      "_nanoseconds": 384000000
+    },
+    "phone": "0194965099",
+    "qrData": "ezham_0194965099_1730532218194",
+    "qrExpiry": {
+      "_seconds": 1767110400,
+      "_nanoseconds": 706000000
+    },
+    "status": "Representative",
+    "teacher": "Teacher Sofea",
+    "timestamp": {
+      "_seconds": 1764691200,
+      "_nanoseconds": 29000000
+    },
+    "representativeName": "",
+    "settings.notifications.attendance": false,
+    "settings.notifications.fees": true,
+    "settings.notifications.emergency": false,
+    "settings.notifications.activity": false,
+    "fcm_token": "cvUgNlBHQ9-voIataAfA0U:APA91bFy21CqKEz-UvcBp1tTIrkZ8voSOyX0EP60qDGZaWsSaK2VweULOA8P3YafHXRWhKgkZ4IXp-a3FDJTTDd9ZPamxWAslDvybJ-9UgcB9hJTuXeVEYA",
+    "dailyQrToken": "1766074013620"
+  },
+  {
+    "id": "rosli_01165066294 ",
+    "childName": "Mirza",
+    "childId": "30314543323930330D0A",
+    "status": "Representative",
+    "timestamp": {
+      "_seconds": 1761555638,
+      "_nanoseconds": 91000000
+    },
+    "passcode": "123456",
+    "className": "Class A",
+    "representativeName": "Uncle Hafiz",
+    "childRef": {
+      "_firestore": {
+        "projectId": "taskazurah"
+      },
+      "_path": {
+        "segments": [
+          "children",
+          "30314543323930330D0A"
+        ]
+      },
+      "_converter": {}
+    },
+    "passcode_expiry": {
+      "_seconds": 1767250800,
+      "_nanoseconds": 540000000
+    },
+    "phone": "123456789",
+    "teacherName": "Teacher Aina",
+    "qrData": "rosli_01165066294 _1762017558987",
+    "parentName": "rosli",
+    "qrExpiry": {
+      "_seconds": 1762300799,
+      "_nanoseconds": 321000000
+    },
+    "fcm_token": "dEytd0GDS6aZBv7lET1r77:APA91bFQbqLb4hzeBwIvTID2L5ug6WGce8BB8fA2mMEe9dlrZRJNTZac84nUt0tHh2zlvm7LWillfS8dnpNoAY2lrGYGxv3_UyHccRI3Wnzr8w_wX0LgCyA",
+    "dailyQrToken": "1762127430650"
+  }
+]

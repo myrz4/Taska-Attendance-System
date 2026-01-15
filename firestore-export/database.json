@@ -1,0 +1,441 @@
+{
+  "admins": {
+  "LJSdYxDURhqmYhSxrViT": {
+    "email": "a",
+    "name": "Admin",
+    "password": "a",
+    "username": "a"
+  },
+  "admin": {
+    "username": "admin",
+    "password": "admin",
+    "name": "admin 2",
+    "profilePicture": "admin 2"
+  },
+  "uhh": {
+    "username": "uhh",
+    "password": "uhh",
+    "name": "uhh",
+    "profilePicture": "uhh"
+  }
+},
+  "teachers": {
+  "sofea": {
+    "name": "Teacher Sofea",
+    "username": "sofea",
+    "email": "nienasofea@gmail.com",
+    "phone": "0112345678",
+    "class": "Mawar",
+    "experience": "5 years",
+    "base_salary": 1800,
+    "tips_total": 400,
+    "join_date": 1457539200,
+    "image": "https://firebasestorage.googleapis.com/v0/b/taskazurah.firebasestorage.app/o/teacher_image%2Fteacher_sofia.jpg?alt=media&token=c77dd884-4bae-4be7-a73c-a698ae16afe3",
+    "password_hash": "1",
+    "fcmToken": "f1I22Fv4QPycCMCIu_MF0s:APA91bEp92BkhSJ8suoKfx-pL5SefzB1qS8MIfTEZN4OWc0Rv9zzYdWq7x_WS_HGTDzKQC2zEGjIGweCc4v-BVbQ2m0UXRRXHjWCvF5VEACvBZ3GTYARBMM"
+  },
+
+  "aina": {
+    "name": "Teacher Aina",
+    "username": "aina",
+    "email": "ainazolkefli@gmail.com",
+    "phone": "01112577356",
+    "class": "Rose",
+    "experience": "3 years",
+    "base_salary": 1800,
+    "tips_total": 100,
+    "join_date": 1731600000,
+    "image": "https://firebasestorage.googleapis.com/v0/b/taskazurah.firebasestorage.app/o/teacher_image%2Fteacher_aina.jpg?alt=media&token=60a7eba0-1806-4950-a295-0a8b55e3b3b2",
+    "password_hash": "4321",
+    "fcmToken": "di_qweSmS_-WgXGGjUsu0G:APA91bGAOUgbs7u1ECDCj3GM84VBvwaMgHGUsPrjp2jtoVF6LdRcMeZPYptTJFO8csFhwANtWCBPZaM--kwkhs0WDUwRTJPb7qmb95Jy62uJOZzxH0YOgGA"
+  },
+
+  "amirul": {
+    "name": "Ustaz Amirul",
+    "username": "amirul",
+    "email": "amirulaiman@gmail.com",
+    "phone": "01927834612",
+    "class": "Cendekia",
+    "experience": "2 years",
+    "base_salary": 2100,
+    "tips_total": 0,
+    "join_date": 1698768000,
+    "image": "https://firebasestorage.googleapis.com/v0/b/taskazurah.firebasestorage.app/o/teacher_image%2Famirul.png?alt=media&token=35640f73-b4a1-4a3e-811c-c4eabc02ab1e",
+    "password_hash": "2222",
+    "fcmToken": "di_qweSmS_-WgXGGjUsu0G:APA91bGAOUgbs7u1ECDCj3GM84VBvwaMgHGUsPrjp2jtoVF6LdRcMeZPYptTJFO8csFhwANtWCBPZaM--kwkhs0WDUwRTJPb7qmb95Jy62uJOZzxH0YOgGA"
+  }
+},
+  "parents": {
+  "ezham_0194965099": {
+    "parentName": "ezham",
+    "phone": "0194965099",
+    "childId": "805E303E",
+    "childName": "Kairi",
+    "className": "Mawar",
+    "teacherName": "Teacher Sofea",
+    "status": "Representative",
+    "representativeName": "",
+    "passcode": "123456",
+    "passcode_expiry": 1767283200,
+    "qrData": "ezham_0194965099_1730532218194",
+    "qrExpiry": 1767110400,
+    "fcm_token": "cvUgNlBHQ9-voIataAfA0U:APA91bFy21CqKEz-UvcBp1tTIrkZ8voSOyX0EP60qDGZaWsSaK2VweULOA8P3YafHXRWhKgkZ4IXp-a3FDJTTDd9ZPamxWAslDvybJ-9UgcB9hJTuXeVEYA",
+    "dailyQrToken": "1766074013620",
+    "timestamp": 1764691200,
+    "settings": {
+      "notifications": {
+        "attendance": false,
+        "fees": true,
+        "emergency": false,
+        "activity": false
+      }
+    }
+  },
+
+  "rosli_01165066294": {
+    "parentName": "rosli",
+    "phone": "123456789",
+    "childId": "30314543323930330D0A",
+    "childName": "Mirza",
+    "className": "Class A",
+    "teacherName": "Teacher Aina",
+    "status": "Representative",
+    "representativeName": "Uncle Hafiz",
+    "passcode": "123456",
+    "passcode_expiry": 1767250800,
+    "qrData": "rosli_01165066294_1762017558987",
+    "qrExpiry": 1762300799,
+    "fcm_token": "dEytd0GDS6aZBv7lET1r77:APA91bFQbqLb4hzeBwIvTID2L5ug6WGce8BB8fA2mMEe9dlrZRJNTZac84nUt0tHh2zlvm7LWillfS8dnpNoAY2lrGYGxv3_UyHccRI3Wnzr8w_wX0LgCyA",
+    "dailyQrToken": "1762127430650",
+    "timestamp": 1761555638,
+    "settings": {
+      "notifications": {
+        "attendance": false,
+        "fees": true,
+        "emergency": false,
+        "activity": false
+      }
+    }
+  }
+},
+  "children": {
+  "01EC2903": {
+    "name": "Mirza Zafri",
+    "birthDate": "2003-02-07",
+    "parentName": "Ali",
+    "parentContact": "0123456789",
+    "teacher_username": "",
+    "nfc_uid": "01EC2903",
+    "photoUrl": ""
+  },
+
+  "04B13D152B0289": {
+    "name": "Amirul",
+    "birthDate": "2004-11-16",
+    "parentName": "Jalal",
+    "parentContact": "012345678",
+    "teacher_username": "",
+    "nfc_uid": "04B13D152B0289",
+    "photoUrl": ""
+  },
+
+  "1EDB303E": {
+    "name": "Qistina",
+    "birthDate": "2000-12-04",
+    "parentName": "Ramli",
+    "parentContact": "0107036422",
+    "teacher_username": "aina",
+    "nfc_uid": "1EDB303E",
+    "photoUrl": ""
+  },
+
+  "30314543323930330D0A": {
+    "name": "Mirza",
+    "birthDate": "2003-02-07",
+    "parentName": "Rosli",
+    "parentContact": "01165066294",
+    "teacher_username": "sofea",
+    "nfc_uid": "30314543323930330D0A",
+    "photoUrl": ""
+  },
+
+  "33394541323930330D0A": {
+    "name": "Annisya",
+    "birthDate": "2004-05-21",
+    "parentName": "Yusuf",
+    "parentContact": "0122801120",
+    "teacher_username": "sofea",
+    "nfc_uid": "33394541323930330D0A",
+    "photoUrl": ""
+  },
+
+  "34323434324130330D0A": {
+    "name": "hakimi",
+    "birthDate": "2025-09-10",
+    "parentName": "lizam",
+    "parentContact": "0123456789",
+    "teacher_username": "sofea",
+    "nfc_uid": "34323434324130330D0A",
+    "photoUrl": ""
+  },
+
+  "37354542334630350D0A": {
+    "name": "Luqman",
+    "birthDate": "2004-11-02",
+    "parentName": "Bahrin",
+    "parentContact": "0171111111",
+    "teacher_username": "sofea",
+    "nfc_uid": "37354542334630350D0A",
+    "photoUrl": ""
+  },
+
+  "38423437324230330D0A": {
+    "name": "Puteri",
+    "birthDate": "2004-09-18",
+    "parentName": "Rozaimi",
+    "parentContact": "0143021456",
+    "teacher_username": "sofea",
+    "nfc_uid": "38423437324230330D0A",
+    "photoUrl": ""
+  },
+
+  "41334143323930330D0A": {
+    "name": "Hajar",
+    "birthDate": "2004-04-07",
+    "parentName": "Shamsulbachry",
+    "parentContact": "01135873736",
+    "teacher_username": "sofea",
+    "nfc_uid": "A3AC2903",
+    "photoUrl": ""
+  },
+
+  "805E303E": {
+    "name": "Kairi",
+    "birthDate": "2003-02-07",
+    "parentName": "ezham",
+    "parentContact": "0194965099",
+    "teacher_username": "sofea",
+    "nfc_uid": "805E303E",
+    "photoUrl": "https://firebasestorage.googleapis.com/v0/b/taskazurah.appspot.com/o/children_image%2Fkhairi.jpg?alt=media&token=5e34c72e-a5aa-4bc2-a556-b6bba8bdba05"
+  }
+},
+  "attendance": {
+  "2025-10": {
+    "01EC2903": {
+      "date": "2025-10-28",
+      "name": "Mirza Zafri",
+      "isPresent": true,
+      "reason": "Default"
+    },
+    "04B13D152B0289": {
+      "date": "2025-10-28",
+      "name": "Amirul",
+      "isPresent": true,
+      "reason": "Default"
+    },
+    "1EDB303E": {
+      "date": "2025-10-28",
+      "name": "Qistina",
+      "isPresent": false,
+      "reason": "Default"
+    }
+  },
+
+  "2025-11": {
+    "01EC2903": {
+      "date": "2025-11-01",
+      "name": "Mirza Zafri",
+      "isPresent": false,
+      "reason": "Default"
+    },
+    "04B13D152B0289": {
+      "date": "2025-11-01",
+      "name": "Amirul",
+      "isPresent": true,
+      "reason": "Default"
+    },
+    "1EDB303E": {
+      "date": "2025-11-01",
+      "name": "Qistina",
+      "isPresent": true,
+      "reason": "Default"
+    }
+  },
+
+  "2025-12": {
+    "01EC2903": {
+      "date": "2025-12-18",
+      "name": "Mirza Zafri",
+      "isPresent": false,
+      "reason": "Default"
+    },
+    "04B13D152B0289": {
+      "date": "2025-12-18",
+      "name": "Amirul",
+      "isPresent": false,
+      "reason": "Default"
+    },
+    "1EDB303E": {
+      "date": "2025-12-18",
+      "name": "Qistina",
+      "isPresent": true,
+      "reason": "Default"
+    }
+  }
+},
+  "salary": {
+  "V8eFyDHTQ5JzGvHA81gi": {
+    "teacher_username": "aina",
+    "teacher_name": "Teacher Aina",
+    "base_salary": 2000,
+    "bonus": 100,
+    "total": 2100,
+    "pay_date": 1762185600
+  },
+
+  "o9QOKp5XCOD0LI1NvhVc": {
+    "teacher_username": "amirul",
+    "teacher_name": "Ustaz Amirul",
+    "base_salary": 2000,
+    "bonus": 0,
+    "total": 2000,
+    "pay_date": 1762128124
+  },
+
+  "uLTnlwr9QGIU2cK8xx0T": {
+    "teacher_username": "sofea",
+    "teacher_name": "Teacher Sofea",
+    "base_salary": 1800,
+    "bonus": 400,
+    "total": 2200,
+    "pay_date": 1759307237
+  }
+},
+  "memory": {
+  "0ZJcyZgxeLz9NzICCCBk": {
+    "parent_name": "lizam",
+    "teacher_name": "Ustaz Amirul",
+    "teacher_username": "amirul",
+    "child_id": "34323434324130330D0A",
+    "child_name": "hakimi",
+    "parent_contact": "999",
+    "description": "Hakimi belajar buat sandwich 🥪",
+    "category": "Meal",
+    "photo_url": "https://firebasestorage.googleapis.com/v0/b/taskazurah.firebasestorage.app/o/memory_photos%2Famirul_1762117728836.jpg?alt=media&token=600133f7-6c26-4e48-8b5e-2c115c11579b",
+    "timestamp": 1762117728,
+    "date_str": "3 Nov 2025, 05:08 AM"
+  },
+
+  "ElwHb8uC37fHKBTMZtHK": {
+    "parent_name": "Jalal",
+    "teacher_name": "Teacher Sofea",
+    "teacher_username": "sofea",
+    "child_id": "04B13D152B0289",
+    "child_name": "Amirul",
+    "parent_contact": "012345678",
+    "description": "uh",
+    "category": "Learning",
+    "photo_url": "https://firebasestorage.googleapis.com/v0/b/taskazurah.firebasestorage.app/o/memory_photos%2Fsofea_1762139627329.jpg?alt=media&token=b3a63b75-6658-40c8-94a5-05247a08eecb",
+    "timestamp": 1762139627,
+    "date_str": "3 Nov 2025, 11:13 AM"
+  },
+
+  "R0Rnw5q9Etgr100c1fqA": {
+    "parent_name": "Jalal",
+    "teacher_name": "Teacher Aina",
+    "teacher_username": "aina",
+    "child_id": "04B13D152B0289",
+    "child_name": "Amirul",
+    "parent_contact": "012345678",
+    "description": "Amirul ade bakat terpendam ni.🤔🤔",
+    "category": "Art",
+    "photo_url": "https://firebasestorage.googleapis.com/v0/b/taskazurah.firebasestorage.app/o/memory_photos%2Faina_1762117934120.jpg?alt=media&token=1ee1e9ee-6030-4a82-a02e-58a2a6f12495",
+    "timestamp": 1762117934,
+    "date_str": "3 Nov 2025, 05:12 AM"
+  },
+
+  "VcfaViCBvuV73K69AGCE": {
+    "parent_name": "lizam",
+    "teacher_name": "Teacher Sofea",
+    "teacher_username": "sofea",
+    "child_id": "34323434324130330D0A",
+    "child_name": "hakimi",
+    "parent_contact": "0123456789",
+    "description": "vgvf",
+    "category": "Nap",
+    "photo_url": "https://firebasestorage.googleapis.com/v0/b/taskazurah.firebasestorage.app/o/memory_photos%2Fsofea_1762140630737.jpg?alt=media&token=a9d073c2-4410-4751-8780-efdfdf70059a",
+    "timestamp": 1762140630,
+    "date_str": "3 Nov 2025, 11:30 AM"
+  },
+
+  "ZPZdjQkNEniEeIj17gFw": {
+    "parent_name": "Rosli",
+    "teacher_name": "Teacher Sofea",
+    "teacher_username": "sofea",
+    "child_id": "30314543323930330D0A",
+    "child_name": "Mirza",
+    "parent_contact": "01165066294",
+    "description": "bulat",
+    "category": "Learning",
+    "photo_url": "https://firebasestorage.googleapis.com/v0/b/taskazurah.firebasestorage.app/o/memory_photos%2Fsofea_1766073879680.jpg?alt=media&token=63a9d3ef-4d30-4dd9-86ab-3ffc392a6717",
+    "timestamp": 1766073879,
+    "date_str": "19 Dec 2025, 12:04 AM"
+  }
+},
+  "chats": {
+  "teacher_sofea_parent_ezham": {
+    "teacherUsername": "sofea",
+    "parentUsername": "ezham",
+    "teacherId": "sofea",
+    "parentId": "ezham",
+    "lastMessage": "Saya on the way pickup 🚗",
+    "lastTimestamp": 1762151824
+  },
+
+  "teacher_teacher_aina_parent_ezham": {
+    "teacherUsername": "teacher aina",
+    "parentUsername": "ezham",
+    "teacherId": "teacher_aina",
+    "parentId": "ezham",
+    "lastMessage": "Saya on the way pickup 🚗",
+    "lastTimestamp": 1762136030
+  },
+
+  "teacher_teacher_sofea_parent_ezham": {
+    "teacherUsername": "teacher sofea",
+    "parentUsername": "ezham",
+    "teacherId": "teacher_sofea",
+    "parentId": "ezham",
+    "lastMessage": "Saya on the way pickup 🚗",
+    "lastTimestamp": 1762136044
+  },
+
+  "teacher_ustaz_amirul_parent_ezham": {
+    "teacherUsername": "ustaz amirul",
+    "parentUsername": "ezham",
+    "teacherId": "ustaz_amirul",
+    "parentId": "ezham",
+    "lastMessage": "",
+    "lastTimestamp": 1762127268
+  }
+},
+"chats ": {
+  "teacher_sofea_parent_ezham": {
+    "teacherUsername": "sofea",
+    "parentUsername": "ezham",
+    "teacherId": "t01",
+    "parentId": "ezham_0194965099",
+    "lastMessage": "Hi, this is the first chat from Sofea & Ezham!",
+    "lastTimestamp": 1761947392
+  },
+
+  "teacher_sofea_parent_rosli": {
+    "teacherUsername": "sofea",
+    "parentUsername": "rosli",
+    "teacherId": "t01",
+    "parentId": "rosli_01165066294",
+    "lastMessage": "Hi, this is first message",
+    "lastTimestamp": 1762063381
+  }
+}
+}
