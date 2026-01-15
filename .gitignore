@@ -1,0 +1,34 @@
+# =========================
+# Executables & archives
+# =========================
+*.exe
+*.jar
+*.zip
+
+# =========================
+# Node / build outputs
+# =========================
+node_modules/
+dist/
+build/
+out/
+target/
+
+# =========================
+# Java / compiled files
+# =========================
+bin/
+*.class
+
+# =========================
+# JavaFX SDK & native libs
+# =========================
+javafx-sdk-*/
+*.dll
+
+# =========================
+# 🔐 SECRETS (VERY IMPORTANT)
+# =========================
+serviceAccountKey.json
+**/serviceAccountKey.json
+*.env
