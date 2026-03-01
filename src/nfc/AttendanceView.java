@@ -82,6 +82,7 @@ public class AttendanceView {
 
     public AttendanceView() {
         currentInstance = this;
+        active = true;
 
         HBox dashboardHeader = new HBox(18);
         dashboardHeader.setAlignment(Pos.CENTER_LEFT);
@@ -562,42 +563,55 @@ public class AttendanceView {
             List<QueryDocumentSnapshot> children = cachedChildren;
             List<QueryDocumentSnapshot> attendanceDocs = cachedAttendance;
 
+            // Map numeric child_id -> nfc_uid (for legacy attendance docs)
+            Map<Long, String> childIdToNfcUid = new HashMap<>();
+            for (DocumentSnapshot child : children) {
+                Long numericId = child.getLong("child_id");
+                String uid = child.getString("nfc_uid");
+                if (numericId != null && uid != null && !uid.isBlank()) {
+                    childIdToNfcUid.put(numericId, uid);
+                }
+            }
+
             Map<String, DocumentSnapshot> attendanceMap = new HashMap<>();
 
-            // ✅ 3. Filter attendance by selected date string
+            // ✅ 3. Filter attendance by selected date
             for (DocumentSnapshot doc : attendanceDocs) {
                 Object dateObj = doc.get("date");
                 if (dateObj == null) continue;
 
                 // ✅ Robust date matching for Firestore Timestamp or Date object
-                LocalDate recordDate = null;
-
+                LocalDate recordDate;
                 try {
                     if (dateObj instanceof com.google.cloud.Timestamp ts) {
-                        recordDate = ts.toDate().toInstant()
-                                .atZone(ZoneId.systemDefault())
-                                .toLocalDate();
+                        recordDate = ts.toDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
                     } else if (dateObj instanceof Date d) {
                         recordDate = d.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
                     } else {
-                        // fallback for legacy string format
-                        String str = dateObj.toString();
-                        try {
-                            recordDate = LocalDate.parse(str.substring(0, 10));
-                        } catch (Exception ex) {
-                            recordDate = LocalDate.now();
-                        }
+                        // legacy: stored as string (e.g. "2026-03-01")
+                        String str = String.valueOf(dateObj);
+                        recordDate = LocalDate.parse(str.substring(0, Math.min(10, str.length())));
                     }
                 } catch (Exception e) {
-                    recordDate = LocalDate.now();
+                    // IMPORTANT: never default to today; otherwise old/invalid docs appear in the wrong day.
+                    continue;
                 }
 
-                if (recordDate == null || !recordDate.equals(date)) continue;
+                if (!recordDate.equals(date)) continue;
 
-                // ✅ Firestore uses "childId" (string)
-                String childId = doc.getString("childId");
-                if (childId != null) {
-                    attendanceMap.put(childId, doc);
+                // Prefer the canonical key: nfc_uid stored in "childId" (string)
+                String keyNfcUid = doc.getString("childId");
+
+                // Legacy schema: numeric "child_id"; translate to nfc_uid
+                if (keyNfcUid == null || keyNfcUid.isBlank()) {
+                    Long numericChildId = doc.getLong("child_id");
+                    if (numericChildId != null) {
+                        keyNfcUid = childIdToNfcUid.get(numericChildId);
+                    }
+                }
+
+                if (keyNfcUid != null && !keyNfcUid.isBlank()) {
+                    attendanceMap.put(keyNfcUid, doc);
                 }
             }
 
@@ -621,7 +635,10 @@ public class AttendanceView {
                         }
                     }
 
-                    record.setPresent(Boolean.TRUE.equals(att.getBoolean("isPresent")));
+                    Boolean presentFlag = att.getBoolean("isPresent");
+                    if (presentFlag == null) presentFlag = att.getBoolean("is_present");
+                    if (presentFlag == null) presentFlag = att.getBoolean("isPresent");
+                    record.setPresent(Boolean.TRUE.equals(presentFlag));
 
                     java.util.Date in = att.getDate("check_in_time");
                     java.util.Date out = att.getDate("check_out_time");
@@ -847,17 +864,26 @@ public class AttendanceView {
     }
 
     public static void refreshUI() {
-        Platform.runLater(() -> {
-            if (currentInstance != null && currentInstance.active) {
+        if (currentInstance == null || !currentInstance.active) {
+            System.out.println("⚠ AttendanceView not active yet");
+            return;
+        }
+
+        // Refresh cached Firestore data off the UI thread, then update UI.
+        CompletableFuture
+            .runAsync(() -> {
+                try {
+                    currentInstance.preloadData();
+                } catch (Exception ignored) {
+                }
+            })
+            .thenRun(() -> Platform.runLater(() -> {
                 currentInstance.loadStudents(currentInstance.datePicker.getValue());
                 if (currentInstance.chart != null) {
                     currentInstance.updateChart(currentInstance.chart, currentInstance.datePicker.getValue());
                 }
                 currentInstance.table.refresh();
-            } else {
-                System.out.println("⚠ AttendanceView not active yet");
-            }
-        });
+            }));
     }
 
     public static List<AttendanceRecord> getCurrentAttendanceState() {

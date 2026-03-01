@@ -40,6 +40,7 @@ import org.opencv.core.Mat;
 import com.google.api.core.ApiFuture;
 import com.google.cloud.firestore.*;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
@@ -63,6 +64,8 @@ public class AdminDashboard extends Application {
 
     private VBox checkInList = new VBox(6);
     private VBox checkOutList = new VBox(6);
+
+    private static volatile long lastDashboardFirestoreRefreshMs = 0;
     
     // Firestore helper
     private static Firestore db() { return FirestoreService.db(); }
@@ -849,90 +852,131 @@ public class AdminDashboard extends Application {
     }
 
     public static void updateLiveScans() {
-        Platform.runLater(() -> {
-            try {
-                if (instance == null) return;
-
-                List<AttendanceRecord> records = AttendanceView.getCurrentAttendanceState();
-                if (records == null || records.isEmpty()) {
-                    instance.checkInList.getChildren().clear();
-                    instance.checkOutList.getChildren().clear();
-                    Label empty = new Label("No attendance records loaded.");
-                    empty.setStyle("-fx-font-size: 14px; -fx-text-fill: #555;");
-                    instance.checkInList.getChildren().add(empty);
-                    return;
-                }
-
-                List<String> checkIns = new ArrayList<>();
-                List<String> checkOuts = new ArrayList<>();
-
-                for (AttendanceRecord rec : records) {
-                    String name = rec.getName();
-                    String inTime = rec.getCheckInTime();
-                    String outTime = rec.getCheckOutTime();
-
-                    if (rec.isPresent() || (inTime != null && !inTime.isEmpty())) {
-                        checkIns.add("✅ " + name + " – " + inTime);
-                    }
-                    if (rec.isManualCheckOut() || (outTime != null && !outTime.isEmpty())) {
-                        checkOuts.add("🏁 " + name + " – " + outTime);
-                    }
-                }
-
-                instance.checkInList.getChildren().clear();
-                instance.checkOutList.getChildren().clear();
-
-                for (String text : checkIns) {
-                    Label lbl = new Label(text);
-                    lbl.setStyle("-fx-font-size: 15px; -fx-text-fill: #2b3b2b;");
-                    instance.checkInList.getChildren().add(lbl);
-                }
-
-                for (String text : checkOuts) {
-                    Label lbl = new Label(text);
-                    lbl.setStyle("-fx-font-size: 15px; -fx-text-fill: #2b3b2b;");
-                    instance.checkOutList.getChildren().add(lbl);
-                }
-
-                System.out.println("✅ Live lists updated → In=" + checkIns.size() + " | Out=" + checkOuts.size());
-
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        });
+        refreshDashboardFromFirestoreAsync();
     }
 
     public static void updateStatistics() {
-        Platform.runLater(() -> {
+        refreshDashboardFromFirestoreAsync();
+    }
+
+    private static void refreshDashboardFromFirestoreAsync() {
+        if (instance == null || scannedToday == null || notScanned == null) return;
+
+        long now = System.currentTimeMillis();
+        if (now - lastDashboardFirestoreRefreshMs < 1200) return;
+        lastDashboardFirestoreRefreshMs = now;
+
+        CompletableFuture.runAsync(() -> {
             try {
-                // 🔹 Use current AttendanceView table state instead of Firestore
-                List<AttendanceRecord> records = AttendanceView.getCurrentAttendanceState();
+                Firestore fdb = db();
+                String prefix = today() + "_";
 
-                if (records == null || records.isEmpty()) {
-                    scannedToday.setText("Scanned Today: 0");
-                    notScanned.setText("Not Yet Scanned: 0");
-                    System.out.println("📊 No local attendance data yet.");
-                    return;
+                List<QueryDocumentSnapshot> childDocs = fdb.collection("children").get().get().getDocuments();
+                int totalChildren = childDocs.size();
+                Map<Long, String> childIdToNfcUid = new HashMap<>();
+                Map<String, String> nfcUidToName = new HashMap<>();
+                for (DocumentSnapshot c : childDocs) {
+                    Long cid = c.getLong("child_id");
+                    String uid = c.getString("nfc_uid");
+                    String nm = c.getString("name");
+                    if (cid != null && uid != null && !uid.isBlank()) {
+                        childIdToNfcUid.put(cid, uid);
+                    }
+                    if (uid != null && nm != null) {
+                        nfcUidToName.put(uid, nm);
+                    }
                 }
 
-                int totalChildren = records.size();
-                int presentCount = 0;
+                Query q = fdb.collection("attendance")
+                        .orderBy(FieldPath.documentId())
+                        .startAt(prefix)
+                        .endAt(prefix + "\uf8ff");
 
-                for (AttendanceRecord rec : records) {
-                    boolean isPresent = rec.isPresent();
-                    if (isPresent) presentCount++;
+                List<QueryDocumentSnapshot> docs = q.get().get().getDocuments();
+
+                // Unique scanned children for the day
+                Set<String> scannedChildren = new HashSet<>();
+
+                List<Map.Entry<String, Date>> checkIns = new ArrayList<>();
+                List<Map.Entry<String, Date>> checkOuts = new ArrayList<>();
+
+                for (DocumentSnapshot doc : docs) {
+                    Date in = doc.getDate("check_in_time");
+                    Date out = doc.getDate("check_out_time");
+
+                    Boolean presentFlag = doc.getBoolean("isPresent");
+                    if (presentFlag == null) presentFlag = doc.getBoolean("is_present");
+
+                    String childKey = doc.getString("childId");
+                    if (childKey == null || childKey.isBlank()) {
+                        Long numericChildId = doc.getLong("child_id");
+                        if (numericChildId != null) {
+                            childKey = childIdToNfcUid.getOrDefault(numericChildId, String.valueOf(numericChildId));
+                        } else {
+                            childKey = doc.getId();
+                        }
+                    }
+
+                    String name = doc.getString("name");
+                    if ((name == null || name.isBlank()) && childKey != null) {
+                        name = nfcUidToName.getOrDefault(childKey, childKey);
+                    }
+
+                    boolean scanned = (in != null) || Boolean.TRUE.equals(presentFlag);
+                    if (scanned) scannedChildren.add(childKey);
+
+                    if (in != null) checkIns.add(Map.entry(name, in));
+                    if (out != null) checkOuts.add(Map.entry(name, out));
                 }
 
+                checkIns.sort((a, b) -> b.getValue().compareTo(a.getValue()));
+                checkOuts.sort((a, b) -> b.getValue().compareTo(a.getValue()));
+
+                int presentCount = scannedChildren.size();
                 int absentCount = Math.max(0, totalChildren - presentCount);
 
-                scannedToday.setText("Scanned Today: " + presentCount);
-                notScanned.setText("Not Yet Scanned: " + absentCount);
+                SimpleDateFormat tf = new SimpleDateFormat("hh:mm a");
+                List<String> inLines = checkIns.stream()
+                        .map(e -> "✅ " + e.getKey() + " – " + tf.format(e.getValue()))
+                        .toList();
+                List<String> outLines = checkOuts.stream()
+                        .map(e -> "🏁 " + e.getKey() + " – " + tf.format(e.getValue()))
+                        .toList();
 
-                System.out.println("📊 Dashboard (from local state) >> Present=" + presentCount + " | Absent=" + absentCount);
+                Platform.runLater(() -> {
+                    scannedToday.setText("Scanned Today: " + presentCount);
+                    notScanned.setText("Not Yet Scanned: " + absentCount);
 
+                    instance.checkInList.getChildren().clear();
+                    instance.checkOutList.getChildren().clear();
+
+                    if (inLines.isEmpty()) {
+                        Label empty = new Label("No check-ins yet today.");
+                        empty.setStyle("-fx-font-size: 14px; -fx-text-fill: #555;");
+                        instance.checkInList.getChildren().add(empty);
+                    } else {
+                        for (String text : inLines) {
+                            Label lbl = new Label(text);
+                            lbl.setStyle("-fx-font-size: 15px; -fx-text-fill: #2b3b2b;");
+                            instance.checkInList.getChildren().add(lbl);
+                        }
+                    }
+
+                    if (outLines.isEmpty()) {
+                        Label empty = new Label("No check-outs yet today.");
+                        empty.setStyle("-fx-font-size: 14px; -fx-text-fill: #555;");
+                        instance.checkOutList.getChildren().add(empty);
+                    } else {
+                        for (String text : outLines) {
+                            Label lbl = new Label(text);
+                            lbl.setStyle("-fx-font-size: 15px; -fx-text-fill: #2b3b2b;");
+                            instance.checkOutList.getChildren().add(lbl);
+                        }
+                    }
+                });
+
+                System.out.println("✅ Dashboard refreshed (Firestore) → In=" + inLines.size() + " | Out=" + outLines.size());
             } catch (Exception e) {
-                scannedToday.setText("Scanned Today: N/A");
-                notScanned.setText("Not Yet Scanned: N/A");
                 e.printStackTrace();
             }
         });
@@ -998,8 +1042,7 @@ public class AdminDashboard extends Application {
     public static void updateDashboardData() {
         Platform.runLater(() -> {
             if (instance != null) {
-                updateStatistics();
-                updateLiveScans();
+                refreshDashboardFromFirestoreAsync();
             }
         });
     }

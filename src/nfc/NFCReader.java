@@ -4,6 +4,7 @@ import com.fazecast.jSerialComm.SerialPort;
 import java.io.InputStream;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.*;
 import javafx.application.Platform;
 import javafx.scene.control.Alert;
@@ -115,17 +116,28 @@ public class NFCReader implements Runnable {
             LocalDate today = LocalDate.now();
             LocalDateTime now = LocalDateTime.now();
 
-            String docId = today + "_" + childId;
+            // Use NFC UID as the stable key (matches AttendanceView doc IDs)
+            String docId = today + "_" + tagId;
             DocumentReference attRef = fdb.collection("attendance").document(docId);
             DocumentSnapshot attSnap = attRef.get().get();
+
+            Date firestoreDate = Date.from(today.atStartOfDay(ZoneId.systemDefault()).toInstant());
 
             // ⚙️ Case 1: No document — create new with check-in
             if (!attSnap.exists()) {
                 Map<String, Object> newData = new HashMap<>();
-                newData.put("child_id", childId);
+                // Canonical fields used by AttendanceView
+                newData.put("childId", tagId);
                 newData.put("name", childName);
-                newData.put("date", today.toString());
+                newData.put("date", firestoreDate);
                 newData.put("check_in_time", new Date());
+                newData.put("check_out_time", null);
+                newData.put("isPresent", true);
+                newData.put("checkin_method", "NFC");
+
+                // Back-compat fields (older code/data)
+                newData.put("child_id", childId);
+                newData.put("dateString", today.toString());
                 newData.put("is_present", true);
                 attRef.set(newData).get();
 
@@ -143,13 +155,27 @@ public class NFCReader implements Runnable {
 
             if (checkIn == null) {
                 // Missing check-in: update it
-                attRef.update("check_in_time", new Date(), "is_present", true).get();
+                attRef.update(
+                    "check_in_time", new Date(),
+                    "isPresent", true,
+                    "is_present", true,
+                    "date", firestoreDate,
+                    "childId", tagId,
+                    "name", childName
+                ).get();
                 System.out.println("✅ Check-in updated for: " + childName);
                 Platform.runLater(() -> showAlert("Check-in updated for " + childName, Alert.AlertType.INFORMATION));
 
             } else if (checkOut == null) {
                 // Normal check-out (no 8h limit)
-                attRef.update("check_out_time", new Date(), "is_present", true).get();
+                attRef.update(
+                    "check_out_time", new Date(),
+                    "isPresent", true,
+                    "is_present", true,
+                    "date", firestoreDate,
+                    "childId", tagId,
+                    "name", childName
+                ).get();
                 System.out.println("✅ Check-out updated for: " + childName);
                 Platform.runLater(() -> showAlert("Check-out successful for " + childName, Alert.AlertType.INFORMATION));
             } else {
