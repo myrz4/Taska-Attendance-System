@@ -15,6 +15,19 @@ out/
 target/
 
 # =========================
+# Flutter / Gradle outputs
+# =========================
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+**/.gradle/
+**/Pods/
+**/.symlinks/
+**/flutter/ephemeral/
+
+# =========================
 # Java / compiled files
 # =========================
 bin/
@@ -25,6 +38,11 @@ bin/
 # =========================
 javafx-sdk-*/
 *.dll
+
+# =========================
+# Packaging / inspection artifacts
+# =========================
+_inspect_appimage/
 
 # =========================
 # 🔐 SECRETS (VERY IMPORTANT)

@@ -24,19 +24,13 @@ import com.lowagie.text.pdf.*;
 import java.awt.Color;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Map;
+import java.util.Arrays;
 import java.util.Date;
-
-// 🔥 Firebase Firestore imports
-import com.google.cloud.firestore.Firestore;
-import com.google.cloud.firestore.DocumentSnapshot;
-import com.google.api.core.ApiFuture;
-import com.google.cloud.firestore.QuerySnapshot;
-import com.google.cloud.firestore.QueryDocumentSnapshot;
 
 public class dailyReport {
     private final VBox root;
@@ -94,14 +88,13 @@ public class dailyReport {
         layout.setAlignment(Pos.TOP_CENTER);
 
         // BEE CALIPH HEADER (can use logo image if you want)
-        Image logoImg;
-        try {
-            logoImg = new Image(getClass().getResourceAsStream("/nfc/logo.png"));
-        } catch (Exception e) {
-            logoImg = null; // fallback or placeholder
+        java.net.URL logoResource = getClass().getResource("/nfc/logo.png");
+        ImageView logo = new ImageView();
+        if (logoResource != null) {
+            logo.setImage(new Image(logoResource.toExternalForm()));
         }
-        ImageView logo = new ImageView(logoImg);
-        logo.setFitHeight(50); logo.setFitWidth(50);
+        logo.setFitHeight(50);
+        logo.setFitWidth(50);
         Label header = new Label("TASKA ZURAH DAILY ATTENDANCE REPORT");
         header.setFont(javafx.scene.text.Font.font("Poppins", FontWeight.BOLD, 22));
         header.setStyle("-fx-text-fill: orange; -fx-font-weight: bold;");
@@ -160,7 +153,7 @@ public class dailyReport {
         
         
        
-        previewTable.getColumns().addAll(colId, colName, colStatus, colReason, colCheckIn, colCheckOut, colRemark);
+        previewTable.getColumns().addAll(Arrays.asList(colId, colName, colStatus, colReason, colCheckIn, colCheckOut, colRemark));
 
         Button exportBtn = new Button("Export as PDF");
         exportBtn.setStyle("-fx-background-color: #FFCB3C;-fx-font-size: 16px; -fx-font-weight: bold;");
@@ -184,130 +177,181 @@ public class dailyReport {
 
     private void generateDailyPDF(File file, LocalDate date, ObservableList<AttendanceRow> rows) {
         try {
-            Document doc = new Document(PageSize.A4);
-            PdfWriter.getInstance(doc, new FileOutputStream(file));
-            doc.open();
+            Document doc = new Document(PageSize.A4, 34, 34, 38, 34);
+            FileOutputStream out = null;
+            try {
+                out = new FileOutputStream(file);
+                PdfWriter.getInstance(doc, out);
+                doc.open();
 
-            // Top yellow header background with logo and title
-            PdfPTable headerTable = new PdfPTable(2);
-            headerTable.setWidthPercentage(100);
-            headerTable.setWidths(new float[]{1f, 6f});
+                Color brandGold = new Color(255, 203, 60);
+                Color brandGoldSoft = new Color(255, 245, 217);
+                Color ink = new Color(29, 42, 58);
+                Color muted = new Color(120, 132, 150);
+                Color border = new Color(228, 234, 242);
+                Color successBg = new Color(234, 248, 239);
+                Color successText = new Color(13, 122, 56);
+                Color dangerBg = new Color(255, 240, 238);
+                Color dangerText = new Color(197, 59, 42);
+                Color tableAlt = new Color(248, 250, 252);
 
-            // Logo cell
-            com.lowagie.text.Image logo = com.lowagie.text.Image.getInstance(getClass().getResource("/nfc/logo.png"));
-            logo.scaleToFit(70, 70);
-            PdfPCell logoCell = new PdfPCell(logo, false);
-            logoCell.setBackgroundColor(new Color(255, 203, 60));
-            logoCell.setBorder(PdfPCell.NO_BORDER);
-            logoCell.setHorizontalAlignment(Element.ALIGN_CENTER);
-            logoCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
-
-            // Title cell
-            com.lowagie.text.Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 24, new Color(36, 36, 36));
-            Paragraph title = new Paragraph("TASKA ZURAH DAILY REPORT", titleFont);
-            PdfPCell titleCell = new PdfPCell(title);
-            titleCell.setBackgroundColor(new Color(255, 203, 60));
-            titleCell.setBorder(PdfPCell.NO_BORDER);
-            titleCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
-            titleCell.setPaddingLeft(16f);
-
-            headerTable.addCell(logoCell);
-            headerTable.addCell(titleCell);
-            doc.add(headerTable);
-            doc.add(Chunk.NEWLINE);
-
-            // Date (large and bold)
-            com.lowagie.text.Font dateFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14, Color.BLACK);
-            String dateStr = date.getDayOfWeek().getDisplayName(java.time.format.TextStyle.FULL, java.util.Locale.ENGLISH).toUpperCase()
-                    + " , " + date.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
-            Paragraph dateInfo = new Paragraph(dateStr, dateFont);
-            dateInfo.setSpacingAfter(10f);
-            doc.add(dateInfo);
-
-            // Table with modern borders and fixed widths
-            PdfPTable table = new PdfPTable(7);
-            table.setWidthPercentage(100);
-            float[] widths = {1.3f, 2.5f, 1.8f, 2.4f, 2.0f, 2.0f, 2.6f};
-            table.setWidths(widths);
-
-            String[] columns = {"CHILD ID", "NAME", "STATUS", "REASON", "CHECK-IN", "CHECK-OUT", "REMARK"};
-            for (String col : columns) {
-                PdfPCell cell = new PdfPCell(new Phrase(col, FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10, Color.BLACK)));
-                cell.setBackgroundColor(new Color(250, 202, 60));
-                cell.setHorizontalAlignment(Element.ALIGN_CENTER);
-                cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
-                cell.setPadding(6f);
-                table.addCell(cell);
-            }
-
-            for (AttendanceRow r : rows) {
-                // Child ID
-                PdfPCell idCell = new PdfPCell(new Phrase(String.valueOf(r.childIdProperty().get()), FontFactory.getFont(FontFactory.HELVETICA, 12, Color.BLACK)));
-                idCell.setHorizontalAlignment(Element.ALIGN_CENTER);
-                table.addCell(idCell);
-
-                // Name
-                PdfPCell nameCell = new PdfPCell(new Phrase(r.nameProperty().get(), FontFactory.getFont(FontFactory.HELVETICA, 12, Color.BLACK)));
-                nameCell.setPaddingLeft(5f);
-                table.addCell(nameCell);
-
-                // Status with bold and color
-                Font statusFont;
-                Color color;
-                if ("attend".equalsIgnoreCase(r.getStatus())) {
-                    color = new Color(0, 135, 38);
-                } else {
-                    color = new Color(180, 0, 0);
+                int attendCount = 0;
+                int absentCount = 0;
+                for (AttendanceRow row : rows) {
+                    if ("attend".equalsIgnoreCase(row.getStatus())) {
+                        attendCount++;
+                    } else {
+                        absentCount++;
+                    }
                 }
-                statusFont = new Font(Font.HELVETICA, 12, Font.BOLD, color);
 
-                PdfPCell statusCell = new PdfPCell(new Phrase(r.getStatus(), statusFont));
-                statusCell.setHorizontalAlignment(Element.ALIGN_CENTER);
-                if ("attend".equalsIgnoreCase(r.getStatus())) {
-                    statusCell.setBackgroundColor(new Color(220, 255, 220));
-                } else {
-                    statusCell.setBackgroundColor(new Color(255, 235, 235));
+                PdfPTable header = new PdfPTable(2);
+                header.setWidthPercentage(100);
+                header.setWidths(new float[]{1.15f, 5.85f});
+                header.setSpacingAfter(10f);
+
+                PdfPCell logoCell = new PdfPCell();
+                logoCell.setBorder(Rectangle.NO_BORDER);
+                logoCell.setBackgroundColor(brandGoldSoft);
+                logoCell.setPadding(16f);
+                try {
+                    java.net.URL logoResource = getClass().getResource("/nfc/logo.png");
+                    if (logoResource != null) {
+                        com.lowagie.text.Image logo = com.lowagie.text.Image.getInstance(logoResource);
+                        logo.scaleToFit(52, 52);
+                        logoCell.addElement(logo);
+                    }
+                } catch (BadElementException | IOException ignored) {
+                    // Optional logo.
                 }
-                table.addCell(statusCell);
 
-                // Reason
-                PdfPCell reasonCell = new PdfPCell(new Phrase(r.getReason() != null ? r.getReason() : "", FontFactory.getFont(FontFactory.HELVETICA, 12, Color.BLACK)));
-                table.addCell(reasonCell);
+                PdfPCell titleCell = new PdfPCell();
+                titleCell.setBorder(Rectangle.NO_BORDER);
+                titleCell.setBackgroundColor(brandGoldSoft);
+                titleCell.setPadding(16f);
+                Paragraph eyebrow = new Paragraph("DAILY ATTENDANCE EXPORT", FontFactory.getFont(FontFactory.HELVETICA_BOLD, 9, muted));
+                eyebrow.setSpacingAfter(6f);
+                titleCell.addElement(eyebrow);
+                Paragraph title = new Paragraph("Taska Zurah Daily Attendance Report", FontFactory.getFont(FontFactory.HELVETICA_BOLD, 22, ink));
+                title.setSpacingAfter(4f);
+                titleCell.addElement(title);
+                String dateStr = date.getDayOfWeek().getDisplayName(java.time.format.TextStyle.FULL, java.util.Locale.ENGLISH).toUpperCase(java.util.Locale.ROOT)
+                    + "  |  " + date.format(DateTimeFormatter.ofPattern("dd MMM yyyy"));
+                titleCell.addElement(new Paragraph(dateStr, FontFactory.getFont(FontFactory.HELVETICA, 11, muted)));
+                header.addCell(logoCell);
+                header.addCell(titleCell);
+                doc.add(header);
 
-                // Check-in
-                PdfPCell checkInCell = new PdfPCell(new Phrase(r.getCheckInTime(), FontFactory.getFont(FontFactory.HELVETICA, 12, Color.BLACK)));
-                table.addCell(checkInCell);
+                PdfPTable metrics = new PdfPTable(4);
+                metrics.setWidthPercentage(100);
+                metrics.setWidths(new float[]{1.2f, 1f, 1f, 1.2f});
+                metrics.setSpacingAfter(14f);
+                metrics.addCell(buildDailyMetricCell("Date", date.format(DateTimeFormatter.ofPattern("dd MMM yyyy")), brandGoldSoft, ink, muted));
+                metrics.addCell(buildDailyMetricCell("Students", String.valueOf(rows.size()), brandGoldSoft, ink, muted));
+                metrics.addCell(buildDailyMetricCell("Attend", String.valueOf(attendCount), successBg, successText, muted));
+                metrics.addCell(buildDailyMetricCell("Absence", String.valueOf(absentCount), dangerBg, dangerText, muted));
+                doc.add(metrics);
 
-                // Check-out
-                PdfPCell checkOutCell = new PdfPCell(new Phrase(r.getCheckOutTime(), FontFactory.getFont(FontFactory.HELVETICA, 12, Color.BLACK)));
-                table.addCell(checkOutCell);
+                Paragraph sectionTitle = new Paragraph("Attendance Timeline", FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14, ink));
+                sectionTitle.setSpacingAfter(8f);
+                doc.add(sectionTitle);
 
-                // Editable Remark (already set by user in preview)
-                PdfPCell remarkCell = new PdfPCell(new Phrase(r.getRemark() != null ? r.getRemark() : "", FontFactory.getFont(FontFactory.HELVETICA, 12, Color.BLACK)));
-                table.addCell(remarkCell);
+                PdfPTable attendanceTable = new PdfPTable(7);
+                attendanceTable.setWidthPercentage(100);
+                attendanceTable.setWidths(new float[]{1.35f, 2.2f, 1.2f, 2f, 1.4f, 1.4f, 1.8f});
+                attendanceTable.setSpacingAfter(14f);
+
+                String[] columns = {"Child ID", "Name", "Status", "Reason", "Check-In", "Check-Out", "Remark"};
+                for (String col : columns) {
+                    PdfPCell cell = new PdfPCell(new Phrase(col, FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10, ink)));
+                    cell.setBackgroundColor(brandGold);
+                    cell.setBorderColor(border);
+                    cell.setHorizontalAlignment(Element.ALIGN_CENTER);
+                    cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+                    cell.setPadding(8f);
+                    attendanceTable.addCell(cell);
+                }
+
+                if (rows.isEmpty()) {
+                    PdfPCell emptyCell = new PdfPCell(new Phrase("No attendance records were found for the selected date.", FontFactory.getFont(FontFactory.HELVETICA, 10, muted)));
+                    emptyCell.setColspan(7);
+                    emptyCell.setPadding(12f);
+                    emptyCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+                    emptyCell.setBorderColor(border);
+                    attendanceTable.addCell(emptyCell);
+                } else {
+                    for (int index = 0; index < rows.size(); index++) {
+                        AttendanceRow row = rows.get(index);
+                        Color rowBg = index % 2 == 0 ? Color.WHITE : tableAlt;
+                        boolean attend = "attend".equalsIgnoreCase(row.getStatus());
+                        Color statusBg = attend ? successBg : dangerBg;
+                        Color statusColor = attend ? successText : dangerText;
+
+                        addDailyPdfBodyCell(attendanceTable, row.childIdProperty().get(), rowBg, border, Element.ALIGN_CENTER, ink, false);
+                        addDailyPdfBodyCell(attendanceTable, row.nameProperty().get(), rowBg, border, Element.ALIGN_LEFT, ink, false);
+                        addDailyPdfBodyCell(attendanceTable, row.getStatus(), statusBg, border, Element.ALIGN_CENTER, statusColor, true);
+                        addDailyPdfBodyCell(attendanceTable, row.getReason() == null ? "-" : row.getReason(), rowBg, border, Element.ALIGN_LEFT, ink, false);
+                        addDailyPdfBodyCell(attendanceTable, formatTime(row.getCheckInTime()), rowBg, border, Element.ALIGN_CENTER, ink, false);
+                        addDailyPdfBodyCell(attendanceTable, formatTime(row.getCheckOutTime()), rowBg, border, Element.ALIGN_CENTER, ink, false);
+                        addDailyPdfBodyCell(attendanceTable, row.getRemark() == null || row.getRemark().isBlank() ? "-" : row.getRemark(), rowBg, border, Element.ALIGN_LEFT, ink, false);
+                    }
+                }
+                doc.add(attendanceTable);
+
+                LineSeparator line = new LineSeparator();
+                line.setPercentage(100f);
+                line.setLineWidth(0.8f);
+                line.setLineColor(border);
+                doc.add(Chunk.NEWLINE);
+                doc.add(line);
+
+                Paragraph footer = new Paragraph("Generated from the Taska Zurah attendance report module for daily attendance review and record keeping.", FontFactory.getFont(FontFactory.HELVETICA, 10, muted));
+                footer.setSpacingBefore(8f);
+                doc.add(footer);
+
+                Paragraph sign = new Paragraph("Assigned Teacher", FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10, ink));
+                sign.setAlignment(Element.ALIGN_RIGHT);
+                sign.setSpacingBefore(16f);
+                doc.add(sign);
+            } finally {
+                if (doc.isOpen()) {
+                    doc.close();
+                }
+                if (out != null) {
+                    out.close();
+                }
             }
-            doc.add(table);
-
-       
-         // Spacer with fixed height to push the signature down (experiment to fit your layout)
-            PdfPTable spacer = new PdfPTable(1);
-            spacer.setWidthPercentage(100);
-            spacer.getDefaultCell().setBorder(PdfPCell.NO_BORDER);
-            spacer.getDefaultCell().setFixedHeight(180); // Try 180, 200, etc. until you like the position
-            spacer.addCell("");
-            doc.add(spacer);
-
-            // Signature footer, bottom right
-            Paragraph sign = new Paragraph("ASSIGNED TEACHER", FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14, Color.BLACK));
-            sign.setAlignment(Element.ALIGN_RIGHT);
-            doc.add(sign);
-
-            doc.close();
             new Alert(Alert.AlertType.INFORMATION, "PDF exported!").showAndWait();
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (DocumentException | IOException e) {
+            System.err.println("Failed to export daily PDF: " + e.getMessage());
             new Alert(Alert.AlertType.ERROR, "Failed to export PDF: " + e.getMessage()).showAndWait();
         }
+    }
+
+    private PdfPCell buildDailyMetricCell(String label, String value, Color bgColor, Color valueColor, Color muted) {
+        PdfPCell cell = new PdfPCell();
+        cell.setPadding(10f);
+        cell.setBorder(Rectangle.NO_BORDER);
+        cell.setBackgroundColor(bgColor);
+
+        Paragraph labelParagraph = new Paragraph(label.toUpperCase(), FontFactory.getFont(FontFactory.HELVETICA_BOLD, 9, muted));
+        labelParagraph.setSpacingAfter(6f);
+        cell.addElement(labelParagraph);
+
+        Paragraph valueParagraph = new Paragraph(value == null ? "-" : value, FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14, valueColor));
+        cell.addElement(valueParagraph);
+        return cell;
+    }
+
+    private void addDailyPdfBodyCell(PdfPTable table, String text, Color bgColor, Color borderColor, int alignment, Color textColor, boolean bold) {
+        Font font = FontFactory.getFont(FontFactory.HELVETICA, 10, bold ? Font.BOLD : Font.NORMAL, textColor);
+        PdfPCell cell = new PdfPCell(new Phrase(text == null || text.isBlank() ? "-" : text, font));
+        cell.setBackgroundColor(bgColor);
+        cell.setBorderColor(borderColor);
+        cell.setPadding(8f);
+        cell.setHorizontalAlignment(alignment);
+        cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+        table.addCell(cell);
     }
 
 
@@ -343,29 +387,6 @@ public class dailyReport {
         colId.setCellValueFactory(data -> data.getValue().childIdProperty());
         colId.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #222; -fx-alignment: CENTER;");
         colId.setPrefWidth(110);
-
-        Callback<TableColumn<AttendanceRow, Integer>, TableCell<AttendanceRow, Integer>> intCellFactory =
-            col -> new TableCell<AttendanceRow, Integer>() {
-                @Override
-                protected void updateItem(Integer item, boolean empty) {
-                    super.updateItem(item, empty);
-                    TableRow<AttendanceRow> row = getTableRow();
-                    if (empty || item == null || row == null || row.getItem() == null) {
-                        setText(null);
-                        setStyle("");
-                    } else {
-                        setText(item.toString());
-                        String status = row.getItem().getStatus();
-                        if ("attend".equalsIgnoreCase(status)) {
-                            setStyle("-fx-background-color: #e8f5e9; -fx-text-fill: #2e7d32; -fx-font-weight: bold;");
-                        } else if ("absence".equalsIgnoreCase(status)) {
-                            setStyle("-fx-background-color: #ffebee; -fx-text-fill: #c62828; -fx-font-weight: bold;");
-                        } else {
-                            setStyle("");
-                        }
-                    }
-                }
-            };
 
         TableColumn<AttendanceRow, String> colName = new TableColumn<>("Name");
         colName.setStyle("-fx-background-color: #FFCB3C;-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #222;");
@@ -472,44 +493,26 @@ public class dailyReport {
         colStatus.setCellFactory(coloredCellFactory);
         colReason.setCellFactory(coloredCellFactory);
 
-        table.getColumns().setAll(colId, colName, colStatus, colReason, checkInCol, colCheckOut);
+        table.getColumns().clear();
+        table.getColumns().addAll(Arrays.asList(colId, colName, colStatus, colReason, checkInCol, colCheckOut));
         table.setPrefHeight(320);
-        table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
     }
 
     private void loadAttendance(LocalDate date) {
         table.getItems().clear();
 
         try {
-            Firestore db = FirestoreService.db();
-            ApiFuture<QuerySnapshot> future = db.collection("attendance").get();
-            QuerySnapshot snapshots = future.get();
-
             ObservableList<AttendanceRow> rows = FXCollections.observableArrayList();
 
-            for (DocumentSnapshot doc : snapshots.getDocuments()) {
-                // Extract 'date' field
-                Object dateObj = doc.get("date");
-                if (dateObj == null) continue;
+            FirestoreRestClient client = FirestoreRest.forCurrentUser();
+            java.util.Date startOfDay = java.util.Date.from(date.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant());
+            java.util.List<FsDocument> docs = client.queryWhereEqual("attendance", "date", startOfDay);
 
-                LocalDate docDate = null;
-                if (dateObj instanceof com.google.cloud.Timestamp ts) {
-                    docDate = ts.toDate().toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDate();
-                } else if (dateObj instanceof String s) {
-                    try {
-                        // Convert from format like "Thu Oct 30 2025 00:00:00 GMT+0800"
-                        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("EEE MMM dd yyyy HH:mm:ss 'GMT'Z", java.util.Locale.ENGLISH);
-                        java.util.Date parsed = sdf.parse(s);
-                        docDate = parsed.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDate();
-                    } catch (Exception ignored) { }
-                }
-
-                if (docDate == null || !docDate.equals(date)) continue;
-
-                // Extract other fields
-                String childId = String.valueOf(doc.get("childId"));
-                String name = String.valueOf(doc.get("name"));
-                String reason = String.valueOf(doc.get("reason"));
+            for (FsDocument doc : docs) {
+                String childId = String.valueOf(doc.getString("childId"));
+                String name = String.valueOf(doc.getString("name"));
+                String reason = String.valueOf(doc.getString("reason"));
                 boolean present = Boolean.TRUE.equals(doc.getBoolean("isPresent"));
                 String status = present ? "attend" : "absence";
                 // ✅ Use only new Firestore format: check_in_time / check_out_time
@@ -526,15 +529,14 @@ public class dailyReport {
                     reason != null ? reason : "",
                     checkIn != null ? checkIn : "",
                     checkOut != null ? checkOut : "",
-                    docDate
+                    date
                 ));
             }
 
             table.setItems(rows);
             System.out.println("✅ Loaded " + rows.size() + " records for " + date);
 
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (IOException | InterruptedException | RuntimeException e) {
             System.err.println("❌ Failed to load attendance: " + e.getMessage());
         }
     }

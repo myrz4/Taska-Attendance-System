@@ -39,31 +39,24 @@ import java.awt.Desktop;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 
-//OpenCV + utils for face verify
-import org.opencv.core.Mat;
-import org.opencv.core.Rect;
-import org.opencv.videoio.VideoCapture;
-
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.Date;
-
-import com.google.cloud.firestore.Firestore;
-import com.google.cloud.firestore.DocumentReference;
-import com.google.cloud.firestore.DocumentSnapshot;
-import com.google.cloud.firestore.QueryDocumentSnapshot;
-import com.google.cloud.firestore.QuerySnapshot;
-import com.google.cloud.firestore.SetOptions;
-import com.google.api.core.ApiFuture;
 
 public class AttendanceView {
 
 	private static AttendanceView currentInstance;
+
+    private static void logError(String context, Exception error) {
+        System.err.println("AttendanceView: " + context + " - " + error.getMessage());
+        error.printStackTrace(System.err);
+    }
     private VBox root;
     private TableView<AttendanceRecord> table;
     private ObservableList<AttendanceRecord> masterRecords = FXCollections.observableArrayList();
@@ -75,8 +68,9 @@ public class AttendanceView {
     private static final DateTimeFormatter DB_TIMESTAMP_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private static final DateTimeFormatter DISPLAY_TIME_FORMAT = DateTimeFormatter.ofPattern("hh:mm a");
 
-    private List<QueryDocumentSnapshot> cachedChildren = new ArrayList<>();
-    private List<QueryDocumentSnapshot> cachedAttendance = new ArrayList<>();
+    private List<FsDocument> cachedChildren = new ArrayList<>();
+    private LocalDate cachedAttendanceDate;
+    private List<FsDocument> cachedAttendanceForDate = new ArrayList<>();
     private boolean active = false;
     private long lastChartUpdate = 0;
 
@@ -89,9 +83,9 @@ public class AttendanceView {
         dashboardHeader.setPrefHeight(70);
         dashboardHeader.setMaxWidth(Double.MAX_VALUE); // Full width
         dashboardHeader.setStyle(
-            "-fx-background-color: #2e8b57;"
-            + "-fx-border-color: #f4b400; -fx-border-width: 0 0 3 0;"
-            + "-fx-background-image: repeating-linear-gradient(to bottom, transparent, transparent 12px, #FECF4D 12px, #FECF4D 15px);"
+            "-fx-background-color: #2e8b57, #FECF4D;"
+            + "-fx-background-insets: 0, 0 0 3 0;"
+            + "-fx-background-radius: 0, 0;"
         );
         ImageView honeyPot = new ImageView(ImageLoader.loadSafe("hive2.png"));
         honeyPot.setFitWidth(54);
@@ -488,130 +482,109 @@ public class AttendanceView {
     }
 
     private void preloadData() {
+        if (!UserSession.isLoggedIn()) {
+            cachedChildren = List.of();
+            return;
+        }
+
         try {
-            Firestore db = FirestoreService.db();
-            cachedChildren = db.collection("children").get().get().getDocuments();
-            cachedAttendance = db.collection("attendance").get().get().getDocuments();
-            System.out.println("⚡ Attendance preload complete");
+            if (cachedChildren != null && !cachedChildren.isEmpty()) {
+                return;
+            }
+
+            FirestoreRestClient client = FirestoreRest.forCurrentUser();
+            cachedChildren = client.listDocuments("children");
+            System.out.println("⚡ Attendance preload complete (REST)");
         } catch (Exception e) {
-            e.printStackTrace();
+            logError("attendance preload failed", e);
         }
     }
-    
-    // Face verification using the trained LBPH model.
-    // We assume your training used folder names == childId (e.g., faces/123/...)
-    public static boolean verifyFaceForChild(int childId) {
-        try {
-            OpenCVLoader.load();               // ensure native loaded
-            FaceDetector fd = new FaceDetector();
-            FaceRecognizerService fr = new FaceRecognizerService();
 
-            // Open camera 0 and try to capture a few frames
-            VideoCapture cap = new VideoCapture(0);
-            if (!cap.isOpened()) {
-                System.out.println("[Face] Camera failed to open.");
-                fd.release();
-                return false;
-            }
+    private List<FsDocument> getAttendanceDocsForDate(LocalDate date) throws Exception {
+        if (date == null) return List.of();
+        if (!UserSession.isLoggedIn()) return List.of();
 
-            Mat frame = new Mat();
-            long endBy = System.currentTimeMillis() + 3500;  // ~3.5s to find a face
-            Rect bestRect = null;
-            Mat bestFrame = null;
-
-            while (System.currentTimeMillis() < endBy) {
-                if (!cap.read(frame) || frame.empty()) continue;
-                List<Rect> faces = fd.detectFaces(frame);
-                if (!faces.isEmpty()) {
-                    // pick the largest face
-                    bestRect = faces.stream().max(Comparator.comparingInt(r -> r.width * r.height)).get();
-                    bestFrame = frame.clone();
-                    break;
-                }
-                try { Thread.sleep(40); } catch (InterruptedException ignored) {}
-            }
-
-            cap.release();
-            fd.release();
-
-            if (bestFrame == null || bestRect == null) {
-                System.out.println("[Face] No face detected in time window.");
-                return false;
-            }
-
-            // Predict
-            FaceRecognizerService.Prediction p = fr.predict(bestFrame, bestRect);
-            System.out.println("[Face] predictedUser=" + p.userId() + " conf=" + p.confidence() + " accept=" + p.accepted());
-
-            // We trained with childId as the userId label; compare as string
-            String expected = String.valueOf(childId);
-            return p.accepted() && expected.equals(p.userId());
-
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            return false;
+        if (cachedAttendanceDate != null && cachedAttendanceDate.equals(date)
+                && cachedAttendanceForDate != null) {
+            return cachedAttendanceForDate;
         }
+
+        FirestoreRestClient client = FirestoreRest.forCurrentUser();
+        Date startOfDay = Date.from(date.atStartOfDay(ZoneId.systemDefault()).toInstant());
+        List<FsDocument> docs = client.queryWhereEqual("attendance", "date", startOfDay);
+
+        cachedAttendanceDate = date;
+        cachedAttendanceForDate = docs != null ? docs : List.of();
+        return cachedAttendanceForDate;
     }
     
     // ─── NEW: Revised loadStudents() with MIN/MAX ───────────────────────────────
     // Change method to accept date parameter
     private void loadStudents(LocalDate date) {
         masterRecords.clear();
+        if (!UserSession.isLoggedIn()) return;
 
         try {
             // ✅ USE CACHED DATA (FAST)
-            List<QueryDocumentSnapshot> children = cachedChildren;
-            List<QueryDocumentSnapshot> attendanceDocs = cachedAttendance;
+            if (cachedChildren == null || cachedChildren.isEmpty()) {
+                preloadData();
+            }
+            List<FsDocument> children = cachedChildren;
+            List<FsDocument> attendanceDocs = getAttendanceDocsForDate(date);
 
             // Map numeric child_id -> nfc_uid (for legacy attendance docs)
             Map<Long, String> childIdToNfcUid = new HashMap<>();
-            for (DocumentSnapshot child : children) {
+            Map<Long, String> childIdToChildDocId = new HashMap<>();
+            Map<String, String> nfcUidToChildDocId = new HashMap<>();
+            Set<String> allChildDocIds = new HashSet<>();
+            for (FsDocument child : children) {
+                allChildDocIds.add(child.getId());
                 Long numericId = child.getLong("child_id");
                 String uid = child.getString("nfc_uid");
                 if (numericId != null && uid != null && !uid.isBlank()) {
                     childIdToNfcUid.put(numericId, uid);
                 }
+                if (numericId != null) {
+                    childIdToChildDocId.put(numericId, child.getId());
+                }
+                if (uid != null && !uid.isBlank()) {
+                    nfcUidToChildDocId.put(uid, child.getId());
+                }
             }
 
-            Map<String, DocumentSnapshot> attendanceMap = new HashMap<>();
+            Map<String, FsDocument> attendanceMap = new HashMap<>();
 
-            // ✅ 3. Filter attendance by selected date
-            for (DocumentSnapshot doc : attendanceDocs) {
-                Object dateObj = doc.get("date");
-                if (dateObj == null) continue;
+            // ✅ Attendance docs are already queried for the selected date
+            for (FsDocument doc : attendanceDocs) {
 
-                // ✅ Robust date matching for Firestore Timestamp or Date object
-                LocalDate recordDate;
-                try {
-                    if (dateObj instanceof com.google.cloud.Timestamp ts) {
-                        recordDate = ts.toDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-                    } else if (dateObj instanceof Date d) {
-                        recordDate = d.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-                    } else {
-                        // legacy: stored as string (e.g. "2026-03-01")
-                        String str = String.valueOf(dateObj);
-                        recordDate = LocalDate.parse(str.substring(0, Math.min(10, str.length())));
-                    }
-                } catch (Exception e) {
-                    // IMPORTANT: never default to today; otherwise old/invalid docs appear in the wrong day.
-                    continue;
-                }
+                // Canonical schema going forward: attendance.childId = children/{childId} docId
+                // Back-compat: older docs may still store NFC UID in attendance.childId.
+                String keyChildDocId = doc.getString("childId");
 
-                if (!recordDate.equals(date)) continue;
-
-                // Prefer the canonical key: nfc_uid stored in "childId" (string)
-                String keyNfcUid = doc.getString("childId");
-
-                // Legacy schema: numeric "child_id"; translate to nfc_uid
-                if (keyNfcUid == null || keyNfcUid.isBlank()) {
+                // Legacy schema: numeric "child_id"; translate to child docId
+                if (keyChildDocId == null || keyChildDocId.isBlank()) {
                     Long numericChildId = doc.getLong("child_id");
                     if (numericChildId != null) {
-                        keyNfcUid = childIdToNfcUid.get(numericChildId);
+                        keyChildDocId = childIdToChildDocId.get(numericChildId);
+                        if (keyChildDocId == null || keyChildDocId.isBlank()) {
+                            String legacyNfc = childIdToNfcUid.get(numericChildId);
+                            if (legacyNfc != null && !legacyNfc.isBlank()) {
+                                keyChildDocId = nfcUidToChildDocId.get(legacyNfc);
+                            }
+                        }
                     }
                 }
 
-                if (keyNfcUid != null && !keyNfcUid.isBlank()) {
-                    attendanceMap.put(keyNfcUid, doc);
+                // If attendance.childId contains an NFC UID, map it to child docId.
+                if (keyChildDocId != null && !keyChildDocId.isBlank() && !allChildDocIds.contains(keyChildDocId)) {
+                    String mapped = nfcUidToChildDocId.get(keyChildDocId);
+                    if (mapped != null && !mapped.isBlank()) {
+                        keyChildDocId = mapped;
+                    }
+                }
+
+                if (keyChildDocId != null && !keyChildDocId.isBlank()) {
+                    attendanceMap.put(keyChildDocId, doc);
                 }
             }
 
@@ -619,21 +592,16 @@ public class AttendanceView {
             System.out.println("✅ Matching records found: " + attendanceMap.size());
 
             // ✅ 4. Match attendance to children list
-            for (DocumentSnapshot c : children) {
+            for (FsDocument c : children) {
+                String childDocId = c.getId();
                 String nfcUid = c.getString("nfc_uid");
                 String name = c.getString("name");
-                AttendanceRecord record = new AttendanceRecord(nfcUid, name);
+                AttendanceRecord record = new AttendanceRecord(childDocId, name, nfcUid);
 
-                DocumentSnapshot att = attendanceMap.get(nfcUid);
+                FsDocument att = attendanceMap.get(childDocId);
                 if (att != null) {
-
-                    // ✅ FAST: resolve child name from cachedChildren (NO Firestore)
-                    for (DocumentSnapshot child : cachedChildren) {
-                        if (nfcUid.equals(child.getString("nfc_uid"))) {
-                            record.nameProperty().set(child.getString("name"));
-                            break;
-                        }
-                    }
+                    // Keep displayed name in sync with latest child doc
+                    record.nameProperty().set(name);
 
                     Boolean presentFlag = att.getBoolean("isPresent");
                     if (presentFlag == null) presentFlag = att.getBoolean("is_present");
@@ -685,7 +653,6 @@ public class AttendanceView {
     }
 
     private void saveAttendance() {
-        Firestore fdb = FirestoreService.db();
         LocalDate selectedDate = datePicker.getValue();
 
         // ✅ Store real Timestamp-compatible date (not stringified GMT)
@@ -696,18 +663,30 @@ public class AttendanceView {
 
         CompletableFuture.runAsync(() -> {
             int savedCount = 0;
-            List<ApiFuture<?>> pendingWrites = new ArrayList<>();
+
+            FirestoreRestClient client;
+            try {
+                client = FirestoreRest.forCurrentUser();
+            } catch (Exception e) {
+                Platform.runLater(() ->
+                        new Alert(Alert.AlertType.ERROR,
+                                "❌ Save failed: " + e.getMessage()).showAndWait());
+                return;
+            }
 
             for (AttendanceRecord record : filteredRecords) {
                 try {
                     // ✅ Use selectedDate in document ID
-                    String docId = dateString + "_" + record.getNfcUid().trim();
-                    DocumentReference ref = fdb.collection("attendance").document(docId);
+                    String docId = dateString + "_" + record.getChildDocId().trim();
 
                     Map<String, Object> data = new HashMap<>();
 
-                    data.put("childId", record.getNfcUid().trim());
-                    data.put("childRef", fdb.collection("children").document(record.getNfcUid().trim()));
+                    data.put("childId", record.getChildDocId().trim());
+                    data.put("childRef", new FirestoreRestClient.ReferenceValue(
+                            client.referenceValue("children", record.getChildDocId().trim())));
+                    if (record.getNfcUid() != null && !record.getNfcUid().trim().isEmpty()) {
+                        data.put("nfc_uid", record.getNfcUid().trim());
+                    }
                     data.put("name", record.getName());
                     data.put("date", firestoreDate);
 
@@ -751,9 +730,9 @@ public class AttendanceView {
                             ? "Default"
                             : record.getReason());
 
-                    pendingWrites.add(ref.set(data, SetOptions.merge()));
+                        client.patchDocumentMerge("attendance", docId, data);
                     savedCount++;
-                    System.out.println("✅ Queued save for: " + record.getName() + " (" + record.getNfcUid() + ")");
+                    System.out.println("✅ Queued save for: " + record.getName() + " (" + record.getChildDocId() + ")");
 
                 } catch (Exception ex) {
                     System.err.println("❌ Failed to queue record for: "
@@ -762,21 +741,16 @@ public class AttendanceView {
             }
 
             try {
-                for (ApiFuture<?> future : pendingWrites) {
-                    future.get(); // wait for all writes
-                }
-
                 int finalCount = savedCount;
                 Platform.runLater(() -> {
                     new Alert(Alert.AlertType.INFORMATION,
                             "✅ Attendance saved for " + finalCount + " students on " + dateString)
                             .showAndWait();
 
-                    FirestoreService.safeRefresh();
-
-                    // 🔥 THIS IS WHAT YOU ASKED "WHERE"
-                    preloadData();                         // refresh cachedAttendance
-                    loadStudents(datePicker.getValue());   // reload table + chart
+                    // Invalidate attendance cache and reload table + chart
+                    cachedAttendanceDate = null;
+                    cachedAttendanceForDate = new ArrayList<>();
+                    loadStudents(datePicker.getValue());
                 });
 
             } catch (Exception e) {

@@ -1,10 +1,53 @@
-javac --module-path "javafx-sdk-21.0.9\lib" `
-  --add-modules javafx.controls,javafx.fxml `
+# JavaFX Build
+
+Recommended compile command:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File tools\compile-javafx.ps1
+```
+
+Equivalent VS Code task:
+
+```text
+Compile (JavaFX + Firestore)
+```
+
+Fallback raw `javac` command if you need to compile manually:
+
+```powershell
+javac --module-path "javafx-sdk-21.0.9\lib
+  --add-modules javafx.controls,javafx.fxml,javafx.graphics,javafx.base `
   -cp "jar_files/*" `
   -d bin `
   (Get-ChildItem -Path src/nfc -Filter *.java).FullName `
   --release 17
+```
 
-java --module-path "javafx-sdk-21.0.9\lib" `
-  --add-modules javafx.controls,javafx.fxml `
-  -cp "bin;jar_files/*" nfc.LoginView
+# Copy Runtime Assets
+
+After compiling, copy non-Java assets into `bin\nfc`:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File tools\copy-assets.ps1
+```
+
+# Run JavaFX
+
+Default launch:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File tools\run-javafx.ps1
+```
+
+Safe launch without NFC hardware:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File tools\run-javafx.ps1 -NfcPort disabled
+```
+
+# Optional NFC Port Override
+
+- Disable NFC hardware on startup: `$env:TASKA_NFC_PORT = 'disabled'`
+- Use a specific port from the run helper: `powershell -NoProfile -ExecutionPolicy Bypass -File tools\run-javafx.ps1 -MainClass nfc.AdminDashboard -NfcPort COM4`
+- Use a JVM/system property manually: `-Dtaska.nfc.port=COM4`
+- Accepted disable values in the app: `disabled` or `none`

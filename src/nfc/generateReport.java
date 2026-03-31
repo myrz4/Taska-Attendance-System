@@ -26,9 +26,9 @@ public class generateReport {
 	    headerBar.setPrefHeight(70);
 	    headerBar.setMaxWidth(Double.MAX_VALUE);
 	    headerBar.setStyle(
-	        "-fx-background-color: #2e8b57;" +
-	        "-fx-border-color: #f4b400; -fx-border-width: 0 0 3 0;" +
-	        "-fx-background-image: repeating-linear-gradient(to bottom, transparent, transparent 12px, #FECF4D 12px, #FECF4D 15px);"
+	        "-fx-background-color: #2e8b57, #FECF4D;" +
+	        "-fx-background-insets: 0, 0 0 3 0;" +
+	        "-fx-background-radius: 0, 0;"
 	    );
 	    ImageView honeyPot = new ImageView(ImageLoader.loadSafe("bee-buku.png"));
 	    honeyPot.setFitWidth(54);

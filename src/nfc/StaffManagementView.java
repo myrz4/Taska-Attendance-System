@@ -14,12 +14,9 @@ import javafx.scene.layout.VBox;
 import nfc.StaffManagementView.Admin;
 import javafx.scene.layout.Priority;
 
-import com.google.api.core.ApiFuture;
-import com.google.cloud.firestore.*;
-import com.google.firebase.cloud.FirestoreClient;
-
 import java.io.File;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Firestore-based Admins View
@@ -37,9 +34,9 @@ public class StaffManagementView extends VBox {
         headerBar.setPrefHeight(70);
         headerBar.setMaxWidth(Double.MAX_VALUE);
         headerBar.setStyle(
-            "-fx-background-color: #2e8b57;" +
-            "-fx-border-color: #f4b400; -fx-border-width: 0 0 3 0;" +
-            "-fx-background-image: repeating-linear-gradient(to bottom, transparent, transparent 12px, #FECF4D 12px, #FECF4D 15px);"
+            "-fx-background-color: #2e8b57, #FECF4D;" +
+            "-fx-background-insets: 0, 0 0 3 0;" +
+            "-fx-background-radius: 0, 0;"
         );
         ImageView honeyPot = new ImageView(ImageLoader.loadSafe("hive2.png"));
         honeyPot.setFitWidth(54);
@@ -124,12 +121,22 @@ public class StaffManagementView extends VBox {
                     setGraphic(null);
                     setText(null);
                 } else {
-                    File imgFile = new File("profile_pics/" + item);
+                    ImageView iv = new ImageView();
+                    iv.setFitHeight(imageSize);
+                    iv.setFitWidth(imageSize);
+                    iv.setPreserveRatio(true);
+
+                    String v = item.trim();
+                    if (ImageCache.isRemoteUrl(v)) {
+                        iv.setImage(ImageCache.loadCachedOrRemote(v, imageSize, imageSize));
+                        setGraphic(iv);
+                        setText(null);
+                        return;
+                    }
+
+                    File imgFile = new File("profile_pics/" + v);
                     if (imgFile.exists()) {
-                        ImageView iv = new ImageView(new Image(imgFile.toURI().toString()));
-                        iv.setFitHeight(imageSize);
-                        iv.setFitWidth(imageSize);
-                        iv.setPreserveRatio(true);
+                        iv.setImage(new Image(imgFile.toURI().toString()));
                         setGraphic(iv);
                         setText(null);
                     } else {
@@ -213,38 +220,35 @@ public class StaffManagementView extends VBox {
     public void reload() {
         data.clear();
 
-        try {
-            Firestore db = FirestoreService.db();
-            ApiFuture<QuerySnapshot> future = db.collection("admins").get();
-
-            future.addListener(() -> {
+        CompletableFuture
+            .supplyAsync(() -> {
                 try {
-                    List<QueryDocumentSnapshot> docs = future.get().getDocuments();
-                    ObservableList<Admin> temp = FXCollections.observableArrayList();
-
-                    for (DocumentSnapshot d : docs) {
-                        temp.add(new Admin(
-                            d.getString("username") != null ? d.getString("username") : d.getId(),
-                            d.getString("password"),
-                            d.getString("profilePicture"),
-                            d.getString("name")
-                        ));
-                    }
-
-                    javafx.application.Platform.runLater(() -> {
-                        data.setAll(temp);
-                        System.out.println("✅ Loaded " + temp.size() + " admin records.");
-                    });
-
-                } catch (Exception ex) {
-                    ex.printStackTrace();
+                    FirestoreRestClient client = FirestoreRest.forCurrentUser();
+                    return client.listDocuments("admins");
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
                 }
-            }, java.util.concurrent.Executors.newSingleThreadExecutor());
+            })
+            .whenComplete((docs, err) -> javafx.application.Platform.runLater(() -> {
+                if (err != null) {
+                    err.printStackTrace();
+                    new Alert(Alert.AlertType.ERROR, "Failed to load admins").showAndWait();
+                    return;
+                }
 
-        } catch (Exception e) {
-            e.printStackTrace();
-            new Alert(Alert.AlertType.ERROR, "Failed to load admins").showAndWait();
-        }
+                ObservableList<Admin> temp = FXCollections.observableArrayList();
+                for (FsDocument d : docs) {
+                    if (d == null) continue;
+                    temp.add(new Admin(
+                        d.getString("username") != null ? d.getString("username") : d.getId(),
+                        d.getString("password"),
+                        d.getString("profilePicture"),
+                        d.getString("name")
+                    ));
+                }
+                data.setAll(temp);
+                System.out.println("✅ Loaded " + temp.size() + " admin records.");
+            }));
     }
 
     private void showEdit(Admin admin) {
@@ -274,14 +278,11 @@ public class StaffManagementView extends VBox {
         }
 
         try {
-            Firestore db = FirestoreService.db();
-            Query q = db.collection("admins")
-                        .whereEqualTo("username", admin.getUsername());
-
-            List<QueryDocumentSnapshot> docs = q.get().get().getDocuments();
-
-            for (DocumentSnapshot doc : docs) {
-                db.collection("admins").document(doc.getId()).delete().get();
+            FirestoreRestClient client = FirestoreRest.forCurrentUser();
+            List<FsDocument> docs = client.queryWhereEqual("admins", "username", admin.getUsername());
+            for (FsDocument doc : docs) {
+                if (doc == null) continue;
+                client.deleteDocument("admins", doc.getId());
             }
 
             new Alert(Alert.AlertType.INFORMATION,

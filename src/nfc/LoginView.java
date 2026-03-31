@@ -14,14 +14,9 @@ import javafx.scene.text.FontWeight;
 import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
 
-// Firebase Firestore imports
-import com.google.api.core.ApiFuture;
-import com.google.cloud.firestore.Firestore;
-import com.google.cloud.firestore.QuerySnapshot;
-import com.google.cloud.firestore.QueryDocumentSnapshot;
+import javafx.application.Platform;
 
-// Java utility import
-import java.util.List;
+import java.util.LinkedHashSet;
 
 public class LoginView extends Application {
 
@@ -156,16 +151,14 @@ ImageView ivSun         = loadImage("sun.png");
         // =========================
         logoView = new ImageView();
 java.net.URL url = LoginView.class.getResource("logo.png");
-System.out.println("DEBUG >> Classpath URL: " + url);
 
 if (url == null) {
     java.io.File f = new java.io.File("src/nfc/logo.png");
-    System.out.println("DEBUG >> Fallback file exists: " + f.exists() + " @ " + f.getAbsolutePath());
     if (f.exists()) {
         try {
             url = f.toURI().toURL();
         } catch (java.net.MalformedURLException ex) {
-            ex.printStackTrace();
+            System.err.println("LoginView: failed to resolve fallback logo URL - " + ex.getMessage());
         }
     }
 }
@@ -173,8 +166,6 @@ if (url == null) {
 if (url != null) {
     if (url != null) logoView.setImage(new Image(url.toExternalForm()));
     else System.out.println("⚠️ logo.png not found.");
-
-    System.out.println("✅ Loaded logo: " + url);
 } else {
     System.out.println("❌ ERROR: logo.png could not be loaded.");
 }
@@ -314,60 +305,124 @@ if (url != null) {
 
             new Thread(() -> {
                 try {
-                    Firestore db = FirestoreService.db();
-                    System.out.println("[LoginView] Firestore connected to: " + db.getOptions().getProjectId());
+                    String input = u;
 
-                    // Query the admins collection
-                    ApiFuture<QuerySnapshot> query = db.collection("admins")
-                            .whereEqualTo("username", u)
-                            .limit(1)
-                            .get();
+                    // Admin: real email/password
+                    // Teacher: phone -> derived email(s) (t_<digits>@taskazurah.local) + PIN
+                    final boolean inputIsEmail = input.contains("@");
+                    final String[] candidates = inputIsEmail
+                            ? new String[] { input.toLowerCase() }
+                            : buildTeacherEmailCandidates(input);
 
-                    List<QueryDocumentSnapshot> docs = query.get().getDocuments();
+                    FirebaseAuthClient.FirebaseUser user = null;
+                    FirebaseAuthClient.FirebaseAuthException last = null;
 
-                    if (!docs.isEmpty()) {
-                        QueryDocumentSnapshot doc = docs.get(0);
-                        String storedPassword = doc.getString("password");
-
-                        if (storedPassword != null && storedPassword.equals(p)) {
-                            System.out.println("✅ Login successful for " + u);
-
-                            // 🔥 READ FROM FIRESTORE
-                            String usernameVal   = doc.getString("username");
-                            String nameVal       = doc.getString("name");
-                            String profilePicVal = doc.getString("profilePicture");
-
-                            // 🔥 SET SESSION (THIS FIXES null 🐝)
-                            UserSession.setAdmin(usernameVal, nameVal, profilePicVal);
-
-                            // 🔎 DEBUG — MUST PRINT REAL VALUES
-                            System.out.println("LOGIN SESSION:");
-                            System.out.println("username = " + usernameVal);
-                            System.out.println("name = " + nameVal);
-                            System.out.println("profilePic = " + profilePicVal);
-
-                            javafx.application.Platform.runLater(() -> {
-                                try {
-                                    new AdminDashboard().start(new Stage());
-                                    primaryStage.close();
-                                } catch (Exception ex) {
-                                    ex.printStackTrace();
+                    for (String email : candidates) {
+                        try {
+                            user = FirebaseAuthClient.signInWithEmailPassword(email, p);
+                            // Ensure we keep the email we actually signed in with.
+                            user.email = email;
+                            break;
+                        } catch (FirebaseAuthClient.FirebaseAuthException fae) {
+                            last = fae;
+                            // For teacher phone-derived login, try other variants.
+                            if (!inputIsEmail) {
+                                String code = fae.code == null ? "" : fae.code.toUpperCase();
+                                if ("EMAIL_NOT_FOUND".equals(code)
+                                        || "INVALID_PASSWORD".equals(code)
+                                        || "INVALID_LOGIN_CREDENTIALS".equals(code)) {
+                                    continue;
                                 }
-                            });
+                            }
+                            throw fae;
                         }
-                        else {
-                            System.out.println("❌ Wrong password for " + u);
-                            javafx.application.Platform.runLater(() -> msg.setText("Incorrect password."));
-                        }
-                    } else {
-                        System.out.println("❌ No such admin: " + u);
-                        javafx.application.Platform.runLater(() -> msg.setText("User not found."));
                     }
 
+                    if (user == null) {
+                        // Preserve previous behavior: if teacher is logging in first time and no account exists,
+                        // create the derived email account. (Teacher app normally creates this after OTP.)
+                        if (!inputIsEmail && last != null && "EMAIL_NOT_FOUND".equalsIgnoreCase(last.code)) {
+                            String canonical = candidates.length > 0 ? candidates[0] : null;
+                            if (canonical == null || canonical.isBlank()) {
+                                Platform.runLater(() -> msg.setText("Enter a valid phone number."));
+                                return;
+                            }
+                            FirebaseAuthClient.signUpWithEmailPassword(canonical, p);
+                            user = FirebaseAuthClient.signInWithEmailPassword(canonical, p);
+                            user.email = canonical;
+                        } else if (last != null) {
+                            throw last;
+                        } else {
+                            throw new RuntimeException("Login failed.");
+                        }
+                    }
+
+                    // Best-effort: sync teacher role (set OR revoke) and refresh token so role changes apply.
+                    // Safe to run for admins too (it will not overwrite admin).
+                    String projectId = FirebaseConfig.readPropertyFromJarFiles("firebase.properties", "projectId");
+                    if (projectId != null && !projectId.isBlank()) {
+                        try {
+                            FirebaseFunctionsClient.callClaimTeacherRole(projectId.trim(), user.idToken);
+                            // Refresh to pick up any updated custom claims.
+                            FirebaseAuthClient.FirebaseUser refreshed = FirebaseAuthClient.refreshIdToken(user.refreshToken);
+                            if (refreshed != null && refreshed.idToken != null && !refreshed.idToken.isBlank()) {
+                                user.idToken = refreshed.idToken;
+                                if (refreshed.refreshToken != null && !refreshed.refreshToken.isBlank()) {
+                                    user.refreshToken = refreshed.refreshToken;
+                                }
+                            }
+                        } catch (Exception ignored) {
+                            // Best-effort: role check below will still protect access.
+                        }
+                    }
+
+                    UserSession.set(user.idToken, user.localId, user.email);
+                    if (!(UserSession.isAdmin() || UserSession.isTeacher())) {
+                        UserSession.clear();
+                        Platform.runLater(() -> msg.setText("Not authorized (missing role claim). Please login in Teacher App once using OTP, then try again."));
+                        return;
+                    }
+
+                    // Populate UI session fields (name/avatar)
+                    if (UserSession.isTeacher() && !UserSession.isAdmin()) {
+                        TeacherProfileResolver.TeacherProfile prof = TeacherProfileResolver.resolve(user.email, input);
+
+                        String usernameVal = (prof != null && prof.phone != null && !prof.phone.isBlank())
+                            ? prof.phone
+                            : (input != null && !input.isBlank()
+                                ? input
+                                : (user.email != null && !user.email.isBlank() ? user.email : u));
+
+                        String nameVal = (prof != null && prof.name != null && !prof.name.isBlank())
+                                ? prof.name
+                                : usernameVal;
+
+                        String profilePicVal = (prof != null && prof.image != null && !prof.image.isBlank())
+                                ? prof.image
+                                : "default_user.png";
+
+                        UserSession.setAdmin(usernameVal, nameVal, profilePicVal);
+                    } else {
+                        String display = (user.email != null && !user.email.isBlank()) ? user.email : u;
+                        UserSession.setAdmin(display, display, "logo.png");
+                    }
+
+                    Platform.runLater(() -> {
+                        try {
+                            new AdminDashboard().start(new Stage());
+                            primaryStage.close();
+                        } catch (Exception ex) {
+                            ex.printStackTrace();
+                            msg.setText("Error: " + ex.getMessage());
+                        }
+                    });
+
+                } catch (FirebaseAuthClient.FirebaseAuthException fae) {
+                    fae.printStackTrace();
+                    Platform.runLater(() -> msg.setText(prettyAuthError(fae.code)));
                 } catch (Exception ex) {
                     ex.printStackTrace();
-                    javafx.application.Platform.runLater(() ->
-                        msg.setText("Error: " + ex.getMessage()));
+                    Platform.runLater(() -> msg.setText("Login failed: " + ex.getMessage()));
                 }
             }).start();
         });
@@ -413,7 +468,6 @@ if (url != null) {
 // =========================
 private ImageView loadImage(String fileName) {
     java.net.URL url = getClass().getResource("/nfc/" + fileName);
-    System.out.println("DEBUG >> Loading " + fileName + " => " + url);
 
     if (url == null) {
         java.io.File f = new java.io.File("src/nfc/" + fileName);
@@ -421,7 +475,7 @@ private ImageView loadImage(String fileName) {
             try {
                 url = f.toURI().toURL();
             } catch (java.net.MalformedURLException ex) {
-                ex.printStackTrace();
+                System.err.println("LoginView: failed to resolve image " + fileName + " - " + ex.getMessage());
             }
         }
     }
@@ -434,5 +488,62 @@ private ImageView loadImage(String fileName) {
 
     public static void main(String[] args) {
         launch(args);
+    }
+
+    private static String digitsOnly(String input) {
+        return input == null ? "" : input.replaceAll("[^0-9]", "");
+    }
+
+    // Canonicalize any input digits to local Malaysian format (0xxxxxxxxx)
+    private static String phoneLocalDigitsFromAny(String phoneAny) {
+        String d = digitsOnly(phoneAny);
+        if (d.isEmpty()) return "";
+        if (d.startsWith("60") && d.length() > 2) return "0" + d.substring(2);
+        if (d.startsWith("0")) return d;
+        if (d.startsWith("1")) return "0" + d;
+        return d;
+    }
+
+    /**
+     * Build candidate derived teacher emails in the same way as the Flutter Teacher app.
+     * Canonical form is: t_<localDigits>@taskazurah.local
+     */
+    private static String[] buildTeacherEmailCandidates(String phoneInput) {
+        String rawDigits = digitsOnly(phoneInput);
+        if (rawDigits.isEmpty()) return new String[0];
+
+        String local = phoneLocalDigitsFromAny(phoneInput);
+        String e164Digits = "";
+        if (local.startsWith("0") && local.length() > 1) {
+            e164Digits = "60" + local.substring(1);
+        } else {
+            e164Digits = rawDigits;
+        }
+
+        LinkedHashSet<String> emails = new LinkedHashSet<>();
+        if (!local.isBlank()) emails.add("t_" + local + "@taskazurah.local");
+        if (!e164Digits.isBlank()) emails.add("t_" + e164Digits + "@taskazurah.local");
+        if (!rawDigits.isBlank()) emails.add("t_" + rawDigits + "@taskazurah.local");
+        return emails.toArray(new String[0]);
+    }
+
+    private static String prettyAuthError(String code) {
+        if (code == null || code.isBlank()) return "Login failed.";
+        switch (code) {
+            case "INVALID_PASSWORD":
+                return "Wrong password.";
+            case "EMAIL_NOT_FOUND":
+                return "Account not found.";
+            case "USER_DISABLED":
+                return "This account is disabled.";
+            case "TOO_MANY_ATTEMPTS_TRY_LATER":
+                return "Too many attempts. Try again later.";
+            case "INVALID_EMAIL":
+                return "Invalid email.";
+            case "WEAK_PASSWORD":
+                return "Password is too weak.";
+            default:
+                return "Login failed: " + code;
+        }
     }
 }

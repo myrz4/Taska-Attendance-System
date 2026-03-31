@@ -8,7 +8,18 @@ public class ArduinoReader {
 	public static SerialPort serialPort;
 
 	public static void startReading() {
-        SerialPort comPort = SerialPort.getCommPort("COM3"); // <-- set to your Arduino COM
+        String portName = NFCReader.resolveConfiguredPortName();
+        if (portName == null) {
+            System.out.println("ℹ️ Arduino reader disabled by configuration.");
+            return;
+        }
+
+        if (!NFCReader.isPortAvailable(portName)) {
+            System.out.println("ℹ️ Arduino reader not started. Port " + portName + " is unavailable. Available ports: " + NFCReader.availablePortsSummary());
+            return;
+        }
+
+        SerialPort comPort = SerialPort.getCommPort(portName);
         comPort.setBaudRate(115200);
 
         if (comPort.openPort()) {

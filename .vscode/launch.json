@@ -6,11 +6,48 @@
       "name": "Run LoginView (JavaFX + Firestore)",
       "request": "launch",
       "mainClass": "nfc.LoginView",
+      "preLaunchTask": "Build (JavaFX + Firestore)",
       "classPaths": [
-        "bin",
-        "C:/Users/zafri/Downloads/Taska Attendance System/jar_files/*"
+        "${workspaceFolder}/bin",
+        "${workspaceFolder}/jar_files/*"
       ],
-      "vmArgs": "--module-path \"C:/Users/zafri/Downloads/Taska Attendance System/jar_files\" --add-modules javafx.controls,javafx.fxml,javafx.graphics,javafx.base -Dprism.order=sw -Dprism.verbose=true -Djavafx.platform=offscreen -Dprism.forceGPU=false -Dprism.text=t2k"
+      "vmArgs": "--module-path \"${workspaceFolder}/javafx-sdk-21.0.9/lib\" --add-modules javafx.controls,javafx.fxml,javafx.graphics,javafx.base"
+    },
+    {
+      "type": "java",
+      "name": "Run LoginView (JavaFX, NFC Disabled)",
+      "request": "launch",
+      "mainClass": "nfc.LoginView",
+      "preLaunchTask": "Build (JavaFX + Firestore)",
+      "classPaths": [
+        "${workspaceFolder}/bin",
+        "${workspaceFolder}/jar_files/*"
+      ],
+      "vmArgs": "--module-path \"${workspaceFolder}/javafx-sdk-21.0.9/lib\" --add-modules javafx.controls,javafx.fxml,javafx.graphics,javafx.base -Dtaska.nfc.port=disabled"
+    },
+    {
+      "type": "java",
+      "name": "Run AdminDashboard (JavaFX + Firestore)",
+      "request": "launch",
+      "mainClass": "nfc.AdminDashboard",
+      "preLaunchTask": "Build (JavaFX + Firestore)",
+      "classPaths": [
+        "${workspaceFolder}/bin",
+        "${workspaceFolder}/jar_files/*"
+      ],
+      "vmArgs": "--module-path \"${workspaceFolder}/javafx-sdk-21.0.9/lib\" --add-modules javafx.controls,javafx.fxml,javafx.graphics,javafx.base"
+    },
+    {
+      "type": "java",
+      "name": "Run AdminDashboard (JavaFX, NFC Disabled)",
+      "request": "launch",
+      "mainClass": "nfc.AdminDashboard",
+      "preLaunchTask": "Build (JavaFX + Firestore)",
+      "classPaths": [
+        "${workspaceFolder}/bin",
+        "${workspaceFolder}/jar_files/*"
+      ],
+      "vmArgs": "--module-path \"${workspaceFolder}/javafx-sdk-21.0.9/lib\" --add-modules javafx.controls,javafx.fxml,javafx.graphics,javafx.base -Dtaska.nfc.port=disabled"
     }
   ]
 }

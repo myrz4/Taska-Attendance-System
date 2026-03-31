@@ -15,7 +15,8 @@ import javafx.beans.property.StringProperty;
 
 public class AttendanceRecord {
     // ─── Core fields ───────────────────────────────────────────────
-    private final String nfcUid; // ✅ use NFC UID string from Firestore
+    private final String childDocId; // stable Firestore children/{childId} docId
+    private final String nfcUid; // replaceable NFC UID (children.nfc_uid)
     private final IntegerProperty childId;
     private final StringProperty name;
 
@@ -33,9 +34,14 @@ public class AttendanceRecord {
     private final ObjectProperty<File> reasonLetterFile = new SimpleObjectProperty<>();
 
     // ─── Constructor ───────────────────────────────────────────────
-    public AttendanceRecord(String nfcUid, String name) {
-        this.nfcUid = nfcUid;
-        this.childId = new SimpleIntegerProperty(nfcUid.hashCode()); // still used internally
+    public AttendanceRecord(String childDocId, String name) {
+        this(childDocId, name, "");
+    }
+
+    public AttendanceRecord(String childDocId, String name, String nfcUid) {
+        this.childDocId = childDocId;
+        this.nfcUid = nfcUid == null ? "" : nfcUid;
+        this.childId = new SimpleIntegerProperty((childDocId == null ? "" : childDocId).hashCode()); // still used internally
         this.name = new SimpleStringProperty(name);
 
         // Auto time tracking
@@ -57,7 +63,8 @@ public class AttendanceRecord {
     }
 
     // ─── Getters/Properties ────────────────────────────────────────
-    public String getNfcUid() { return nfcUid; } // ✅ used for Firestore link
+    public String getChildDocId() { return childDocId; } // ✅ used for Firestore link
+    public String getNfcUid() { return nfcUid; }
     public int getChildId() { return childId.get(); }
     public IntegerProperty childIdProperty() { return childId; }
 

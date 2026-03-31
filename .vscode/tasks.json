@@ -2,21 +2,129 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "Build (JavaFX + Firestore)",
+      "label": "Compile (JavaFX + Firestore)",
       "type": "shell",
-      "command": "javac",
+      "command": "powershell",
       "args": [
-        "--module-path", "C:/Users/zafri/Downloads/Taska Attendance System/jar_files",
-        "--add-modules", "javafx.controls,javafx.fxml,javafx.graphics,javafx.base",
-        "-cp", "src;bin;C:/Users/zafri/Downloads/Taska Attendance System/jar_files/*",
-        "-d", "bin",
-        "src/nfc/*.java"
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "tools\\compile-javafx.ps1"
       ],
       "options": {
         "cwd": "C:/Users/zafri/Downloads/Taska Attendance System"
       },
       "group": "build",
       "problemMatcher": "$javac"
+    },
+    {
+      "label": "Copy Assets (JavaFX)",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "tools\\copy-assets.ps1"
+      ],
+      "options": {
+        "cwd": "C:/Users/zafri/Downloads/Taska Attendance System"
+      }
+    },
+    {
+      "label": "Build (JavaFX + Firestore)",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "Compile (JavaFX + Firestore)",
+        "Copy Assets (JavaFX)"
+      ],
+      "group": "build"
+    },
+    {
+      "label": "Run LoginView (JavaFX + Firestore)",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "tools\\run-javafx.ps1"
+      ],
+      "options": {
+        "cwd": "C:/Users/zafri/Downloads/Taska Attendance System"
+      },
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "Build (JavaFX + Firestore)"
+      ]
+    },
+    {
+      "label": "Run LoginView (JavaFX, NFC Disabled)",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "tools\\run-javafx.ps1",
+        "-NfcPort",
+        "disabled"
+      ],
+      "options": {
+        "cwd": "C:/Users/zafri/Downloads/Taska Attendance System"
+      },
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "Build (JavaFX + Firestore)"
+      ]
+    },
+    {
+      "label": "Run AdminDashboard (JavaFX + Firestore)",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "tools\\run-javafx.ps1",
+        "-MainClass",
+        "nfc.AdminDashboard"
+      ],
+      "options": {
+        "cwd": "C:/Users/zafri/Downloads/Taska Attendance System"
+      },
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "Build (JavaFX + Firestore)"
+      ]
+    },
+    {
+      "label": "Run AdminDashboard (JavaFX, NFC Disabled)",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "tools\\run-javafx.ps1",
+        "-MainClass",
+        "nfc.AdminDashboard",
+        "-NfcPort",
+        "disabled"
+      ],
+      "options": {
+        "cwd": "C:/Users/zafri/Downloads/Taska Attendance System"
+      },
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "Build (JavaFX + Firestore)"
+      ]
     }
   ]
 }

@@ -4,7 +4,22 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "backfill-children-parents:dry": "node fix/backfill_children_parent_cache.js",
+    "backfill-children-parents": "node fix/backfill_children_parent_cache.js --commit",
+    "migrate-children-docid:dry": "node fix/migrate_children_docid_to_autoid.js",
+    "migrate-children-docid": "node fix/migrate_children_docid_to_autoid.js --commit",
+    "migrate-teachers-docid:dry": "node fix/migrate_teachers_docid_to_autoid.js",
+    "migrate-teachers-docid": "node fix/migrate_teachers_docid_to_autoid.js --commit",
+    "normalize-children-dob:dry": "node fix/migrate_children_birthdate_to_iso.js",
+    "normalize-children-dob": "node fix/migrate_children_birthdate_to_iso.js --commit",
+    "migrate-parent-links:dry": "node fix/migrate_parent_child_links.js",
+    "migrate-parent-links": "node fix/migrate_parent_child_links.js --commit",
+    "remove-teacher-fields:dry": "node fix/remove_child_parent_teacher_fields.js",
+    "remove-teacher-fields": "node fix/remove_child_parent_teacher_fields.js --commit",
+    "migrate-chats-space:dry": "node fix/migrate_chats_trailing_space.js",
+    "migrate-chats-space": "node fix/migrate_chats_trailing_space.js --commit",
+    "migrate-chats-space:delete": "node fix/migrate_chats_trailing_space.js --commit --deleteLegacy"
   },
   "keywords": [],
   "author": "",

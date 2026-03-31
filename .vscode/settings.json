@@ -1,5 +1,7 @@
 {
   "java.project.sourcePaths": ["src"],
+  "java.project.outputPath": "bin",
+  "java.jdt.ls.vmargs": "-Xms128m -Xmx1024m -XX:+UseG1GC -XX:+UseStringDeduplication",
   "java.configuration.excludeFolders": [
     "bin",
     "doc",
@@ -8,8 +10,29 @@
     "profile_pics",
     "out",
     "target",
-    ".vscode"
+    ".vscode",
+    "javafx-sdk-21.0.9",
+    "firestore-export/exports",
+    "parent_app_taskazurah/build",
+    "parent_app_taskazurah/.dart_tool",
+    "teacher_app_taskazurah/build",
+    "teacher_app_taskazurah/.dart_tool"
   ],
+  "java.import.exclusions": [
+    "src/pom.xml",
+    "src/src/**",
+    "src/test/**"
+  ],
+  "files.watcherExclude": {
+    "**/bin/**": true,
+    "**/doc/**": true,
+    "**/firestore-export/exports/**": true,
+    "**/javafx-sdk-21.0.9/**": true,
+    "**/parent_app_taskazurah/.dart_tool/**": true,
+    "**/parent_app_taskazurah/build/**": true,
+    "**/teacher_app_taskazurah/.dart_tool/**": true,
+    "**/teacher_app_taskazurah/build/**": true
+  },
   "java.configuration.runtimes": [
     {
       "name": "JavaSE-21",
@@ -21,12 +44,13 @@
     "C:/Users/zafri/Downloads/Taska Attendance System/jar_files/*.jar"
   ],
   "code-runner.executorMap": {
-    "java": "cd \"c:/Users/zafri/Downloads/Taska Attendance System\" && javac --module-path \"C:/Users/zafri/Downloads/Taska Attendance System/jar_files\" --add-modules javafx.controls,javafx.fxml,javafx.graphics,javafx.base -cp \"src;bin;C:/Users/zafri/Downloads/Taska Attendance System/jar_files/*\" -d bin src/nfc/*.java && java --module-path \"C:/Users/zafri/Downloads/Taska Attendance System/jar_files\" --add-modules javafx.controls,javafx.fxml,javafx.graphics,javafx.base -cp \"bin;C:/Users/zafri/Downloads/Taska Attendance System/jar_files/*\" nfc.LoginView"
+    "java": "cd \"c:/Users/zafri/Downloads/Taska Attendance System\" && powershell -NoProfile -ExecutionPolicy Bypass -File tools\\compile-javafx.ps1 && powershell -NoProfile -ExecutionPolicy Bypass -File tools\\copy-assets.ps1 && powershell -NoProfile -ExecutionPolicy Bypass -File tools\\run-javafx.ps1"
   },
   "java.compile.nullAnalysis.mode": "disabled",
   "java.errors.incompleteClasspath.severity": "ignore",
   "java.validate.enabled": false,
   "python-envs.defaultEnvManager": "ms-python.python:conda",
   "python-envs.defaultPackageManager": "ms-python.python:conda",
-  "python-envs.pythonProjects": []
+  "python-envs.pythonProjects": [],
+  "java.configuration.updateBuildConfiguration": "automatic"
 }

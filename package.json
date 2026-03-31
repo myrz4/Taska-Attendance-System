@@ -1,5 +1,21 @@
 {
+  "scripts": {
+    "e2e:billing": "npm --prefix teacher_app_taskazurah/functions run e2e:billing",
+    "deploy:billing-functions": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/deploy-billing-functions.ps1",
+    "smoke:demo-billing": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"npm run use:demo-payments; npm run verify:billing-rollout; npm run e2e:billing\"",
+    "smoke:dummy-billing": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"npm run use:dummy-payments; npm run verify:billing-rollout; npm run e2e:billing\"",
+    "use:demo-payments": "node tools/set-billing-gateway-config.js --provider dummy --mode dummy --enable",
+    "use:dummy-payments": "node tools/set-billing-gateway-config.js --provider dummy --mode dummy --enable",
+    "set:billing-gateway": "node tools/set-billing-gateway-config.js",
+    "verify:billing-rollout": "node tools/verify-billing-rollout.js",
+    "set-role": "node tools/set-role.js",
+    "reset-pin": "node tools/reset-pin.js"
+  },
   "dependencies": {
-    "firebase": "^12.4.0"
+    "firebase": "^12.4.0",
+    "firebase-admin": "^13.5.0"
+  },
+  "devDependencies": {
+    "pdf-parse": "^1.1.4"
   }
 }

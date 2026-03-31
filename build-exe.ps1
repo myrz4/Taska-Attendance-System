@@ -16,18 +16,32 @@ javac --module-path "javafx-sdk-21.0.9\lib" `
       --release 17
 
 # 📦 Copy static resources
-Copy-Item "src/nfc/*.png" -Destination "bin/nfc" -Force -ErrorAction SilentlyContinue
-Copy-Item "src/nfc/*.css" -Destination "bin/nfc" -Force -ErrorAction SilentlyContinue
+Write-Host "Copying runtime assets..." -ForegroundColor Cyan
+powershell -NoProfile -ExecutionPolicy Bypass -File tools\copy-assets.ps1
 
 # 🧩 Package compiled classes into a runnable JAR
 Write-Host "Creating runnable JAR..." -ForegroundColor Cyan
 jar --create --file "TaskaAttendanceSystem.jar" -C bin .
 
+# 📦 Stage a clean jpackage input folder (prevents accidentally shipping repo files like serviceAccountKey.json)
+Write-Host "Staging jpackage input..." -ForegroundColor Cyan
+$stage = Join-Path (Get-Location).Path "dist-input"
+Remove-Item -Recurse -Force $stage -ErrorAction Ignore
+New-Item -ItemType Directory -Force -Path $stage | Out-Null
+
+# Main runnable jar
+Copy-Item -LiteralPath "TaskaAttendanceSystem.jar" -Destination $stage -Force
+
+# Dependency jars
+Get-ChildItem -LiteralPath "jar_files" -File -Filter "*.jar" | ForEach-Object {
+  Copy-Item -LiteralPath $_.FullName -Destination $stage -Force
+}
+
 # 🏗️ Build .exe using jpackage
 Write-Host "Packaging into EXE..." -ForegroundColor Green
 jpackage `
   --type exe `
-  --input . `
+  --input "$stage" `
   --main-jar "TaskaAttendanceSystem.jar" `
   --main-class nfc.LoginView `
   --name "Taska Attendance System" `

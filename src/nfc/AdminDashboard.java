@@ -6,8 +6,6 @@ import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
 import javafx.application.Application;
 import javafx.application.Platform;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -26,31 +24,21 @@ import javafx.util.Duration;
 import javafx.animation.PauseTransition;
 
 import java.io.File;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.ZoneId;
-
-import nfc.ChildrenView;
-import nfc.StaffManagementView;
-import nfc.LoginView;
-import org.opencv.core.Mat;
-
-import com.google.api.core.ApiFuture;
-import com.google.cloud.firestore.*;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
-@SuppressWarnings({"rawtypes", "unchecked"})
 public class AdminDashboard extends Application {
 
+    private static volatile boolean missingAssetsWarningShown = false;
+    private static volatile boolean realtimeModeNoticeShown = false;
+
     private static AdminDashboard instance;
-    private Label mainContent;
     private static Label scannedToday;
     private static Label notScanned;
+    private static Label billingAgeReview;
+    private static Label billingOvertimeReview;
     private static ListView<String> liveIns, liveOuts;
     private static boolean dashboardReady = false;
     private StackPane contentPane;
@@ -58,34 +46,24 @@ public class AdminDashboard extends Application {
     private static Thread nfcReaderThread;
     private double xOffset = 0;
     private double yOffset = 0;
-    private CameraPreviewWindow camWin;
-    private final FaceCameraService cameraService = new FaceCameraService();
-    private ImageView cameraView;
 
-    private VBox checkInList = new VBox(6);
-    private VBox checkOutList = new VBox(6);
+    private final VBox checkInList = new VBox(6);
+    private final VBox checkOutList = new VBox(6);
 
     private static volatile long lastDashboardFirestoreRefreshMs = 0;
-    
-    // Firestore helper
-    private static Firestore db() { return FirestoreService.db(); }
+
     private static String today() { return java.time.LocalDate.now().toString(); } // "YYYY-MM-DD"
+    private static void logError(String context, Exception error) {
+        System.err.println("AdminDashboard: " + context + " - " + error.getMessage());
+        error.printStackTrace(System.err);
+    }
+
+    private static FirestoreRestClient rest() {
+        return FirestoreRest.forCurrentUser();
+    }
     
     public static AdminDashboard getInstance() { 
     	return instance; }
-    
-    // ✅ Load OpenCV once, but don't block dashboard if it fails
-    static {
-        try {
-            OpenCVLoader.load();
-        } catch (Throwable t) {
-            System.err.println("[OpenCV] Not loaded, camera features disabled.");
-            // continue; do NOT rethrow
-        }
-    }
-
-            // Fallback: force exact path if needed
-            // System.load("C:\\dev\\opencv\\build\\install\\java\\opencv_java4100.dll");
 
     public static void main(String[] args) {
         launch(args);
@@ -120,7 +98,7 @@ public class AdminDashboard extends Application {
             stage.setY(event.getScreenY() - yOffset);
         });
 
-        HBox bodyLayout = createBodyLayout(primaryStage);
+        HBox bodyLayout = createBodyLayout();
 
         mainLayout.getChildren().addAll(topBar, bodyLayout);
         VBox.setVgrow(bodyLayout, Priority.ALWAYS);
@@ -135,8 +113,6 @@ public class AdminDashboard extends Application {
         primaryStage.setOnCloseRequest(event -> {
             System.out.println("👋 Closing application, releasing Serial Port...");
             if (reader != null) reader.stopReading();
-            if (camWin != null) { camWin.stop(); camWin = null; }
-            cameraService.stop();
             Platform.exit(); // let JavaFX call your stop()
         });
 
@@ -183,7 +159,6 @@ public class AdminDashboard extends Application {
         closeButton.setOnAction(e -> {
             System.out.println("👋 Closing application, releasing Serial Port...");
             if (reader != null) reader.stopReading();
-            if (camWin != null) { camWin.stop(); camWin = null; }
             Platform.exit(); // triggers your @Override stop()
         });
 
@@ -197,22 +172,22 @@ public class AdminDashboard extends Application {
     }
 
 
-    private HBox createBodyLayout(Stage primaryStage) {
+    private HBox createBodyLayout() {
         HBox bodyLayout = new HBox();
         bodyLayout.setStyle("-fx-background-color: transparent;");
 
-        VBox sidebar = createSidebar(primaryStage);
+        VBox sidebar = createSidebar();
         contentPane = new StackPane();
         contentPane.setStyle("-fx-background-color: transparent;");
 
-        loadDashboardContent(); //
+        loadDashboardContent();
 
         bodyLayout.getChildren().addAll(sidebar, contentPane);
         HBox.setHgrow(contentPane, Priority.ALWAYS);
         return bodyLayout;
     }
 
-    private VBox createSidebar(Stage primaryStage) {
+    private VBox createSidebar() {
         VBox sidebar = new VBox(20);
         sidebar.setPadding(new Insets(20));
         sidebar.setPrefWidth(240);
@@ -233,15 +208,20 @@ public class AdminDashboard extends Application {
 
         // ✅ Load profile picture from UserSession
         String pic = UserSession.getProfilePicture();
-        System.out.println("🎯 Dashboard avatar file = " + pic);
 
         if (pic != null && !pic.isBlank()) {
-            File imgFile = new File("profile_pics", pic);
-            if (imgFile.exists()) {
-                profileView.setImage(new Image(imgFile.toURI().toString()));
+            String v = pic.trim();
+            if (ImageCache.isRemoteUrl(v)) {
+                profileView.setImage(ImageCache.loadCachedOrRemote(v, 130, 130));
+                // Populate disk cache for future runs
+                ImageCache.prefetch(v);
             } else {
-                System.out.println("❌ Avatar file not found: " + imgFile.getAbsolutePath());
-                profileView.setImage(ImageLoader.loadSafe("default_user.png"));
+                File imgFile = new File("profile_pics", v);
+                if (imgFile.exists()) {
+                    profileView.setImage(new Image(imgFile.toURI().toString()));
+                } else {
+                    profileView.setImage(ImageLoader.loadSafe("default_user.png"));
+                }
             }
         } else {
             profileView.setImage(ImageLoader.loadSafe("default_user.png"));
@@ -339,6 +319,30 @@ public class AdminDashboard extends Application {
             setMainContent(view);
         });
 
+        Button btnBillingPolicy = createNavButton("Billing Policy");
+        btnBillingPolicy.setStyle(
+            "-fx-background-color: #FFCB3C;" +
+            "-fx-font-size: 16px;" +
+            "-fx-font-weight: bold;" +
+            "-fx-background-radius: 28px;"
+        );
+        btnBillingPolicy.setOnAction(e -> {
+            BillingPolicyView view = new BillingPolicyView();
+            setMainContent(view);
+        });
+
+        Button btnBillingLedger = createNavButton("Billing Ledger");
+        btnBillingLedger.setStyle(
+            "-fx-background-color: #FFCB3C;" +
+            "-fx-font-size: 16px;" +
+            "-fx-font-weight: bold;" +
+            "-fx-background-radius: 28px;"
+        );
+        btnBillingLedger.setOnAction(e -> {
+            BillingLedgerView view = new BillingLedgerView();
+            setMainContent(view);
+        });
+
         // Navigation actions
         btnDashboard.setOnAction(e -> loadDashboardContent());
         btnAttendance.setOnAction(e -> {
@@ -367,7 +371,6 @@ public class AdminDashboard extends Application {
             if (reader != null) {
                 reader.stopReading();
             }
-            if (camWin != null) { camWin.stop(); camWin = null; }
            
             // Open login window
             LoginView loginView = new LoginView();
@@ -375,65 +378,37 @@ public class AdminDashboard extends Application {
             try {
                 loginView.start(loginStage);
             } catch (Exception ex) {
-                ex.printStackTrace();
+                logError("failed to open LoginView", ex);
             }
             
             // Close the current (dashboard) window
             Stage currentStage = (Stage) ((Node) event.getSource()).getScene().getWindow();
             currentStage.close();
         });
-        
-        Button btnOpenCam = createNavButton("Open Camera");
-        btnOpenCam.setStyle("-fx-background-color: #FFCB3C;-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #222; -fx-background-radius: 28px;");
-        btnOpenCam.setMinHeight(28);
-        btnOpenCam.setPrefHeight(Region.USE_COMPUTED_SIZE);
-        btnOpenCam.setMaxWidth(Double.MAX_VALUE);
-        btnOpenCam.setWrapText(true);
-        btnOpenCam.setTextOverrun(OverrunStyle.CLIP);
-
-
-        // action: open camera preview window
-        btnOpenCam.setOnAction(e -> {
-            System.out.println("[AdminDashboard] Open Camera clicked");
-            if (camWin == null) camWin = new CameraPreviewWindow(primaryStage);
-            camWin.show(0);
-        });
 
         Region spacer = new Region();
         VBox.setVgrow(spacer, Priority.ALWAYS);
         
-     // --- Add two new buttons ---
-        Button btnRegisterFace = createNavButton("Register Face");
-        btnRegisterFace.setStyle("-fx-background-color: #FFCB3C;-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #222; -fx-background-radius: 28px;");
-        btnRegisterFace.setMinHeight(28);
-        btnRegisterFace.setPrefHeight(Region.USE_COMPUTED_SIZE);
-        btnRegisterFace.setMaxWidth(Double.MAX_VALUE);
-        btnRegisterFace.setWrapText(true);
-        btnRegisterFace.setTextOverrun(OverrunStyle.CLIP);
 
-        Button btnRetrain = createNavButton("Retrain Model");
-        btnRetrain.setStyle("-fx-background-color: #FFCB3C;-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #222; -fx-background-radius: 28px;");
-        btnRetrain.setMinHeight(28);
-        btnRetrain.setPrefHeight(Region.USE_COMPUTED_SIZE);
-        btnRetrain.setMaxWidth(Double.MAX_VALUE);
-        btnRetrain.setWrapText(true);
-        btnRetrain.setTextOverrun(OverrunStyle.CLIP);
-
-        // Actions
-        btnRegisterFace.setOnAction(e -> registerFaceFlow(primaryStage));
-        btnRetrain.setOnAction(e -> {
-            try {
-                FaceTrainer.trainAll();
-                showAlert("Face model retrained successfully.", Alert.AlertType.INFORMATION);
-            } catch (Exception ex) {
-                ex.printStackTrace();
-                showAlert("Training failed: " + ex.getMessage(), Alert.AlertType.ERROR);
-            }
-        });
-
-        btnOpenCam.setVisible(false);
-        btnRegisterFace.setVisible(false);
-        btnRetrain.setVisible(false);
+        // Teacher role: hide admin-only sections
+        if (UserSession.isTeacher() && !UserSession.isAdmin()) {
+            btnChildren.setVisible(false);
+            btnChildren.setManaged(false);
+            btnStaff.setVisible(false);
+            btnStaff.setManaged(false);
+            btnTeachers.setVisible(false);
+            btnTeachers.setManaged(false);
+            btnBillingPolicy.setVisible(false);
+            btnBillingPolicy.setManaged(false);
+            btnBillingLedger.setVisible(false);
+            btnBillingLedger.setManaged(false);
+            btnGenerateReport.setVisible(false);
+            btnGenerateReport.setManaged(false);
+            btnDaily.setVisible(false);
+            btnDaily.setManaged(false);
+            btnMonthly.setVisible(false);
+            btnMonthly.setManaged(false);
+        }
         
         sidebar.getChildren().addAll(
         	    profileBox,
@@ -443,9 +418,8 @@ public class AdminDashboard extends Application {
         	    btnChildren,
         	    btnStaff,
                 btnTeachers,
-        	    btnOpenCam,
-        	    btnRegisterFace,
-        	    btnRetrain,
+                btnBillingLedger,
+                btnBillingPolicy,
         	    spacer,      // ⬅️ spacer BEFORE logout pushes logout to the bottom
         	    btnLogout    // ⬅️ logout last, always visible
         	);
@@ -461,9 +435,8 @@ public class AdminDashboard extends Application {
         	    btnChildren,
         	    btnStaff,
                 btnTeachers,
-        	    btnOpenCam,
-        	    btnRegisterFace,
-        	    btnRetrain,
+                btnBillingLedger,
+                btnBillingPolicy,
         	    btnLogout
         	);
 
@@ -552,89 +525,6 @@ public class AdminDashboard extends Application {
         });
     }
 
- // --- Helper: Register Face capture flow ---
-    private void registerFaceFlow(Stage owner) {
-        TextInputDialog dlg = new TextInputDialog();
-        dlg.setTitle("Register Face");
-        dlg.setHeaderText("Enter Student ID (or NFC UID) to register");
-        dlg.setContentText("ID:");
-        var res = dlg.showAndWait();
-        if (res.isEmpty() || res.get().trim().isEmpty()) return;
-
-        String studentId = res.get().trim();
-
-        try {
-            // Ensure folders
-            java.nio.file.Files.createDirectories(java.nio.file.Path.of("faces", studentId));
-
-            // Start/ensure camera preview window
-            if (camWin == null) camWin = new CameraPreviewWindow(owner);
-            camWin.show(0); // show device 0 (if this already starts the camera, fcs.start() below is a no-op)
-
-            // Use the preview ImageView from the camera window if available; fallback to headless
-            ImageView previewView = (camWin != null && camWin.getView() != null)
-                    ? camWin.getView()
-                    : new ImageView();
-
-            // Reuse the single shared camera service and make sure it's running
-            FaceCameraService fcs = new FaceCameraService();
-            fcs.setView(previewView);
-            fcs.start(0);   // 0 = default camera
-
-            FaceDetector fd = new FaceDetector();
-
-            int saved = 0;
-            long endAt = System.currentTimeMillis() + 8000; // ~8s capture
-            int idx = 1;
-
-            while (System.currentTimeMillis() < endAt && saved < 60) {
-                org.opencv.core.Mat frame = fcs.getLastFrame();   // clone from cache
-                if (frame == null || frame.empty()) {
-                    try { Thread.sleep(40); } catch (InterruptedException ignored) {}
-                    continue;
-                }
-
-                var rects = fd.detectFaces(frame);
-                if (!rects.isEmpty()) {
-                    // pick largest
-                    org.opencv.core.Rect best = rects.stream()
-                            .max(java.util.Comparator.comparingInt(r -> r.width * r.height))
-                            .get();
-
-                    // save 200x200 gray crop
-                    java.nio.file.Path out = java.nio.file.Path.of("faces", studentId, String.format("img_%03d.png", idx++));
-                    saveFace(frame, best, out);
-                    saved++;
-                }
-
-                // 🔑 EXACT SPOT: release the clone at the END of each loop iteration
-                frame.release();
-
-                try { Thread.sleep(80); } catch (InterruptedException ignored) {}
-            }
-
-            // Do NOT necessarily stop the service here if your preview should stay open.
-            // If you want to close the camera when done, uncomment the next line:
-            // fcs.stop();
-
-            fd.release();
-            showAlert("Saved " + saved + " face images for " + studentId + ".", Alert.AlertType.INFORMATION);
-
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            showAlert("Face registration failed: " + ex.getMessage(), Alert.AlertType.ERROR);
-        }
-    }
-
-    // --- Tiny saver (same logic as FaceCaptureUtil.saveFace) ---
-    private static void saveFace(org.opencv.core.Mat bgrFrame, org.opencv.core.Rect r, java.nio.file.Path outPath) {
-        org.opencv.core.Mat gray = new org.opencv.core.Mat();
-        org.opencv.imgproc.Imgproc.cvtColor(bgrFrame, gray, org.opencv.imgproc.Imgproc.COLOR_BGR2GRAY);
-        org.opencv.core.Mat face = new org.opencv.core.Mat(gray, r);
-        org.opencv.imgproc.Imgproc.resize(face, face, new org.opencv.core.Size(200, 200));
-        org.opencv.imgcodecs.Imgcodecs.imwrite(outPath.toString(), face);
-        gray.release(); face.release();
-    }
     
     public void showDailyReportView() {
         dailyReport drv = new dailyReport();
@@ -666,13 +556,27 @@ public class AdminDashboard extends Application {
                     nfcReaderThread.join();
                     Thread.sleep(1000); // 🧠 Add this small 1 second delay to fully release COM4
                 } catch (InterruptedException ex) {
-                    ex.printStackTrace();
+                    Thread.currentThread().interrupt();
+                    logError("interrupted while stopping NFC reader", ex);
                 }
             }
         }
 
-        reader = new NFCReader("COM3");
+        String portName = NFCReader.resolveConfiguredPortName();
+        if (portName == null) {
+            System.out.println("ℹ️ NFC reader disabled by configuration.");
+            return;
+        }
+
+        if (!NFCReader.isPortAvailable(portName)) {
+            System.out.println("ℹ️ NFC reader not started. Port " + portName + " is unavailable. Available ports: " + NFCReader.availablePortsSummary());
+            return;
+        }
+
+        reader = new NFCReader(portName);
         nfcReaderThread = new Thread(reader);
+        nfcReaderThread.setName("taska-nfc-reader");
+        nfcReaderThread.setDaemon(true);
         nfcReaderThread.start();
     }
 
@@ -685,9 +589,9 @@ public class AdminDashboard extends Application {
         dashboardHeader.setPrefHeight(70);
         dashboardHeader.setMaxWidth(Double.MAX_VALUE); // Stretch to parent
         dashboardHeader.setStyle(
-            "-fx-background-color: #2e8b57;" +
-            "-fx-border-color: #f4b400; -fx-border-width: 0 0 3 0;" +
-            "-fx-background-image: repeating-linear-gradient(to bottom, transparent, transparent 12px, #FECF4D 12px, #FECF4D 15px);"
+            "-fx-background-color: #2e8b57, #FECF4D;" +
+            "-fx-background-insets: 0, 0 0 3 0;" +
+            "-fx-background-radius: 0, 0;"
         );
         ImageView honeyPot = new ImageView(loadSafe("hive2.png"));
         honeyPot.setFitWidth(54);
@@ -720,9 +624,31 @@ public class AdminDashboard extends Application {
         scannedToday.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-padding: 20px; -fx-background-radius: 50px;");
         notScanned = new Label();
         notScanned.setStyle("-fx-background-color: #F44336; -fx-text-fill: white; -fx-padding: 20px; -fx-background-radius: 50px;");
+        billingAgeReview = new Label("Age Review: 0 fam / 0 inv");
+        billingAgeReview.setStyle("-fx-background-color: #ffdda8; -fx-text-fill: #7a4200; -fx-padding: 20px; -fx-background-radius: 50px;");
+        billingOvertimeReview = new Label("OT Review: 0 fam / 0 inv");
+        billingOvertimeReview.setStyle("-fx-background-color: #fff2a8; -fx-text-fill: #7a5a00; -fx-padding: 20px; -fx-background-radius: 50px;");
+        configureDashboardBillingBadge(
+            billingAgeReview,
+            "Open Billing Ledger with age-review invoices first.",
+            () -> {
+                BillingLedgerView view = new BillingLedgerView();
+                view.showAgeReviewView();
+                setMainContent(view);
+            }
+        );
+        configureDashboardBillingBadge(
+            billingOvertimeReview,
+            "Open Billing Ledger with overtime-review invoices first.",
+            () -> {
+                BillingLedgerView view = new BillingLedgerView();
+                view.showOvertimeReviewView();
+                setMainContent(view);
+            }
+        );
         updateStatistics();
 
-        HBox topRow = new HBox(50, scannedToday, notScanned);
+        HBox topRow = new HBox(28, scannedToday, notScanned, billingAgeReview, billingOvertimeReview);
         topRow.setAlignment(Pos.CENTER);
 
         // Live scan stats
@@ -744,7 +670,7 @@ public class AdminDashboard extends Application {
         Font checkFont = Font.font("JetBrains Mono", FontWeight.NORMAL, 16); // or "Fira Mono", "Consolas", etc.
 
      // For Check-Ins
-     liveIns.setCellFactory(list -> new ListCell<>() {
+    liveIns.setCellFactory(list -> new ListCell<String>() {
          @Override
          protected void updateItem(String item, boolean empty) {
              super.updateItem(item, empty);
@@ -754,7 +680,7 @@ public class AdminDashboard extends Application {
          }
      });
      // For Check-Outs
-     liveOuts.setCellFactory(list -> new ListCell<>() {
+    liveOuts.setCellFactory(list -> new ListCell<String>() {
          @Override
          protected void updateItem(String item, boolean empty) {
              super.updateItem(item, empty);
@@ -861,6 +787,7 @@ public class AdminDashboard extends Application {
 
     private static void refreshDashboardFromFirestoreAsync() {
         if (instance == null || scannedToday == null || notScanned == null) return;
+        if (!UserSession.isLoggedIn()) return;
 
         long now = System.currentTimeMillis();
         if (now - lastDashboardFirestoreRefreshMs < 1200) return;
@@ -868,14 +795,25 @@ public class AdminDashboard extends Application {
 
         CompletableFuture.runAsync(() -> {
             try {
-                Firestore fdb = db();
-                String prefix = today() + "_";
+                FirestoreRestClient client = FirestoreRest.forCurrentUser();
 
-                List<QueryDocumentSnapshot> childDocs = fdb.collection("children").get().get().getDocuments();
-                int totalChildren = childDocs.size();
+                List<FsDocument> childDocs = client.listDocuments("children");
+                List<FsDocument> parentDocs = client.listDocuments("parents");
+                int totalChildren = 0;
                 Map<Long, String> childIdToNfcUid = new HashMap<>();
                 Map<String, String> nfcUidToName = new HashMap<>();
-                for (DocumentSnapshot c : childDocs) {
+                Set<String> ageReviewParents = new HashSet<>();
+                Set<String> overtimeReviewParents = new HashSet<>();
+                int ageReviewInvoices = 0;
+                int overtimeReviewInvoices = 0;
+                for (FsDocument c : childDocs) {
+                    String migratedTo = c.getString("migratedToChildId");
+                    if (migratedTo != null && !migratedTo.isBlank()) {
+                        continue;
+                    }
+
+                    totalChildren++;
+
                     Long cid = c.getLong("child_id");
                     String uid = c.getString("nfc_uid");
                     String nm = c.getString("name");
@@ -887,12 +825,44 @@ public class AdminDashboard extends Application {
                     }
                 }
 
-                Query q = fdb.collection("attendance")
-                        .orderBy(FieldPath.documentId())
-                        .startAt(prefix)
-                        .endAt(prefix + "\uf8ff");
+                for (FsDocument parent : parentDocs) {
+                    String parentId = parent.getId();
+                    if (parentId == null || parentId.isBlank()) {
+                        continue;
+                    }
+                    List<FsDocument> invoices = client.listSubcollectionDocuments("parents", parentId, "invoices");
+                    for (FsDocument invoice : invoices) {
+                        Object billingMeta = invoice.get("billingMeta");
+                        if (!(billingMeta instanceof Map<?, ?>)) {
+                            continue;
+                        }
+                        Map<?, ?> billingMetaMap = (Map<?, ?>) billingMeta;
+                        Object reviewRaw = billingMetaMap.get("managementReviewRecommended");
+                        boolean managementReview = reviewRaw instanceof Boolean
+                            ? (Boolean) reviewRaw
+                            : "true".equalsIgnoreCase(String.valueOf(reviewRaw));
+                        if (!managementReview) {
+                            continue;
+                        }
 
-                List<QueryDocumentSnapshot> docs = q.get().get().getDocuments();
+                        Object ageRaw = billingMetaMap.get("ageOutOfPolicy");
+                        boolean ageReview = ageRaw instanceof Boolean
+                            ? (Boolean) ageRaw
+                            : "true".equalsIgnoreCase(String.valueOf(ageRaw));
+                        if (ageReview) {
+                            ageReviewInvoices++;
+                            ageReviewParents.add(parentId);
+                        } else {
+                            overtimeReviewInvoices++;
+                            overtimeReviewParents.add(parentId);
+                        }
+                    }
+                }
+
+                java.util.Date startOfDay = java.util.Date.from(
+                    java.time.LocalDate.now().atStartOfDay(java.time.ZoneId.systemDefault()).toInstant()
+                );
+                List<FsDocument> docs = client.queryWhereEqual("attendance", "date", startOfDay);
 
                 // Unique scanned children for the day
                 Set<String> scannedChildren = new HashSet<>();
@@ -900,7 +870,7 @@ public class AdminDashboard extends Application {
                 List<Map.Entry<String, Date>> checkIns = new ArrayList<>();
                 List<Map.Entry<String, Date>> checkOuts = new ArrayList<>();
 
-                for (DocumentSnapshot doc : docs) {
+                for (FsDocument doc : docs) {
                     Date in = doc.getDate("check_in_time");
                     Date out = doc.getDate("check_out_time");
 
@@ -913,7 +883,12 @@ public class AdminDashboard extends Application {
                         if (numericChildId != null) {
                             childKey = childIdToNfcUid.getOrDefault(numericChildId, String.valueOf(numericChildId));
                         } else {
-                            childKey = doc.getId();
+                            String id = doc.getId();
+                            if (id != null && id.contains("_")) {
+                                childKey = id.substring(id.indexOf('_') + 1);
+                            } else {
+                                childKey = id;
+                            }
                         }
                     }
 
@@ -934,6 +909,10 @@ public class AdminDashboard extends Application {
 
                 int presentCount = scannedChildren.size();
                 int absentCount = Math.max(0, totalChildren - presentCount);
+                final int finalAgeReviewInvoices = ageReviewInvoices;
+                final int finalOvertimeReviewInvoices = overtimeReviewInvoices;
+                final int finalAgeReviewFamilies = ageReviewParents.size();
+                final int finalOvertimeReviewFamilies = overtimeReviewParents.size();
 
                 SimpleDateFormat tf = new SimpleDateFormat("hh:mm a");
                 List<String> inLines = checkIns.stream()
@@ -946,6 +925,12 @@ public class AdminDashboard extends Application {
                 Platform.runLater(() -> {
                     scannedToday.setText("Scanned Today: " + presentCount);
                     notScanned.setText("Not Yet Scanned: " + absentCount);
+                    if (billingAgeReview != null) {
+                        billingAgeReview.setText("Age Review: " + finalAgeReviewFamilies + " fam / " + finalAgeReviewInvoices + " inv");
+                    }
+                    if (billingOvertimeReview != null) {
+                        billingOvertimeReview.setText("OT Review: " + finalOvertimeReviewFamilies + " fam / " + finalOvertimeReviewInvoices + " inv");
+                    }
 
                     instance.checkInList.getChildren().clear();
                     instance.checkOutList.getChildren().clear();
@@ -976,66 +961,26 @@ public class AdminDashboard extends Application {
                 });
 
                 System.out.println("✅ Dashboard refreshed (Firestore) → In=" + inLines.size() + " | Out=" + outLines.size());
-            } catch (Exception e) {
-                e.printStackTrace();
+            } catch (IOException | InterruptedException e) {
+                logError("dashboard refresh failed", e);
             }
         });
     }
 
     // ✅ Real-time Firestore listener for attendance updates
     private void loadTodayAttendanceRealtime() {
-        System.out.println("✅ Firestore realtime listener enabled.");
-
-        Firestore fdb = db();
-        String todayPrefix = today() + "_";
-
-        fdb.collection("attendance")
-            .addSnapshotListener((snap, err) -> {
-                if (err != null) {
-                    System.err.println("⚠️ Listener error: " + err.getMessage());
-                    return;
-                }
-                if (snap == null) return;
-
-                System.out.println("🔁 Firestore snapshot updated → refreshing Attendance & Dashboard");
-                Platform.runLater(FirestoreService::safeRefresh);
-            });
-    }
-
-    // 🔄 Helper – updates list smoothly without flicker
-    private void syncVBoxWithData(VBox box, Map<String, String> data, String prefix) {
-        ObservableList<Node> children = FXCollections.observableArrayList(box.getChildren());
-        if (children.size() != data.size()) {
-            box.getChildren().clear();
-            data.forEach((name, time) -> {
-                Label lbl = new Label(prefix + " " + name + " – " + time);
-                lbl.setStyle("-fx-font-size: 15px; -fx-text-fill: #2b3b2b;");
-                box.getChildren().add(lbl);
-            });
-            return;
-        }
-        // If same size, verify content differences
-        List<String> current = children.stream()
-            .filter(n -> n instanceof Label)
-            .map(n -> ((Label) n).getText())
-            .toList();
-        List<String> updated = data.entrySet().stream()
-            .map(e -> prefix + " " + e.getKey() + " – " + e.getValue())
-            .toList();
-
-        if (!current.equals(updated)) {
-            box.getChildren().clear();
-            for (String text : updated) {
-                Label lbl = new Label(text);
-                lbl.setStyle("-fx-font-size: 15px; -fx-text-fill: #2b3b2b;");
-                box.getChildren().add(lbl);
-            }
+        // Realtime listeners were previously implemented via the Admin SDK.
+        // In the distributed build (no service account), we rely on the existing UI timer refresh.
+        if (!realtimeModeNoticeShown) {
+            realtimeModeNoticeShown = true;
+            System.out.println("ℹ️ Realtime listener disabled (REST mode). Using periodic refresh.");
         }
     }
 
-    // small formatter
-    private static String formatTime(Date d) {
-        return d.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalTime().withNano(0).toString();
+    private void configureDashboardBillingBadge(Label label, String tooltipText, Runnable action) {
+        label.setCursor(javafx.scene.Cursor.HAND);
+        label.setTooltip(new Tooltip(tooltipText));
+        label.setOnMouseClicked(event -> action.run());
     }
 
     // ✅ Add this
@@ -1067,32 +1012,30 @@ public class AdminDashboard extends Application {
         alert.showAndWait();
     } else {
         try {
-            Firestore fdb = db();
+            FirestoreRestClient client = rest();
 
-            // choose a child_id: max(existing)+1 or timestamp-based if not using numeric IDs
+            // choose a child_id: max(existing)+1 (best-effort)
             int nextId = 1;
-            List<QueryDocumentSnapshot> kids = fdb.collection("children").get().get().getDocuments();
-            for (DocumentSnapshot kd : kids) {
-                if (kd.getLong("child_id") != null) {
-                    nextId = Math.max(nextId, kd.getLong("child_id").intValue() + 1);
-                }
+            for (FsDocument kid : client.listDocuments("children")) {
+                Long v = kid.getLong("child_id");
+                if (v != null) nextId = Math.max(nextId, Math.toIntExact(v + 1L));
             }
 
             Map<String, Object> data = new HashMap<>();
             data.put("child_id", nextId);
             data.put("name", name);
             data.put("parent_contact", parentContact);
-            data.put("nfc_uid", tagId);
+            data.put("nfc_uid", tagId == null ? "" : tagId.trim().toUpperCase());
 
-            fdb.collection("children").add(data).get();
+            client.addDocumentAutoId("children", data);
 
             Alert alert = new Alert(Alert.AlertType.INFORMATION, "Child registered successfully!");
             alert.showAndWait();
             stage.close();
 
             Platform.runLater(FirestoreService::safeRefresh);
-        } catch (Exception ex) {
-            ex.printStackTrace();
+        } catch (IOException | InterruptedException ex) {
+            logError("child registration failed", ex);
         }
     }
 });
@@ -1102,33 +1045,9 @@ public class AdminDashboard extends Application {
         form.setPadding(new Insets(20));
         form.setAlignment(Pos.CENTER);
 
-        // --- Right side: camera preview (local service; safe in static method) ---
-        ImageView camView = new ImageView();
-        camView.setFitWidth(360);
-        camView.setPreserveRatio(true);
-
-        VBox rightPanel = new VBox(12, camView);
-        rightPanel.setAlignment(Pos.CENTER);
-        rightPanel.setPadding(new Insets(20));
-
-        // Use a local FaceCameraService so we don't touch instance fields
-        FaceCameraService localCam = new FaceCameraService();
-        try {
-            localCam.setView(camView);
-            localCam.start(0); // 0 = default webcam
-        } catch (Throwable t) {
-            System.err.println("[RegisterForm] Camera failed to start: " + t);
-        }
-
-        // Stop the local camera when this window closes
-        stage.setOnCloseRequest(ev -> {
-            try { localCam.stop(); } catch (Throwable ignore) {}
-        });
-
-        // --- Put both into a BorderPane ---
+        // --- Put form into a BorderPane ---
         BorderPane root = new BorderPane();
         root.setCenter(form);
-        root.setRight(rightPanel);
 
         Scene scene = new Scene(root, 800, 400);
         stage.setScene(scene);
@@ -1137,39 +1056,57 @@ public class AdminDashboard extends Application {
 
     //UNTUK CHECK IN CHECK OUT
     public static void handleNfcAttendance(String nfcUid) {
-        LocalDate today = LocalDate.now();
-
+        String uid = nfcUid == null ? "" : nfcUid.trim().toUpperCase();
+        if (uid.isEmpty()) {
+            Platform.runLater(() -> showAlert("⚠ Invalid NFC UID", Alert.AlertType.WARNING));
+            return;
+        }
         try {
-            Firestore fdb = db();
+            FirestoreRestClient client = rest();
 
             // 🔍 Find child using NFC UID
-            QuerySnapshot qs = fdb.collection("children")
-                    .whereEqualTo("nfc_uid", nfcUid)
-                    .limit(1)
-                    .get()
-                    .get();
-
-            if (qs.isEmpty()) {
+            List<FsDocument> hits = client.queryWhereEqual("children", "nfc_uid", uid);
+            if (hits == null || hits.isEmpty()) {
                 Platform.runLater(() -> showAlert("⚠ This card is not registered!", Alert.AlertType.WARNING));
                 return;
             }
 
-            DocumentSnapshot childDoc = qs.getDocuments().get(0);
+            // Prefer the active child doc (skip redirect docs left behind by migration).
+            FsDocument childDoc = null;
+            for (FsDocument d : hits) {
+                String migratedTo = d.getString("migratedToChildId");
+                if (migratedTo == null || migratedTo.trim().isEmpty()) {
+                    childDoc = d;
+                    break;
+                }
+            }
+            if (childDoc == null) {
+                FsDocument legacy = hits.get(0);
+                String migratedTo = legacy.getString("migratedToChildId");
+                if (migratedTo != null && !migratedTo.trim().isEmpty()) {
+                    childDoc = client.getDocument("children", migratedTo.trim());
+                }
+            }
+            if (childDoc == null) {
+                Platform.runLater(() -> showAlert("⚠ This card is not registered!", Alert.AlertType.WARNING));
+                return;
+            }
+
+            String childId = childDoc.getId();
             String childName = childDoc.getString("name");
 
             // 🧠 Check if attendance already exists
-            String docId = today() + "_" + nfcUid;
-            DocumentReference attRef = fdb.collection("attendance").document(docId);
-            DocumentSnapshot att = attRef.get().get();
+            String docId = today() + "_" + childId;
+            FsDocument att = client.getDocument("attendance", docId);
 
-            Date checkIn = att.exists() ? att.getDate("check_in_time") : null;
-            Date checkOut = att.exists() ? att.getDate("check_out_time") : null;
+            Date checkIn = att == null ? null : att.getDate("check_in_time");
+            Date checkOut = att == null ? null : att.getDate("check_out_time");
 
             if (checkIn == null) {
-                recordCheckIn(nfcUid, childName);
+                recordCheckIn(client, childId, uid, childName);
                 Platform.runLater(() -> showAlert("✅ Check-in successful for " + childName, Alert.AlertType.INFORMATION));
             } else if (checkOut == null) {
-                recordCheckOut(nfcUid, childName);
+                recordCheckOut(client, childId);
                 Platform.runLater(() -> showAlert("✅ Check-out successful for " + childName, Alert.AlertType.INFORMATION));
             } else {
                 Platform.runLater(() -> showAlert("⚠ Already checked out today for " + childName, Alert.AlertType.WARNING));
@@ -1179,32 +1116,28 @@ public class AdminDashboard extends Application {
             Platform.runLater(FirestoreService::safeRefresh);
 
         } catch (Exception e) {
-            e.printStackTrace();
+            logError("handle NFC attendance", e);
             Platform.runLater(() -> showAlert("❌ Firestore error: " + e.getMessage(), Alert.AlertType.ERROR));
         }
     }
     
-    private static void recordCheckIn(String nfcUid, String childName) throws Exception {
-        Firestore fdb = db();
-        String docId = today() + "_" + nfcUid;
+    private static void recordCheckIn(FirestoreRestClient client, String childId, String nfcUid, String childName) throws Exception {
+        String docId = today() + "_" + childId;
 
-        DocumentSnapshot childDoc = fdb.collection("children")
-                .whereEqualTo("nfc_uid", nfcUid)
-                .limit(1)
-                .get()
-                .get()
-                .getDocuments()
-                .get(0);
-
-        String parentName = childDoc.getString("parentName") != null ? childDoc.getString("parentName") : "-";
-        String teacherName = childDoc.getString("teacher_username") != null ? childDoc.getString("teacher_username") : "-";
+        FsDocument childDoc = client.getDocument("children", childId);
+        String parentName = (childDoc != null && childDoc.getString("parentName") != null)
+            ? childDoc.getString("parentName")
+            : "-";
 
         Map<String, Object> data = new HashMap<>();
         data.put("date", today());
-        data.put("childId", nfcUid);
+        data.put("childId", childId);
+        data.put("childRef", new FirestoreRestClient.ReferenceValue(client.referenceValue("children", childId)));
+        data.put("nfc_uid", nfcUid);
         data.put("name", childName);
         data.put("parentName", parentName);
-        data.put("teacher", teacherName);
+        // No designated teacher per child.
+        data.put("teacher", "");
         data.put("check_in_time", new Date());
         data.put("checkin_method", "NFC");
         data.put("isPresent", true);
@@ -1213,12 +1146,11 @@ public class AdminDashboard extends Application {
         data.put("manualCheckout", false);
         data.put("reason", "Default");
 
-        fdb.collection("attendance").document(docId).set(data, SetOptions.merge()).get();
+        client.patchDocumentMerge("attendance", docId, data);
     }
 
-    private static void recordCheckOut(String nfcUid, String childName) throws Exception {
-        Firestore fdb = db();
-        String docId = today() + "_" + nfcUid;
+    private static void recordCheckOut(FirestoreRestClient client, String childId) throws Exception {
+        String docId = today() + "_" + childId;
 
         Map<String, Object> data = new HashMap<>();
         data.put("check_out_time", new Date());
@@ -1227,7 +1159,7 @@ public class AdminDashboard extends Application {
         data.put("manualCheckout", false);
         data.put("manual_out", false);
 
-        fdb.collection("attendance").document(docId).set(data, SetOptions.merge()).get();
+        client.patchDocumentMerge("attendance", docId, data);
     }
 
     public static void showToast(Stage owner, String message) {
@@ -1276,77 +1208,60 @@ public class AdminDashboard extends Application {
     
     @Override
     public void stop() {
-        try {
-            if (camWin != null) { camWin.stop(); camWin = null; }
-        } catch (Exception ignored) {}
     }
 
     private Image loadSafe(String fileName) {
         try {
-            // Try from compiled classpath (bin/nfc)
-            java.net.URL url = getClass().getResource(fileName);
-            if (url == null) url = getClass().getResource("/nfc/" + fileName);
+            // 1) Try classpath (preferred for packaged app)
+            java.net.URL url = getClass().getResource("/nfc/" + fileName);
             if (url != null) return new Image(url.toExternalForm());
 
-            if (url == null) {
-                System.err.println("❌ Critical image missing: " + fileName);
-                Platform.runLater(() -> {
-                    Alert alert = new Alert(Alert.AlertType.ERROR);
-                    alert.setTitle("Missing Assets");
-                    alert.setHeaderText("Critical file missing!");
-                    alert.setContentText("Please ensure all images are in /src/nfc/ before launching the app.");
-                    alert.showAndWait();
-                    Platform.exit();
-                });
-                return new Image("https://via.placeholder.com/60x60.png?text=Missing");
-            }
-
-            // Fallback: look directly in source folders
+            // 2) Dev fallback: load directly from src folder
             File localFile = new File("src/nfc/" + fileName);
             if (localFile.exists()) return new Image(localFile.toURI().toString());
 
-            System.out.println("⚠️ Missing image: " + fileName);
+            // Missing asset: warn once, but do not crash the app
+            System.err.println("⚠️ Missing image: " + fileName);
+            if (!missingAssetsWarningShown) {
+                missingAssetsWarningShown = true;
+                Platform.runLater(() -> {
+                    Alert alert = new Alert(Alert.AlertType.WARNING);
+                    alert.setTitle("Missing Assets");
+                    alert.setHeaderText("Some images could not be loaded");
+                    alert.setContentText(
+                        "Some UI images are missing from the classpath. "
+                        + "If you are running from source, rebuild to copy assets into bin/nfc."
+                    );
+                    alert.show();
+
+                    PauseTransition delay = new PauseTransition(javafx.util.Duration.seconds(4));
+                    delay.setOnFinished(e -> alert.close());
+                    delay.play();
+                });
+            }
+
             return new Image("https://via.placeholder.com/60x60.png?text=Missing");
         } catch (Exception e) {
-            e.printStackTrace();
+            logError("loadSafe image fallback", e);
             return new Image("https://via.placeholder.com/60x60.png?text=Error");
         }
     }
 
     // ✅ Shared function so both dashboard + pie chart use identical attendance logic
     public static int[] getTodayStats() throws Exception {
-        Firestore fdb = db();
+        FirestoreRestClient client = rest();
 
         // Get all children
-        List<QueryDocumentSnapshot> allKids = fdb.collection("children").get().get().getDocuments();
-        int totalChildren = allKids.size();
+        int totalChildren = client.listDocuments("children").size();
 
         // Get today's attendance
-        List<QueryDocumentSnapshot> allDocs = fdb.collection("attendance").get().get().getDocuments();
-        List<DocumentSnapshot> todayDocs = new ArrayList<>();
-        String todayStr = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
-
-        for (DocumentSnapshot d : allDocs) {
-            String dateField = d.getString("date");
-            if (dateField == null) continue;
-            boolean sameDate = false;
-            try {
-                SimpleDateFormat parser =
-                    new SimpleDateFormat("EEE MMM dd yyyy HH:mm:ss 'GMT'Z", Locale.ENGLISH);
-                Date parsed = parser.parse(dateField.replace(" (Malaysia Time)", ""));
-                LocalDate parsedDate = parsed.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-                sameDate = parsedDate.equals(LocalDate.now());
-            } catch (Exception ex) {
-                sameDate = dateField.contains(todayStr) || dateField.equals(todayStr);
-            }
-            if (sameDate) todayDocs.add(d);
-        }
+        List<FsDocument> todayDocs = client.queryWhereEqual("attendance", "date", today());
 
         // Unique per child logic
         Map<String, Boolean> childPresenceMap = new HashMap<>();
-        for (DocumentSnapshot d : todayDocs) {
-            String childName = d.getString("name"); // ✅ corrected field name
-            boolean hasCheckIn = d.contains("check_in_time") && d.get("check_in_time") != null;
+        for (FsDocument d : todayDocs) {
+            String childName = d.getString("name");
+            boolean hasCheckIn = d.getDate("check_in_time") != null;
             boolean hasManualIn =
                 Boolean.TRUE.equals(d.getBoolean("manual_in")) ||
                 Boolean.TRUE.equals(d.getBoolean("manualIn")) ||

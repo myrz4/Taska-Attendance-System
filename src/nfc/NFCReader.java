@@ -9,22 +9,66 @@ import java.util.*;
 import javafx.application.Platform;
 import javafx.scene.control.Alert;
 
-import com.google.api.core.ApiFuture;
-import com.google.cloud.firestore.*;
-
 public class NFCReader implements Runnable {
+
+    private static final String DEFAULT_PORT = "COM3";
 
     private SerialPort serialPort;
     private final String portName;
     private volatile boolean running = true;
 
-    // Firestore helper
-    private static Firestore db() {
-        return FirestoreService.db(); // unified Firestore connection
+    private static void logError(String context, Exception error) {
+        System.err.println("NFCReader: " + context + " - " + error.getMessage());
+        error.printStackTrace(System.err);
     }
 
     public NFCReader(String portName) {
         this.portName = portName;
+    }
+
+    public static String resolveConfiguredPortName() {
+        String configured = System.getProperty("taska.nfc.port");
+        if (configured == null || configured.isBlank()) {
+            configured = System.getenv("TASKA_NFC_PORT");
+        }
+        if (configured == null || configured.isBlank()) {
+            configured = DEFAULT_PORT;
+        }
+
+        configured = configured.trim();
+        if (configured.equalsIgnoreCase("disabled") || configured.equalsIgnoreCase("none")) {
+            return null;
+        }
+
+        return configured;
+    }
+
+    public static boolean isPortAvailable(String portName) {
+        if (portName == null || portName.isBlank()) {
+            return false;
+        }
+
+        for (SerialPort port : SerialPort.getCommPorts()) {
+            String systemName = String.valueOf(port.getSystemPortName());
+            String descriptiveName = String.valueOf(port.getDescriptivePortName());
+            if (portName.equalsIgnoreCase(systemName) || portName.equalsIgnoreCase(descriptiveName)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static String availablePortsSummary() {
+        SerialPort[] ports = SerialPort.getCommPorts();
+        if (ports == null || ports.length == 0) {
+            return "<none>";
+        }
+
+        List<String> names = new ArrayList<>();
+        for (SerialPort port : ports) {
+            names.add(String.valueOf(port.getSystemPortName()));
+        }
+        return String.join(", ", names);
     }
 
     @Override
@@ -66,7 +110,7 @@ public class NFCReader implements Runnable {
                 }
 
             } catch (Exception e) {
-                e.printStackTrace();
+                logError("serial reader loop failed", e);
             } finally {
                 if (serialPort != null && serialPort.isOpen()) {
                     serialPort.closePort();
@@ -94,40 +138,61 @@ public class NFCReader implements Runnable {
 
     private void processTag(String tagId) {
         try {
-            Firestore fdb = db();
+            FirestoreRestClient client = FirestoreRest.forCurrentUser();
 
             // 🔍 Step 1: Find the child document with this NFC UID
-            ApiFuture<QuerySnapshot> queryFuture = fdb.collection("children")
-                    .whereEqualTo("nfc_uid", tagId)
-                    .limit(1)
-                    .get();
-            QuerySnapshot querySnapshot = queryFuture.get();
+            List<FsDocument> matches = client.queryWhereEqual("children", "nfc_uid", tagId);
 
-            if (querySnapshot.isEmpty()) {
+            if (matches == null || matches.isEmpty()) {
                 System.out.println("❌ Unknown card detected!");
-                Platform.runLater(() -> AdminDashboard.handleNfcAttendance(tagId));
+                Platform.runLater(() -> showAlert("❌ Unknown card detected!", Alert.AlertType.WARNING));
                 return;
             }
 
-            DocumentSnapshot childDoc = querySnapshot.getDocuments().get(0);
-            int childId = childDoc.getLong("child_id").intValue();
+            // Prefer the active child doc (skip redirect docs left behind by migration).
+            FsDocument childDoc = null;
+            for (FsDocument d : matches) {
+                String migratedTo = d.getString("migratedToChildId");
+                if (migratedTo == null || migratedTo.trim().isEmpty()) {
+                    childDoc = d;
+                    break;
+                }
+            }
+            if (childDoc == null) {
+                FsDocument legacy = matches.get(0);
+                String migratedTo = legacy.getString("migratedToChildId");
+                if (migratedTo != null && !migratedTo.trim().isEmpty()) {
+                    childDoc = client.getDocument("children", migratedTo.trim());
+                }
+            }
+            if (childDoc == null) {
+                System.out.println("❌ Unknown card detected!");
+                Platform.runLater(() -> showAlert("❌ Unknown card detected!", Alert.AlertType.WARNING));
+                return;
+            }
+
+            String childDocId = childDoc.getId();
+            Long numericChildId = childDoc.getLong("child_id");
             String childName = childDoc.getString("name");
 
             LocalDate today = LocalDate.now();
             LocalDateTime now = LocalDateTime.now();
 
-            // Use NFC UID as the stable key (matches AttendanceView doc IDs)
-            String docId = today + "_" + tagId;
-            DocumentReference attRef = fdb.collection("attendance").document(docId);
-            DocumentSnapshot attSnap = attRef.get().get();
+            // Use stable childDocId as the key (NFC UID is replaceable)
+            String docId = today + "_" + childDocId;
+            FsDocument attSnap = client.getDocument("attendance", docId);
 
             Date firestoreDate = Date.from(today.atStartOfDay(ZoneId.systemDefault()).toInstant());
 
+            String childRef = client.referenceValue("children", childDocId);
+
             // ⚙️ Case 1: No document — create new with check-in
-            if (!attSnap.exists()) {
+            if (attSnap == null) {
                 Map<String, Object> newData = new HashMap<>();
                 // Canonical fields used by AttendanceView
-                newData.put("childId", tagId);
+                newData.put("childId", childDocId);
+                newData.put("childRef", new FirestoreRestClient.ReferenceValue(childRef));
+                newData.put("nfc_uid", tagId);
                 newData.put("name", childName);
                 newData.put("date", firestoreDate);
                 newData.put("check_in_time", new Date());
@@ -136,16 +201,22 @@ public class NFCReader implements Runnable {
                 newData.put("checkin_method", "NFC");
 
                 // Back-compat fields (older code/data)
-                newData.put("child_id", childId);
+                if (numericChildId != null) {
+                    newData.put("child_id", numericChildId.intValue());
+                }
                 newData.put("dateString", today.toString());
                 newData.put("is_present", true);
-                attRef.set(newData).get();
+
+                client.patchDocumentMerge("attendance", docId, newData);
 
                 System.out.println("✅ Attendance recorded (check-in) for: " + childName);
                 Platform.runLater(() -> showAlert("Check-in successful for " + childName, Alert.AlertType.INFORMATION));
 
                 // 🟢 Instantly refresh dashboard + attendance UI
-                FirestoreService.forceFullRefresh();
+                Platform.runLater(() -> {
+                    AttendanceView.refreshUI();
+                    AttendanceView.updateChartFromStatic();
+                });
                 return;
             }
 
@@ -155,27 +226,42 @@ public class NFCReader implements Runnable {
 
             if (checkIn == null) {
                 // Missing check-in: update it
-                attRef.update(
-                    "check_in_time", new Date(),
-                    "isPresent", true,
-                    "is_present", true,
-                    "date", firestoreDate,
-                    "childId", tagId,
-                    "name", childName
-                ).get();
+                Map<String, Object> update = new HashMap<>();
+                update.put("check_in_time", new Date());
+                update.put("isPresent", true);
+                update.put("is_present", true);
+                update.put("date", firestoreDate);
+                update.put("childId", childDocId);
+                update.put("childRef", new FirestoreRestClient.ReferenceValue(childRef));
+                update.put("nfc_uid", tagId);
+                update.put("name", childName);
+                update.put("checkin_method", "NFC");
+                if (numericChildId != null) {
+                    update.put("child_id", numericChildId.intValue());
+                }
+                update.put("dateString", today.toString());
+
+                client.patchDocumentMerge("attendance", docId, update);
                 System.out.println("✅ Check-in updated for: " + childName);
                 Platform.runLater(() -> showAlert("Check-in updated for " + childName, Alert.AlertType.INFORMATION));
 
             } else if (checkOut == null) {
                 // Normal check-out (no 8h limit)
-                attRef.update(
-                    "check_out_time", new Date(),
-                    "isPresent", true,
-                    "is_present", true,
-                    "date", firestoreDate,
-                    "childId", tagId,
-                    "name", childName
-                ).get();
+                Map<String, Object> update = new HashMap<>();
+                update.put("check_out_time", new Date());
+                update.put("isPresent", true);
+                update.put("is_present", true);
+                update.put("date", firestoreDate);
+                update.put("childId", childDocId);
+                update.put("childRef", new FirestoreRestClient.ReferenceValue(childRef));
+                update.put("nfc_uid", tagId);
+                update.put("name", childName);
+                if (numericChildId != null) {
+                    update.put("child_id", numericChildId.intValue());
+                }
+                update.put("dateString", today.toString());
+
+                client.patchDocumentMerge("attendance", docId, update);
                 System.out.println("✅ Check-out updated for: " + childName);
                 Platform.runLater(() -> showAlert("Check-out successful for " + childName, Alert.AlertType.INFORMATION));
             } else {
@@ -184,10 +270,13 @@ public class NFCReader implements Runnable {
             }
 
             // 🟢 Final unified refresh (runs once per scan)
-            Platform.runLater(FirestoreService::forceFullRefresh);
+            Platform.runLater(() -> {
+                AttendanceView.refreshUI();
+                AttendanceView.updateChartFromStatic();
+            });
 
         } catch (Exception e) {
-            e.printStackTrace();
+            logError("tag processing failed", e);
             Platform.runLater(() ->
                 showAlert("Firestore error: " + e.getMessage(), Alert.AlertType.ERROR)
             );

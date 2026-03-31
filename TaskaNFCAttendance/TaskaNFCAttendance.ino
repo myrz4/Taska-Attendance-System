@@ -182,8 +182,9 @@ void loop() {
 
   String childDocPath = "children/" + nfcUID;
   if (!Firebase.Firestore.getDocument(&fbdo, FIREBASE_PROJECT_ID, FIRESTORE_DB_ID, childDocPath.c_str())) {
-    showLCD("❌ No record", "Please check card");
-    Serial.println("❌ Child not found for UID " + nfcUID);
+    showLCD("No record", "Check card/rules");
+    Serial.println("❌ Child lookup failed for UID: " + nfcUID);
+    Serial.println("   Reason: " + fbdo.errorReason());
     delay(2000);
     lcdSplash();
     return;

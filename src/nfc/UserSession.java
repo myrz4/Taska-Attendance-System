@@ -1,10 +1,5 @@
 package nfc;
 
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseAuthException;
-import com.google.firebase.auth.FirebaseToken;
-import com.google.firebase.auth.UserRecord;
-
 /**
  * UserSession
  * Handles Firebase-authenticated session info (no UI changes required).
@@ -13,6 +8,7 @@ public class UserSession {
     private static String idToken;
     private static String uid;
     private static String email;
+    private static String role;
     
     // --- UI session fields (Admin Dashboard) ---
     private static String username;
@@ -36,37 +32,7 @@ public class UserSession {
         idToken = token;
         uid = uidVal;
         email = emailVal;
-    }
-
-    /**
-     * Verify a Firebase ID token and populate session fields automatically.
-     * Call this right after FirebaseAuth sign-in if you receive an ID token.
-     */
-    public static boolean verifyAndSet(String token) {
-        try {
-            FirebaseToken decoded = FirebaseAuth.getInstance().verifyIdToken(token);
-            idToken = token;
-            uid = decoded.getUid();
-            email = decoded.getEmail();
-            return true;
-        } catch (FirebaseAuthException e) {
-            e.printStackTrace();
-            clear();
-            return false;
-        }
-    }
-
-    /**
-     * Refresh current user data from Firebase if UID is known.
-     */
-    public static void refreshFromFirebase() {
-        if (uid == null) return;
-        try {
-            UserRecord user = FirebaseAuth.getInstance().getUser(uid);
-            email = user.getEmail();
-        } catch (FirebaseAuthException e) {
-            e.printStackTrace();
-        }
+        role = JwtUtils.extractStringClaim(token, "role");
     }
 
     // --- Getters (UI uses these exactly the same way) ---
@@ -90,13 +56,23 @@ public class UserSession {
     public static String getIdToken() { return idToken; }
     public static String getUid() { return uid; }
     public static String getEmail() { return email; }
+    public static String getRole() { return role; }
     public static String getToken() { return idToken; }
     public static boolean isLoggedIn() { return idToken != null; }
+
+    public static boolean isAdmin() {
+        return "admin".equalsIgnoreCase(role);
+    }
+
+    public static boolean isTeacher() {
+        return "teacher".equalsIgnoreCase(role);
+    }
 
     public static void clear() {
         idToken = null;
         uid = null;
         email = null;
+        role = null;
         username = null;
         name = null;
         profilePicture = null;
