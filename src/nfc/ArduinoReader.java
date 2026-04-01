@@ -20,22 +20,27 @@ public class ArduinoReader {
         }
 
         SerialPort comPort = SerialPort.getCommPort(portName);
+        serialPort = comPort;
         comPort.setBaudRate(115200);
 
         if (comPort.openPort()) {
             System.out.println("✅ Arduino connected!");
 
-            Scanner scanner = new Scanner(comPort.getInputStream());
+            final Scanner scanner = new Scanner(comPort.getInputStream());
             new Thread(() -> {
-                while (scanner.hasNextLine()) {
-                    String line = scanner.nextLine().trim();
-                    System.out.println("📥 Arduino says: " + line);
+                try {
+                    while (scanner.hasNextLine()) {
+                        String line = scanner.nextLine().trim();
+                        System.out.println("📥 Arduino says: " + line);
 
-                    if (line.startsWith("NFC Tag Detected:")) {
-                        String uid = line.replace("NFC Tag Detected:", "").trim();
-                        System.out.println("🎯 UID Read: " + uid);
-                        saveAttendance(uid);
+                        if (line.startsWith("NFC Tag Detected:")) {
+                            String uid = line.replace("NFC Tag Detected:", "").trim();
+                            System.out.println("🎯 UID Read: " + uid);
+                            saveAttendance(uid);
+                        }
                     }
+                } finally {
+                    scanner.close();
                 }
             }).start();
 
@@ -54,6 +59,6 @@ public class ArduinoReader {
 	}
 
     private static void saveAttendance(String uid) {
-        System.out.println("⚠️ MySQL code disabled — Firestore integration coming soon.");
+        System.out.println("⚠️ MySQL code disabled — Firestore integration coming soon for UID: " + uid);
     }
 }

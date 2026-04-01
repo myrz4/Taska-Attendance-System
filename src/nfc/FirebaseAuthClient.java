@@ -54,7 +54,7 @@ public class FirebaseAuthClient {
             throw new IllegalArgumentException("Missing refreshToken");
         }
 
-        URL url = new URL(REFRESH_URL + apiKey());
+        URL url = java.net.URI.create(REFRESH_URL + apiKey()).toURL();
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
         conn.setRequestMethod("POST");
         conn.setDoOutput(true);
@@ -88,7 +88,7 @@ public class FirebaseAuthClient {
     }
 
     private static FirebaseUser authCall(String endpoint, String email, String password) throws IOException {
-        URL url = new URL(endpoint);
+        URL url = java.net.URI.create(endpoint).toURL();
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
         conn.setRequestMethod("POST");
         conn.setDoOutput(true);
@@ -121,7 +121,6 @@ public class FirebaseAuthClient {
         throw new IOException("Auth failed: " + body);
     }
 
-    @SuppressWarnings("unchecked")
     private static String extractFirebaseErrorCode(String body) {
         try {
             Map<?, ?> m = gson.fromJson(body, Map.class);
@@ -129,7 +128,7 @@ public class FirebaseAuthClient {
             if (!(err instanceof Map)) return null;
             Object msg = ((Map<?, ?>) err).get("message");
             return msg == null ? null : String.valueOf(msg);
-        } catch (Exception ignored) {
+        } catch (RuntimeException ignored) {
             return null;
         }
     }

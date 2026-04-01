@@ -7,14 +7,15 @@ function parseArgs(argv) {
   const out = {
     serviceAccount: "",
     projectId: "",
-    provider: "billplz",
-    mode: "redirect",
+    provider: "dummy",
+    mode: "dummy",
     enabled: true,
     isSandbox: true,
     collectionId: "",
     returnUrl: "",
     callbackUrl: "",
     clearCallbackUrl: false,
+    allowRealProvider: false,
   };
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -75,6 +76,10 @@ function parseArgs(argv) {
       out.clearCallbackUrl = true;
       continue;
     }
+    if (token === "--allow-real-provider") {
+      out.allowRealProvider = true;
+      continue;
+    }
   }
 
   return out;
@@ -111,7 +116,10 @@ async function main() {
     throw new Error("No service account JSON found. Pass --serviceAccount <path>.");
   }
 
-  const provider = String(args.provider || "billplz").trim().toLowerCase();
+  const provider = String(args.provider || "dummy").trim().toLowerCase();
+  if (provider !== "dummy" && !args.allowRealProvider) {
+    throw new Error("Refusing to configure a real payment provider without --allow-real-provider. Use dummy mode for now.");
+  }
   const requiresRedirectConfig = provider !== "dummy";
 
   if (requiresRedirectConfig && !args.collectionId) {
@@ -138,6 +146,7 @@ async function main() {
     mode: String(args.mode || (provider === "dummy" ? "dummy" : "redirect")).trim().toLowerCase(),
     enabled: Boolean(args.enabled),
     isSandbox: Boolean(args.isSandbox),
+    allowRealProvider: Boolean(args.allowRealProvider && provider !== "dummy"),
     collectionId: requiresRedirectConfig ? String(args.collectionId).trim() : "",
     returnUrl: requiresRedirectConfig ? String(args.returnUrl).trim() : "",
   };

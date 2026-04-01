@@ -1,7 +1,13 @@
 {
   "scripts": {
+    "ci:billing-gate": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/ci-billing-gate.ps1",
+    "e2e:attendance": "npm --prefix teacher_app_taskazurah/functions run e2e:attendance",
+    "e2e:casual-transit": "npm --prefix teacher_app_taskazurah/functions run e2e:casual-transit",
     "e2e:billing": "npm --prefix teacher_app_taskazurah/functions run e2e:billing",
+    "check:billing-predeploy": "node tools/check-billing-predeploy.js",
     "deploy:billing-functions": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/deploy-billing-functions.ps1",
+    "release:billing-rollout": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/release-billing-rollout.ps1",
+    "smoke:postdeploy-billing": "node tools/smoke-billing-postdeploy.js",
     "smoke:demo-billing": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"npm run use:demo-payments; npm run verify:billing-rollout; npm run e2e:billing\"",
     "smoke:dummy-billing": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"npm run use:dummy-payments; npm run verify:billing-rollout; npm run e2e:billing\"",
     "use:demo-payments": "node tools/set-billing-gateway-config.js --provider dummy --mode dummy --enable",

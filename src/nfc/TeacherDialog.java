@@ -23,6 +23,10 @@ import javafx.stage.Stage;
 
 public class TeacherDialog {
 
+    public static TeacherDialog open(Map<String, Object> data, Runnable refresh) {
+        return new TeacherDialog(data, refresh);
+    }
+
     private static int parseMoneyToSen(String input, int fallbackSen) {
         if (input == null) return fallbackSen;
         String s = input.trim().replace(",", "");
@@ -30,7 +34,7 @@ public class TeacherDialog {
         try {
             double v = Double.parseDouble(s);
             return Math.max(0, (int) Math.round(v * 100.0));
-        } catch (Exception ignored) {
+        } catch (NumberFormatException ignored) {
             return fallbackSen;
         }
     }
@@ -54,21 +58,13 @@ public class TeacherDialog {
         try {
             String ct = Files.probeContentType(file.toPath());
             if (ct != null && !ct.isBlank()) return ct;
-        } catch (Exception ignored) {
+        } catch (java.io.IOException | SecurityException ignored) {
         }
         String name = file.getName().toLowerCase();
         if (name.endsWith(".png")) return "image/png";
         if (name.endsWith(".webp")) return "image/webp";
         if (name.endsWith(".gif")) return "image/gif";
         return "image/jpeg";
-    }
-
-    private static void showUploadDisabledAlert() {
-        new Alert(
-            Alert.AlertType.INFORMATION,
-            "Image upload is disabled in REST mode (no service-account keys in the app).\n\n"
-                + "Upload the image using Firebase Console/Storage tools, then paste the download URL here."
-        ).showAndWait();
     }
 
     private static String extLower(File f) {
@@ -81,6 +77,7 @@ public class TeacherDialog {
 
 
     public TeacherDialog(Map<String, Object> data, Runnable refresh) {
+        Map<String, Object> editData = data == null ? java.util.Collections.<String, Object>emptyMap() : data;
         Stage stage = new Stage();
         boolean isEdit = (data != null);
 
@@ -156,7 +153,7 @@ public class TeacherDialog {
                     if (!ext.isBlank()) object += "." + ext;
 
                     return FirebaseStorageRest.uploadPublicDownloadUrl(object, bytes, ct);
-                } catch (Exception ex) {
+                } catch (java.io.IOException | InterruptedException | RuntimeException ex) {
                     throw new RuntimeException(ex);
                 }
             }).whenComplete((url, err) -> Platform.runLater(() -> {
@@ -164,7 +161,7 @@ public class TeacherDialog {
                 uploadImageBtn.setText("Upload...");
 
                 if (err != null) {
-                    err.printStackTrace();
+                    System.err.println("TeacherDialog: upload failed - " + err.getMessage());
                     new Alert(Alert.AlertType.ERROR, "Upload failed: " + err.getMessage()).showAndWait();
                     return;
                 }
@@ -236,7 +233,7 @@ public class TeacherDialog {
                     }
                     client.addDocumentAutoId("teachers", m);
                 } else {
-                    String teacherId = safeString(data.get("id")).trim();
+                    String teacherId = safeString(editData.get("id")).trim();
                     if (teacherId.isEmpty()) {
                         new Alert(Alert.AlertType.ERROR, "Missing teacher ID.").showAndWait();
                         return;
@@ -247,8 +244,8 @@ public class TeacherDialog {
                 refresh.run();
                 stage.close();
 
-            } catch (Exception ex) {
-                ex.printStackTrace();
+            } catch (java.io.IOException | InterruptedException | RuntimeException ex) {
+                System.err.println("TeacherDialog: failed to save teacher - " + ex.getMessage());
                 new Alert(Alert.AlertType.ERROR, "Failed to save teacher: " + ex.getMessage()).showAndWait();
             }
         });

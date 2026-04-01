@@ -1,16 +1,10 @@
 package nfc;
 
 import java.io.IOException;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
-import java.time.Duration;
 import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -36,11 +30,6 @@ public final class ImageCache {
         t.setDaemon(true);
         return t;
     });
-
-    private static final HttpClient HTTP = HttpClient.newBuilder()
-        .followRedirects(HttpClient.Redirect.NORMAL)
-        .connectTimeout(Duration.ofSeconds(10))
-        .build();
 
     private ImageCache() {}
 
@@ -92,41 +81,12 @@ public final class ImageCache {
 
         CompletableFuture.runAsync(() -> {
             try {
-                downloadToFile(normalized, cached);
+                RemoteImageFetcher.downloadToFile(normalized, cached);
             } catch (Exception ignored) {
             } finally {
                 IN_FLIGHT.remove(normalized);
             }
         }, EXEC);
-    }
-
-    private static void downloadToFile(String url, Path target) throws IOException, InterruptedException {
-        try {
-            Files.createDirectories(target.getParent());
-        } catch (Exception ignored) {
-        }
-
-        Path tmp = target.resolveSibling(target.getFileName().toString() + ".tmp");
-
-        HttpRequest req = HttpRequest.newBuilder()
-            .uri(URI.create(url))
-            .timeout(Duration.ofSeconds(20))
-            .GET()
-            .build();
-
-        HttpResponse<Path> resp = HTTP.send(req, HttpResponse.BodyHandlers.ofFile(tmp));
-        int sc = resp.statusCode();
-        if (sc < 200 || sc >= 300) {
-            try { Files.deleteIfExists(tmp); } catch (Exception ignored) {}
-            return;
-        }
-
-        try {
-            Files.move(tmp, target, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
-        } catch (Exception e) {
-            // Atomic move may not be supported; fall back.
-            Files.move(tmp, target, StandardCopyOption.REPLACE_EXISTING);
-        }
     }
 
     private static Path cachedPathForUrl(String url) {

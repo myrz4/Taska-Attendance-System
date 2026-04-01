@@ -51,3 +51,29 @@ powershell -NoProfile -ExecutionPolicy Bypass -File tools\run-javafx.ps1 -NfcPor
 - Use a specific port from the run helper: `powershell -NoProfile -ExecutionPolicy Bypass -File tools\run-javafx.ps1 -MainClass nfc.AdminDashboard -NfcPort COM4`
 - Use a JVM/system property manually: `-Dtaska.nfc.port=COM4`
 - Accepted disable values in the app: `disabled` or `none`
+
+# Billing Rollout
+
+Pre-deploy billing catalog check:
+
+```powershell
+node tools\check-billing-predeploy.js
+```
+
+Live post-deploy billing smoke:
+
+```powershell
+node tools\smoke-billing-postdeploy.js
+```
+
+Recommended one-command billing release handoff:
+
+```powershell
+npm run release:billing-rollout
+```
+
+Safe no-deploy validation of the release flow:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File tools\release-billing-rollout.ps1 -SkipDeploy
+```

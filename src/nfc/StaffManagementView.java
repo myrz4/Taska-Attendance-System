@@ -5,17 +5,12 @@ import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
-import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import nfc.StaffManagementView.Admin;
 import javafx.scene.layout.Priority;
 
-import java.io.File;
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -51,7 +46,17 @@ public class StaffManagementView extends VBox {
         mainBody.setPadding(new Insets(20));
         mainBody.setAlignment(Pos.TOP_LEFT);
 
-        buildTable();
+        StaffManagementTableSupport.setupTable(table, data, new StaffManagementTableSupport.StaffActions() {
+            @Override
+            public void edit(Admin admin) {
+                showEdit(admin);
+            }
+
+            @Override
+            public void delete(Admin admin) {
+                CRUDDialogs.showDeleteAdminDialog(admin, StaffManagementView.this::reload);
+            }
+        });
 
         Button addBtn = new Button("Add New Staff");
         addBtn.setStyle("-fx-background-color: #FFCB3C;-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #222; -fx-background-radius: 28px;");
@@ -79,225 +84,31 @@ public class StaffManagementView extends VBox {
         reload();
     }
 
-    private void buildTable() {
-        table.setItems(data);
-        table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-
-        TableColumn<Admin, String> usernameCol = new TableColumn<>("Username");
-        TableColumn<Admin, String> passwordCol = new TableColumn<>("Password");
-        TableColumn<Admin, String> profilePictureCol = new TableColumn<>("Profile Picture");
-        TableColumn<Admin, String> nameCol = new TableColumn<>("Name");
-        TableColumn<Admin, Void> actCol = new TableColumn<>("Actions");
-
-        usernameCol.setCellValueFactory(new PropertyValueFactory<>("username"));
-        passwordCol.setCellValueFactory(new PropertyValueFactory<>("password"));
-        profilePictureCol.setCellValueFactory(new PropertyValueFactory<>("profilePicture"));
-        nameCol.setCellValueFactory(new PropertyValueFactory<>("name"));
-
-        String fontStyle = "-fx-font-family: 'Poppins', 'Arial', sans-serif; -fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #181818;";
-
-        usernameCol.setCellFactory(tc -> new TableCell<>() {
-            @Override
-            protected void updateItem(String item, boolean empty) {
-                super.updateItem(item, empty);
-                setText(empty ? null : item);
-                setStyle(fontStyle);
-            }
-        });
-        passwordCol.setCellFactory(tc -> new TableCell<>() {
-            @Override
-            protected void updateItem(String item, boolean empty) {
-                super.updateItem(item, empty);
-                setText(empty ? null : "*".repeat(8));
-                setStyle(fontStyle);
-            }
-        });
-        profilePictureCol.setCellFactory(tc -> new TableCell<>() {
-            private final int imageSize = 44;
-            @Override
-            protected void updateItem(String item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null || item.isBlank()) {
-                    setGraphic(null);
-                    setText(null);
-                } else {
-                    ImageView iv = new ImageView();
-                    iv.setFitHeight(imageSize);
-                    iv.setFitWidth(imageSize);
-                    iv.setPreserveRatio(true);
-
-                    String v = item.trim();
-                    if (ImageCache.isRemoteUrl(v)) {
-                        iv.setImage(ImageCache.loadCachedOrRemote(v, imageSize, imageSize));
-                        setGraphic(iv);
-                        setText(null);
-                        return;
-                    }
-
-                    File imgFile = new File("profile_pics/" + v);
-                    if (imgFile.exists()) {
-                        iv.setImage(new Image(imgFile.toURI().toString()));
-                        setGraphic(iv);
-                        setText(null);
-                    } else {
-                        setGraphic(null);
-                        setText("No image");
-                    }
-                }
-            }
-        });
-        nameCol.setCellFactory(tc -> new TableCell<>() {
-            @Override
-            protected void updateItem(String item, boolean empty) {
-                super.updateItem(item, empty);
-                setText(empty ? null : item);
-                setStyle(fontStyle);
-            }
-        });
-
-        actCol.setCellFactory(tc -> new TableCell<>() {
-            private final Button edit = new Button("Edit");
-            private final Button del = new Button("Delete");
-
-            {
-                String btnStyle =
-                    "-fx-background-color: #FFCB3C;" +
-                    "-fx-font-size: 16px;" +
-                    "-fx-font-weight: bold;" +
-                    "-fx-text-fill: #222;" +
-                    "-fx-background-radius: 28px;";
-
-                edit.setStyle(btnStyle);
-                del.setStyle(btnStyle);
-
-                edit.setOnAction(e -> showEdit(getCurrent()));
-
-                del.setOnAction(e ->
-                    CRUDDialogs.showDeleteAdminDialog(getCurrent(), StaffManagementView.this::reload)
-                );
-            }
-
-            private Admin getCurrent() {
-                return getTableView().getItems().get(getIndex());
-            }
-
-            @Override
-            protected void updateItem(Void item, boolean empty) {
-                super.updateItem(item, empty);
-
-                if (empty) {
-                    setGraphic(null);
-                    return;
-                }
-
-                Admin admin = getCurrent();
-                String loggedIn = UserSession.getUsername();
-
-                if (admin.getUsername() == null || !admin.getUsername().equals(loggedIn)) {
-                    edit.setVisible(false);
-                    edit.setManaged(false);
-                    del.setVisible(false);
-                    del.setManaged(false);
-                } else {
-                    edit.setVisible(true);
-                    edit.setManaged(true);
-                    del.setVisible(true);
-                    del.setManaged(true);
-                }
-
-                setGraphic(new HBox(5, edit, del));
-            }
-        });
-        table.getColumns().setAll(
-            usernameCol,
-            passwordCol,
-            profilePictureCol,
-            nameCol,
-            actCol
-        );
-    }
-
-    public void reload() {
+    public final void reload() {
         data.clear();
 
         CompletableFuture
             .supplyAsync(() -> {
                 try {
-                    FirestoreRestClient client = FirestoreRest.forCurrentUser();
-                    return client.listDocuments("admins");
-                } catch (Exception e) {
+                    return StaffDataSupport.loadAdmins();
+                } catch (java.io.IOException | InterruptedException | IllegalStateException e) {
                     throw new RuntimeException(e);
                 }
             })
-            .whenComplete((docs, err) -> javafx.application.Platform.runLater(() -> {
+            .whenComplete((admins, err) -> javafx.application.Platform.runLater(() -> {
                 if (err != null) {
-                    err.printStackTrace();
+                    System.err.println("StaffManagementView: failed to load admins - " + err.getMessage());
                     new Alert(Alert.AlertType.ERROR, "Failed to load admins").showAndWait();
                     return;
                 }
 
-                ObservableList<Admin> temp = FXCollections.observableArrayList();
-                for (FsDocument d : docs) {
-                    if (d == null) continue;
-                    temp.add(new Admin(
-                        d.getString("username") != null ? d.getString("username") : d.getId(),
-                        d.getString("password"),
-                        d.getString("profilePicture"),
-                        d.getString("name")
-                    ));
-                }
-                data.setAll(temp);
-                System.out.println("✅ Loaded " + temp.size() + " admin records.");
+                data.setAll(admins);
+                System.out.println("✅ Loaded " + admins.size() + " admin records.");
             }));
     }
 
     private void showEdit(Admin admin) {
         CRUDDialogs.showStaffDialog(admin, false, this::reload);
-    }
-
-    private void deleteAdmin(Admin admin) {
-        if (admin.getUsername().equals(UserSession.getUsername())) {
-            new Alert(
-                Alert.AlertType.ERROR,
-                "You cannot delete your own admin account."
-            ).showAndWait();
-            return;
-        }
-
-        // ✅ CONFIRMATION POPUP
-        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
-        confirm.setTitle("Confirm Delete");
-        confirm.setHeaderText("Delete Admin Account");
-        confirm.setContentText(
-            "Are you sure you want to delete admin \"" + admin.getUsername() + "\"?\n\n" +
-            "This action cannot be undone."
-        );
-
-        if (confirm.showAndWait().orElse(ButtonType.CANCEL) != ButtonType.OK) {
-            return; // ❌ User cancelled
-        }
-
-        try {
-            FirestoreRestClient client = FirestoreRest.forCurrentUser();
-            List<FsDocument> docs = client.queryWhereEqual("admins", "username", admin.getUsername());
-            for (FsDocument doc : docs) {
-                if (doc == null) continue;
-                client.deleteDocument("admins", doc.getId());
-            }
-
-            new Alert(Alert.AlertType.INFORMATION,
-                    "Admin \"" + admin.getUsername() + "\" deleted successfully."
-            ).showAndWait();
-
-            System.out.println("🗑 Deleted staff: " + admin.getUsername());
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            new Alert(
-                Alert.AlertType.ERROR,
-                "Failed to delete admin: " + e.getMessage()
-            ).showAndWait();
-        }
     }
 
     public static class Admin {

@@ -8,12 +8,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.time.Instant;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -68,7 +63,7 @@ public final class FirestoreRestClient {
             if (body.has("documents") && body.get("documents").isJsonArray()) {
                 for (JsonElement el : body.getAsJsonArray("documents")) {
                     if (!el.isJsonObject()) continue;
-                    FsDocument d = parseDocument(el.getAsJsonObject());
+                    FsDocument d = FirestoreRestDocumentSupport.parseDocument(el.getAsJsonObject());
                     if (d != null) out.add(d);
                 }
             }
@@ -86,7 +81,7 @@ public final class FirestoreRestClient {
             throw new IOException("Firestore GET failed: " + resp.statusCode() + " " + resp.body());
         }
         JsonObject obj = JsonParser.parseString(resp.body()).getAsJsonObject();
-        return parseDocument(obj);
+        return FirestoreRestDocumentSupport.parseDocument(obj);
     }
 
     /**
@@ -97,16 +92,14 @@ public final class FirestoreRestClient {
         throws IOException, InterruptedException {
 
         String url = collectionUrl(collectionId);
-        JsonObject doc = new JsonObject();
-        doc.add("fields", toFields(fields));
+        JsonObject doc = FirestoreRestMutationSupport.createDocumentBody(fields);
 
         HttpResponse<String> resp = send("POST", url, gson.toJson(doc));
         if (resp.statusCode() < 200 || resp.statusCode() >= 300) {
             throw new IOException("Firestore POST failed: " + resp.statusCode() + " " + resp.body());
         }
 
-        JsonObject obj = JsonParser.parseString(resp.body()).getAsJsonObject();
-        return parseDocument(obj);
+        return FirestoreRestMutationSupport.parseDocumentResponse(resp.body());
     }
 
     public FsDocument addSubcollectionDocumentAutoId(
@@ -117,16 +110,14 @@ public final class FirestoreRestClient {
         throws IOException, InterruptedException {
 
         String url = subcollectionUrl(parentCollectionId, parentDocId, subcollectionId);
-        JsonObject doc = new JsonObject();
-        doc.add("fields", toFields(fields));
+        JsonObject doc = FirestoreRestMutationSupport.createDocumentBody(fields);
 
         HttpResponse<String> resp = send("POST", url, gson.toJson(doc));
         if (resp.statusCode() < 200 || resp.statusCode() >= 300) {
             throw new IOException("Firestore POST failed: " + resp.statusCode() + " " + resp.body());
         }
 
-        JsonObject obj = JsonParser.parseString(resp.body()).getAsJsonObject();
-        return parseDocument(obj);
+        return FirestoreRestMutationSupport.parseDocumentResponse(resp.body());
     }
 
     /**
@@ -136,20 +127,16 @@ public final class FirestoreRestClient {
     public FsDocument createDocumentWithId(String collectionId, String docId, Map<String, Object> fields)
         throws IOException, InterruptedException {
 
-        String url = collectionUrl(collectionId)
-            + "?documentId="
-            + URLEncoder.encode(Objects.requireNonNull(docId, "docId"), StandardCharsets.UTF_8);
+        String url = FirestoreRestMutationSupport.createDocumentWithIdUrl(collectionUrl(collectionId), docId);
 
-        JsonObject doc = new JsonObject();
-        doc.add("fields", toFields(fields));
+        JsonObject doc = FirestoreRestMutationSupport.createDocumentBody(fields);
 
         HttpResponse<String> resp = send("POST", url, gson.toJson(doc));
         if (resp.statusCode() < 200 || resp.statusCode() >= 300) {
             throw new IOException("Firestore create failed: " + resp.statusCode() + " " + resp.body());
         }
 
-        JsonObject obj = JsonParser.parseString(resp.body()).getAsJsonObject();
-        return parseDocument(obj);
+        return FirestoreRestMutationSupport.parseDocumentResponse(resp.body());
     }
 
     public List<FsDocument> runQuery(JsonObject structuredQuery) throws IOException, InterruptedException {
@@ -171,7 +158,7 @@ public final class FirestoreRestClient {
             if (!el.isJsonObject()) continue;
             JsonObject row = el.getAsJsonObject();
             if (!row.has("document") || !row.get("document").isJsonObject()) continue;
-            FsDocument doc = parseDocument(row.getAsJsonObject("document"));
+            FsDocument doc = FirestoreRestDocumentSupport.parseDocument(row.getAsJsonObject("document"));
             if (doc != null) out.add(doc);
         }
         return out;
@@ -186,7 +173,7 @@ public final class FirestoreRestClient {
         JsonObject filter = new JsonObject();
         filter.add("field", field);
         filter.addProperty("op", "EQUAL");
-        filter.add("value", toValue(value));
+        filter.add("value", FirestoreRestValueSupport.toValue(value));
 
         JsonObject where = new JsonObject();
         where.add("fieldFilter", filter);
@@ -208,22 +195,9 @@ public final class FirestoreRestClient {
     public void patchDocumentMerge(String collectionId, String docId, Map<String, Object> fields)
         throws IOException, InterruptedException {
 
-        String url = documentUrl(collectionId, docId);
-        if (fields != null && !fields.isEmpty()) {
-            StringBuilder sb = new StringBuilder(url);
-            sb.append("?");
-            boolean first = true;
-            for (String k : fields.keySet()) {
-                if (!first) sb.append("&");
-                first = false;
-                sb.append("updateMask.fieldPaths=")
-                  .append(URLEncoder.encode(k, StandardCharsets.UTF_8));
-            }
-            url = sb.toString();
-        }
+        String url = FirestoreRestMutationSupport.appendUpdateMask(documentUrl(collectionId, docId), fields);
 
-        JsonObject doc = new JsonObject();
-        doc.add("fields", toFields(fields));
+        JsonObject doc = FirestoreRestMutationSupport.createDocumentBody(fields);
 
         HttpResponse<String> resp = send("PATCH", url, gson.toJson(doc));
         if (resp.statusCode() < 200 || resp.statusCode() >= 300) {
@@ -239,22 +213,12 @@ public final class FirestoreRestClient {
         Map<String, Object> fields)
         throws IOException, InterruptedException {
 
-        String url = subcollectionDocumentUrl(parentCollectionId, parentDocId, subcollectionId, docId);
-        if (fields != null && !fields.isEmpty()) {
-            StringBuilder sb = new StringBuilder(url);
-            sb.append("?");
-            boolean first = true;
-            for (String k : fields.keySet()) {
-                if (!first) sb.append("&");
-                first = false;
-                sb.append("updateMask.fieldPaths=")
-                  .append(URLEncoder.encode(k, StandardCharsets.UTF_8));
-            }
-            url = sb.toString();
-        }
+        String url = FirestoreRestMutationSupport.appendUpdateMask(
+            subcollectionDocumentUrl(parentCollectionId, parentDocId, subcollectionId, docId),
+            fields
+        );
 
-        JsonObject doc = new JsonObject();
-        doc.add("fields", toFields(fields));
+        JsonObject doc = FirestoreRestMutationSupport.createDocumentBody(fields);
 
         HttpResponse<String> resp = send("PATCH", url, gson.toJson(doc));
         if (resp.statusCode() < 200 || resp.statusCode() >= 300) {
@@ -315,175 +279,23 @@ public final class FirestoreRestClient {
         }
 
         switch (method) {
-            case "GET" -> b.GET();
-            case "POST" -> b.POST(HttpRequest.BodyPublishers.ofString(jsonBody == null ? "{}" : jsonBody, StandardCharsets.UTF_8));
-            case "PATCH" -> b.method("PATCH", HttpRequest.BodyPublishers.ofString(jsonBody == null ? "{}" : jsonBody, StandardCharsets.UTF_8));
-            case "DELETE" -> b.DELETE();
-            default -> throw new IllegalArgumentException("Unsupported method: " + method);
+            case "GET":
+                b.GET();
+                break;
+            case "POST":
+                b.POST(HttpRequest.BodyPublishers.ofString(jsonBody == null ? "{}" : jsonBody, StandardCharsets.UTF_8));
+                break;
+            case "PATCH":
+                b.method("PATCH", HttpRequest.BodyPublishers.ofString(jsonBody == null ? "{}" : jsonBody, StandardCharsets.UTF_8));
+                break;
+            case "DELETE":
+                b.DELETE();
+                break;
+            default:
+                throw new IllegalArgumentException("Unsupported method: " + method);
         }
 
         return http.send(b.build(), HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-    }
-
-    private FsDocument parseDocument(JsonObject doc) {
-        if (doc == null || !doc.has("name")) return null;
-        String name = doc.get("name").getAsString();
-        String id = name.substring(name.lastIndexOf('/') + 1);
-
-        Map<String, Object> fields = new HashMap<>();
-        if (doc.has("fields") && doc.get("fields").isJsonObject()) {
-            JsonObject fs = doc.getAsJsonObject("fields");
-            for (Map.Entry<String, JsonElement> e : fs.entrySet()) {
-                if (!e.getValue().isJsonObject()) continue;
-                fields.put(e.getKey(), fromValue(e.getValue().getAsJsonObject()));
-            }
-        }
-
-        return new FsDocument(id, fields);
-    }
-
-    private JsonObject toFields(Map<String, Object> fields) {
-        JsonObject out = new JsonObject();
-        if (fields == null) return out;
-        for (Map.Entry<String, Object> e : fields.entrySet()) {
-            out.add(e.getKey(), toValue(e.getValue()));
-        }
-        return out;
-    }
-
-    private JsonObject toValue(Object value) {
-        JsonObject v = new JsonObject();
-
-        if (value == null) {
-            v.addProperty("nullValue", "NULL_VALUE");
-            return v;
-        }
-        if (value instanceof String s) {
-            v.addProperty("stringValue", s);
-            return v;
-        }
-        if (value instanceof Boolean b) {
-            v.addProperty("booleanValue", b);
-            return v;
-        }
-        if (value instanceof Integer i) {
-            v.addProperty("integerValue", String.valueOf(i.longValue()));
-            return v;
-        }
-        if (value instanceof Long l) {
-            v.addProperty("integerValue", String.valueOf(l));
-            return v;
-        }
-        if (value instanceof Double d) {
-            v.addProperty("doubleValue", d);
-            return v;
-        }
-        if (value instanceof Float f) {
-            v.addProperty("doubleValue", f.doubleValue());
-            return v;
-        }
-        if (value instanceof List list) {
-            JsonArray values = new JsonArray();
-            for (Object o : list) {
-                values.add(toValue(o));
-            }
-
-            JsonObject arrayValue = new JsonObject();
-            arrayValue.add("values", values);
-            v.add("arrayValue", arrayValue);
-            return v;
-        }
-        if (value instanceof Map map) {
-            JsonObject fields = new JsonObject();
-            for (Object k : map.keySet()) {
-                if (k == null) continue;
-                fields.add(String.valueOf(k), toValue(map.get(k)));
-            }
-
-            JsonObject mapValue = new JsonObject();
-            mapValue.add("fields", fields);
-            v.add("mapValue", mapValue);
-            return v;
-        }
-        if (value instanceof Date d) {
-            v.addProperty("timestampValue", DateTimeFormatter.ISO_INSTANT.format(d.toInstant()));
-            return v;
-        }
-        if (value instanceof Instant i) {
-            v.addProperty("timestampValue", DateTimeFormatter.ISO_INSTANT.format(i));
-            return v;
-        }
-        if (value instanceof ReferenceValue r) {
-            v.addProperty("referenceValue", r.value);
-            return v;
-        }
-
-        // Fallback to string representation (keeps client robust)
-        v.addProperty("stringValue", String.valueOf(value));
-        return v;
-    }
-
-    private Object fromValue(JsonObject v) {
-        if (v == null) return null;
-
-        if (v.has("nullValue")) return null;
-        if (v.has("stringValue")) return v.get("stringValue").getAsString();
-        if (v.has("booleanValue")) return v.get("booleanValue").getAsBoolean();
-
-        if (v.has("integerValue")) {
-            try {
-                return Long.parseLong(v.get("integerValue").getAsString());
-            } catch (Exception ignored) {
-                return null;
-            }
-        }
-
-        if (v.has("doubleValue")) {
-            try {
-                return v.get("doubleValue").getAsDouble();
-            } catch (Exception ignored) {
-                return null;
-            }
-        }
-
-        if (v.has("timestampValue")) {
-            try {
-                Instant i = Instant.parse(v.get("timestampValue").getAsString());
-                return Date.from(i);
-            } catch (Exception ignored) {
-                return null;
-            }
-        }
-
-        if (v.has("referenceValue")) {
-            return v.get("referenceValue").getAsString();
-        }
-
-        if (v.has("arrayValue") && v.get("arrayValue").isJsonObject()) {
-            JsonObject av = v.getAsJsonObject("arrayValue");
-            if (!av.has("values") || !av.get("values").isJsonArray()) return List.of();
-            List<Object> out = new ArrayList<>();
-            for (JsonElement el : av.getAsJsonArray("values")) {
-                if (!el.isJsonObject()) continue;
-                out.add(fromValue(el.getAsJsonObject()));
-            }
-            return out;
-        }
-
-        if (v.has("mapValue") && v.get("mapValue").isJsonObject()) {
-            JsonObject mv = v.getAsJsonObject("mapValue");
-            if (!mv.has("fields") || !mv.get("fields").isJsonObject()) return Map.of();
-
-            Map<String, Object> out = new LinkedHashMap<>();
-            JsonObject fs = mv.getAsJsonObject("fields");
-            for (Map.Entry<String, JsonElement> e : fs.entrySet()) {
-                if (!e.getValue().isJsonObject()) continue;
-                out.put(e.getKey(), fromValue(e.getValue().getAsJsonObject()));
-            }
-            return out;
-        }
-
-        return null;
     }
 
     public static final class ReferenceValue {
@@ -491,6 +303,10 @@ public final class FirestoreRestClient {
 
         public ReferenceValue(String value) {
             this.value = Objects.requireNonNull(value, "value");
+        }
+
+        String value() {
+            return value;
         }
     }
 }

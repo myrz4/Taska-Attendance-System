@@ -88,14 +88,21 @@ async function main() {
   const data = snap.exists ? (snap.data() || {}) : {};
   const callbackUrl = String(data.callbackUrl || "").trim();
   const provider = String(data.provider || data.activeProvider || "").trim().toLowerCase();
+  const allowRealProvider = data.allowRealProvider === true;
+  const effectiveProvider = provider && (provider === "dummy" || allowRealProvider) ? provider : "dummy";
+  const effectiveMode = effectiveProvider === "dummy"
+    ? "dummy"
+    : String(data.mode || "redirect").trim().toLowerCase();
   const expectedUrl = expectedCallbackUrl(projectId, args.region);
 
   const findings = [
     { label: "projectId", value: projectId },
     { label: "region", value: args.region },
     { label: "serviceAccount", value: serviceAccountPath },
-    { label: "provider", value: provider || "<empty>" },
-    { label: "mode", value: String(data.mode || "<empty>") },
+    { label: "configuredProvider", value: provider || "<empty>" },
+    { label: "effectiveProvider", value: effectiveProvider },
+    { label: "effectiveMode", value: effectiveMode },
+    { label: "allowRealProvider", value: String(allowRealProvider) },
     { label: "enabled", value: String(data.enabled !== false) },
     { label: "collectionId", value: String(data.collectionId || data.billplzCollectionId || "<empty>") },
     { label: "returnUrl", value: String(data.returnUrl || "<empty>") },
@@ -112,6 +119,8 @@ async function main() {
   const warnings = [];
   if (!provider) {
     warnings.push("paymentGateway provider is empty");
+  } else if (provider !== "dummy" && !allowRealProvider) {
+    warnings.push("real provider is configured but runtime lock keeps billing on dummy mode");
   } else if (provider === "billplz") {
     if (data.enabled === false) warnings.push("paymentGateway is disabled");
     if (!String(data.collectionId || data.billplzCollectionId || "").trim()) warnings.push("collectionId is empty");
@@ -124,7 +133,7 @@ async function main() {
     console.log(`Updated callbackUrl to ${expectedUrl}`);
   } else if (provider === "billplz" && !callbackUrl) {
     console.log("callbackUrl is blank. This is allowed because checkout creation will auto-fill the deployed function URL.");
-  } else if (provider === "dummy") {
+  } else if (effectiveProvider === "dummy") {
     console.log("Demo payment mode is active using the internal dummy provider. Real payment credentials and callback rollout are not required.");
   }
 

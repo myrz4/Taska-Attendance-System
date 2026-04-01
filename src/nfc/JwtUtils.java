@@ -34,7 +34,7 @@ public final class JwtUtils {
             Map<String, Object> payload = gson.fromJson(json, Map.class);
             if (payload == null) return null;
             return payload.get(claimName);
-        } catch (Exception ignored) {
+        } catch (IllegalArgumentException | com.google.gson.JsonSyntaxException ignored) {
             return null;
         }
     }

@@ -157,17 +157,40 @@ void setup() {
   config.api_key = API_KEY;
   auth.user.email = USER_EMAIL;
   auth.user.password = USER_PASSWORD;
+  config.token_status_callback = tokenStatusCallback;  // required for Firebase.ready() to work
   Firebase.begin(&config, &auth);
   Firebase.reconnectWiFi(true);
 
+  // Wait until Firebase auth token is ready before accepting scans
+  showLCD("Firebase Auth...", "Please wait");
+  Serial.print("⏳ Waiting for Firebase auth token");
+  unsigned long authTimeout = millis();
+  while (!Firebase.ready()) {
+    Serial.print(".");
+    delay(300);
+    if (millis() - authTimeout > 20000) {
+      Serial.println("\n❌ Firebase auth timed out — restarting");
+      showLCD("Auth timeout!", "Restarting...");
+      delay(2000);
+      ESP.restart();
+    }
+  }
+  Serial.println("\n✅ Firebase Ready");
+
   lcdSplash();
-  Serial.println("✅ Firebase Ready");
 }
 
 // ---------------- Loop ------------------
 void loop() {
   uint8_t uid[7];
   uint8_t uidLength;
+
+  // Keep Firebase token alive; show brief notice if not ready yet
+  if (!Firebase.ready()) {
+    showLCD("Reconnecting...", "Please wait");
+    delay(500);
+    return;
+  }
 
   if (!nfc.readPassiveTargetID(PN532_MIFARE_ISO14443A, uid, &uidLength)) {
     delay(200);

@@ -19,7 +19,7 @@ public final class FirebaseConfig {
                 props.load(in);
             }
             return props.getProperty(key);
-        } catch (Exception ignored) {
+        } catch (java.io.IOException | SecurityException ignored) {
             return null;
         }
     }

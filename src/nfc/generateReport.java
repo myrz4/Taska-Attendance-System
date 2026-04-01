@@ -5,7 +5,6 @@ import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
@@ -78,7 +77,7 @@ public class generateReport {
 	    card.getChildren().addAll(dailyBtn, monthlyBtn);
 
 	    // --- Main layout as BorderPane
-	    BorderPane root = new BorderPane();
+	    root = new BorderPane();
 	    root.setTop(headerBar);
 	    root.setStyle("-fx-background-color: linear-gradient(to bottom right, #86d67f 0%, #76cc6e 100%);");
 
@@ -87,7 +86,6 @@ public class generateReport {
 	    root.setCenter(centerPane);
 
 	  
-	    this.root = root; //!
 	}
 	
 	

@@ -71,29 +71,6 @@ public final class FirebaseStorageRest {
         }
 
         JsonObject obj = JsonParser.parseString(resp.body()).getAsJsonObject();
-        String downloadTokens = obj.has("downloadTokens") ? obj.get("downloadTokens").getAsString() : null;
-        String tokenPart = null;
-        if (downloadTokens != null && !downloadTokens.isBlank()) {
-            int idx = downloadTokens.indexOf(',');
-            tokenPart = (idx >= 0) ? downloadTokens.substring(0, idx) : downloadTokens;
-            tokenPart = tokenPart.trim();
-        }
-
-        if (tokenPart == null || tokenPart.isBlank()) {
-            // The object still uploaded; it may be protected by Storage rules.
-            // Return the object URL without token so caller can still store it.
-            return "https://firebasestorage.googleapis.com/v0/b/"
-                + bucket
-                + "/o/"
-                + encodedName
-                + "?alt=media";
-        }
-
-        return "https://firebasestorage.googleapis.com/v0/b/"
-            + bucket
-            + "/o/"
-            + encodedName
-            + "?alt=media&token="
-            + URLEncoder.encode(tokenPart, StandardCharsets.UTF_8);
+        return FirebaseStorageDownloadUrlSupport.buildDownloadUrl(bucket, encodedName, obj);
     }
 }

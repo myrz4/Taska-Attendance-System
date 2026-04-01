@@ -1,0 +1,176 @@
+package nfc;
+
+import java.awt.Desktop;
+import java.io.File;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
+
+import javafx.beans.property.SimpleStringProperty;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.TableCell;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableRow;
+import javafx.scene.control.TableView;
+import javafx.stage.FileChooser;
+import javafx.stage.Window;
+
+final class AttendanceTableSupport {
+    private AttendanceTableSupport() {}
+
+    static void configureTable(
+        TableView<AttendanceRecord> table,
+        Consumer<AttendanceRecord> showAuditAction,
+        Supplier<Window> windowSupplier
+    ) {
+        table.setEditable(false);
+
+        TableColumn<AttendanceRecord, String> nameCol = new TableColumn<>("Name");
+        nameCol.setPrefWidth(120);
+        nameCol.setStyle("-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #222;");
+        nameCol.setCellValueFactory(data -> data.getValue().nameProperty());
+
+        TableColumn<AttendanceRecord, String> statusCol = new TableColumn<>("Status");
+        statusCol.setPrefWidth(120);
+        statusCol.setStyle("-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #222;");
+        statusCol.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getStatusLabel()));
+
+        TableColumn<AttendanceRecord, String> reasonCol = new TableColumn<>("Reason");
+        reasonCol.setStyle("-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #222;");
+        reasonCol.setMinWidth(120);
+        reasonCol.setCellValueFactory(data -> data.getValue().reasonProperty());
+
+        TableColumn<AttendanceRecord, String> inCol = new TableColumn<>("Check-In");
+        inCol.setStyle("-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #222;");
+        inCol.setPrefWidth(95);
+        inCol.setCellValueFactory(data -> data.getValue().checkInTimeProperty());
+
+        TableColumn<AttendanceRecord, String> outCol = new TableColumn<>("Check-Out");
+        outCol.setPrefWidth(95);
+        outCol.setStyle("-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #222;");
+        outCol.setCellValueFactory(data -> data.getValue().checkOutTimeProperty());
+
+        TableColumn<AttendanceRecord, String> sourceCol = new TableColumn<>("Source");
+        sourceCol.setMinWidth(200);
+        sourceCol.setStyle("-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #222;");
+        sourceCol.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getSourceSummary()));
+
+        TableColumn<AttendanceRecord, String> updatedByCol = new TableColumn<>("Updated By");
+        updatedByCol.setMinWidth(130);
+        updatedByCol.setStyle("-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #222;");
+        updatedByCol.setCellValueFactory(data -> data.getValue().updatedByProperty());
+
+        TableColumn<AttendanceRecord, String> correctionCol = new TableColumn<>("Correction Reason");
+        correctionCol.setMinWidth(180);
+        correctionCol.setStyle("-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #222;");
+        correctionCol.setCellValueFactory(data -> data.getValue().manualEditReasonProperty());
+
+        TableColumn<AttendanceRecord, Void> auditCol = new TableColumn<>("Audit");
+        auditCol.setMinWidth(96);
+        auditCol.setStyle("-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #222;");
+        auditCol.setCellFactory(param -> new TableCell<AttendanceRecord, Void>() {
+            private final Button auditBtn = new Button("View");
+
+            {
+                auditBtn.setOnAction(event -> {
+                    AttendanceRecord record = getTableView().getItems().get(getIndex());
+                    showAuditAction.accept(record);
+                });
+            }
+
+            @Override
+            public void updateItem(Void item, boolean empty) {
+                super.updateItem(item, empty);
+                setGraphic(empty ? null : auditBtn);
+            }
+        });
+
+        TableColumn<AttendanceRecord, Void> uploadCol = new TableColumn<>("Upload Letter");
+        uploadCol.setStyle("-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #222;");
+        uploadCol.setCellFactory(param -> new TableCell<AttendanceRecord, Void>() {
+            private final Button uploadBtn = new Button("Upload");
+
+            {
+                uploadBtn.setOnAction(event -> {
+                    AttendanceRecord record = getTableView().getItems().get(getIndex());
+                    FileChooser fileChooser = new FileChooser();
+                    File selectedFile = fileChooser.showOpenDialog(windowSupplier.get());
+                    if (selectedFile != null) {
+                        record.setReasonLetterFile(selectedFile);
+                    }
+                });
+            }
+
+            @Override
+            public void updateItem(Void item, boolean empty) {
+                super.updateItem(item, empty);
+                setGraphic(empty ? null : uploadBtn);
+            }
+        });
+
+        TableColumn<AttendanceRecord, Void> viewCol = new TableColumn<>("View Letter");
+        viewCol.setStyle("-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #222;");
+        viewCol.setCellFactory(param -> new TableCell<AttendanceRecord, Void>() {
+            private final Button viewBtn = new Button("View");
+
+            {
+                viewBtn.setOnAction(event -> {
+                    AttendanceRecord record = getTableView().getItems().get(getIndex());
+                    File reasonLetterFile = record.getReasonLetterFile();
+                    if (reasonLetterFile != null && reasonLetterFile.exists()) {
+                        try {
+                            Desktop.getDesktop().open(reasonLetterFile);
+                        } catch (IOException ex) {
+                            new Alert(Alert.AlertType.ERROR, "Unable to open file: " + ex.getMessage()).showAndWait();
+                        }
+                    } else {
+                        new Alert(Alert.AlertType.WARNING, "No reason letter available to view.").showAndWait();
+                    }
+                });
+            }
+
+            @Override
+            public void updateItem(Void item, boolean empty) {
+                super.updateItem(item, empty);
+                setGraphic(empty ? null : viewBtn);
+            }
+        });
+
+        table.getColumns().setAll(Arrays.asList(
+            nameCol,
+            statusCol,
+            inCol,
+            outCol,
+            sourceCol,
+            updatedByCol,
+            correctionCol,
+            auditCol,
+            reasonCol,
+            uploadCol,
+            viewCol
+        ));
+        table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
+        table.setRowFactory(tv -> new TableRow<AttendanceRecord>() {
+            @Override
+            protected void updateItem(AttendanceRecord item, boolean empty) {
+                super.updateItem(item, empty);
+                if (item == null || empty) {
+                    setStyle("");
+                } else if (item.isAdminCorrected()) {
+                    setStyle("-fx-background-color: #fff4d6; -fx-text-fill: #7a5c00;");
+                } else if (item.hasCheckIn() || item.hasCheckOut()) {
+                    setStyle("-fx-background-color: #e8f5e9; -fx-text-fill: #2e7d32;");
+                } else {
+                    setStyle("-fx-background-color: #ffebee; -fx-text-fill: #c62828;");
+                }
+            }
+        });
+
+        for (TableColumn<AttendanceRecord, ?> column : table.getColumns()) {
+            column.setStyle(column.getStyle() == null ? "-fx-alignment: CENTER;" : column.getStyle());
+        }
+        table.getColumns().forEach(column -> column.setStyle(column.getStyle()));
+    }
+}

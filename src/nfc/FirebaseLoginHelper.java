@@ -20,7 +20,7 @@ public class FirebaseLoginHelper {
     public static boolean verifyPassword(String email, String password) {
         try {
             String endpoint = "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=" + API_KEY;
-            URL url = new URL(endpoint);
+            URL url = java.net.URI.create(endpoint).toURL();
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("POST");
             conn.setRequestProperty("Content-Type", "application/json");
@@ -42,8 +42,8 @@ public class FirebaseLoginHelper {
                     System.err.println("[FirebaseLoginHelper] Error: " + json);
                 }
             }
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (java.io.IOException | RuntimeException e) {
+            System.err.println("[FirebaseLoginHelper] verifyPassword failed: " + e.getMessage());
         }
         return false;
     }

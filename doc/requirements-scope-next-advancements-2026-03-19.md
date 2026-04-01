@@ -47,6 +47,7 @@
 - Add a callable health endpoint that reports active catalog validity and pointer consistency.
 - Add pre-deploy check script to verify required billing codes and default transit code presence.
 - Add post-deploy smoke script with pass/fail exit code for operational handoff.
+- Add one release handoff command that runs Java compile plus billing deploy verification steps in sequence.
 
 ### 2) Error Contract Standardization
 - Introduce a shared error helper for callables with stable reason codes.
@@ -77,6 +78,9 @@
   - begin payment provider integration skeleton
   - refactor one high-churn JavaFX module (BillingPolicyView) into smaller units
   - add CI command that runs Java compile and billing emulator suite together
+
+Update on 2026-04-01:
+- Added `npm run ci:billing-gate` to run JavaFX compile plus the dummy billing emulator regression in one command.
 
 ## Definition of Done for Next Milestone
 - Every release includes:

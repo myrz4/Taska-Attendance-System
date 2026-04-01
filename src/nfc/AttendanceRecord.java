@@ -29,6 +29,10 @@ public class AttendanceRecord {
     private final StringProperty checkInTime = new SimpleStringProperty("");
     private final StringProperty checkOutFullTimestamp = new SimpleStringProperty("");
     private final StringProperty checkOutTime = new SimpleStringProperty("");
+    private final StringProperty checkInMethod = new SimpleStringProperty("");
+    private final StringProperty checkOutMethod = new SimpleStringProperty("");
+    private final StringProperty manualEditReason = new SimpleStringProperty("");
+    private final StringProperty updatedBy = new SimpleStringProperty("");
 
     private final BooleanProperty manualCheckOut = new SimpleBooleanProperty(false);
     private final ObjectProperty<File> reasonLetterFile = new SimpleObjectProperty<>();
@@ -113,9 +117,84 @@ public class AttendanceRecord {
     public String getCheckOutTime() { return checkOutTime.get(); }
     public StringProperty checkOutTimeProperty() { return checkOutTime; }
 
+    public String getCheckInMethod() { return checkInMethod.get(); }
+    public void setCheckInMethod(String value) { checkInMethod.set(value == null ? "" : value); }
+    public StringProperty checkInMethodProperty() { return checkInMethod; }
+
+    public String getCheckOutMethod() { return checkOutMethod.get(); }
+    public void setCheckOutMethod(String value) { checkOutMethod.set(value == null ? "" : value); }
+    public StringProperty checkOutMethodProperty() { return checkOutMethod; }
+
+    public String getManualEditReason() { return manualEditReason.get(); }
+    public void setManualEditReason(String value) { manualEditReason.set(value == null ? "" : value); }
+    public StringProperty manualEditReasonProperty() { return manualEditReason; }
+
+    public String getUpdatedBy() { return updatedBy.get(); }
+    public void setUpdatedBy(String value) { updatedBy.set(value == null ? "" : value); }
+    public StringProperty updatedByProperty() { return updatedBy; }
+
     public boolean isManualCheckOut() { return manualCheckOut.get(); }
     public void setManualCheckOut(boolean value) { manualCheckOut.set(value); }
     public BooleanProperty manualCheckOutProperty() { return manualCheckOut; }
+
+    public boolean hasCheckIn() {
+        return getCheckInFullTimestamp() != null && !getCheckInFullTimestamp().isBlank();
+    }
+
+    public boolean hasCheckOut() {
+        return getCheckOutFullTimestamp() != null && !getCheckOutFullTimestamp().isBlank();
+    }
+
+    public boolean isAdminCorrected() {
+        return !getManualEditReason().isBlank() || getSourceSummary().toLowerCase().contains("admin manual");
+    }
+
+    public String getSourceSummary() {
+        StringBuilder summary = new StringBuilder();
+        String inLabel = methodLabel(getCheckInMethod(), false);
+        String outLabel = methodLabel(getCheckOutMethod(), true);
+        if (!inLabel.isBlank()) {
+            summary.append("Check-in via ").append(inLabel);
+        }
+        if (!outLabel.isBlank()) {
+            if (summary.length() > 0) {
+                summary.append(" | ");
+            }
+            summary.append("Check-out via ").append(outLabel);
+        }
+        return summary.length() == 0 ? "Attendance source not recorded yet" : summary.toString();
+    }
+
+    private String methodLabel(String value, boolean isCheckout) {
+        if (value == null) {
+            return "";
+        }
+        switch (value.trim().toUpperCase()) {
+            case "NFC":
+                return isCheckout ? "NFC scan" : "NFC tap";
+            case "QR":
+            case "PARENT_QR":
+                return "Parent QR";
+            case "MANUAL":
+            case "ADMIN_MANUAL":
+                return "Admin manual";
+            default:
+                return "";
+        }
+    }
+
+    public String getStatusLabel() {
+        if (hasCheckOut()) {
+            return "Checked Out";
+        }
+        if (hasCheckIn()) {
+            return "Checked In";
+        }
+        if (getReason() != null && !getReason().isBlank() && !"Default".equalsIgnoreCase(getReason())) {
+            return "Absent";
+        }
+        return "Not Checked In";
+    }
 
     public File getReasonLetterFile() { return reasonLetterFile.get(); }
     public void setReasonLetterFile(File file) { reasonLetterFile.set(file); }

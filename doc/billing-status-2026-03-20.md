@@ -16,7 +16,7 @@ Current state:
 
 - Invoices are parent-scoped and support family coverage across multiple linked children.
 - Payment remains dummy-only for now.
-- The dummy payment path behaves like a real hosted gateway flow rather than an instant toggle.
+- The dummy payment path behaves like a hosted-payment simulation rather than an instant toggle.
 - Parent Flutter billing screens and JavaFX admin billing screens now use consistent billing language.
 
 ## Implemented
@@ -66,6 +66,9 @@ Current state:
 
 ### Automated
 
+- `npm run ci:billing-gate`
+- `npm run check:billing-predeploy`
+- `npm run smoke:postdeploy-billing`
 - `flutter analyze lib/screens/billing_invoice_presenter.dart lib/screens/fees_dashboard.dart lib/screens/fee_ledger.dart lib/screens/fee_invoice_details.dart`
 - `flutter analyze lib/screens/parent_profile_page.dart`
 - `flutter analyze lib/screens/demo_checkout.dart`
@@ -85,15 +88,51 @@ Current state:
 
 - No real payment provider is enabled for parent checkout.
 - Billplz production credentials and rollout are not required while dummy mode remains active.
-- The system is prepared for a future real hosted-payment integration, but current behavior is intentionally non-production.
+- The system still preserves the session lifecycle needed for a future hosted-payment adapter, but current behavior is intentionally dummy-only and non-production.
 
 ## Recommended Usage Right Now
 
 - Keep payment gateway config in dummy mode.
-- Use the billing smoke script before future billing changes:
+- Use the pre-deploy billing catalog check before billing function rollout:
+
+```powershell
+npm run check:billing-predeploy
+```
+
+- Use the combined CI-style local billing gate when you want Java compile plus emulator billing regression in one command:
+
+```powershell
+npm run ci:billing-gate
+```
+
+- Use the live post-deploy billing smoke after billing function rollout:
+
+```powershell
+npm run smoke:postdeploy-billing
+```
+
+- Use the emulator billing smoke before future billing logic changes:
 
 ```powershell
 npm run smoke:dummy-billing
+```
+
+- Billing function deployment now runs the pre-deploy billing catalog check and live post-deploy smoke automatically unless you pass `-SkipPreDeployCheck` or `-SkipPostDeploySmoke`:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File tools\deploy-billing-functions.ps1
+```
+
+- For a single handoff command that compiles JavaFX, copies assets, then runs the billing deploy flow:
+
+```powershell
+npm run release:billing-rollout
+```
+
+- To validate the local release prep without deploying functions:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File tools\release-billing-rollout.ps1 -SkipDeploy
 ```
 
 - Use the manual checklist after UI-affecting billing changes:

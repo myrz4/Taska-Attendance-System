@@ -17,6 +17,7 @@ These checks already passed before running manual QA:
 
 - `flutter analyze lib/screens/billing_invoice_presenter.dart lib/screens/fees_dashboard.dart lib/screens/fee_ledger.dart lib/screens/fee_invoice_details.dart`
 - `flutter analyze lib/screens/parent_profile_page.dart`
+- `npm run smoke:postdeploy-billing`
 - `npm run smoke:dummy-billing`
 - `Build (JavaFX + Firestore)`
 
@@ -71,14 +72,15 @@ Verify:
 - Success returns the user to invoice details with updated payment status.
 - Failed or expired states are handled clearly.
 
-### 5. Redirect Checkout Safety
+### 5. Dummy-Only Rollout Safety
 
 File:
-- `parent_app_taskazurah/lib/screens/redirect_checkout.dart`
+- `parent_app_taskazurah/lib/screens/fee_invoice_details.dart`
 
 Verify:
-- Redirect-mode sessions still poll and sync correctly if used.
-- Returning from a hosted page path does not break invoice state refresh.
+- Non-dummy checkout responses are rejected with a clear dummy-simulator-only message.
+- Invoice details only route into the demo checkout simulator.
+- Returning from the demo simulator refreshes invoice state correctly.
 
 ### 6. Parent Profile Billing Reminder
 

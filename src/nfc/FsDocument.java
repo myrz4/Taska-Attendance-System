@@ -38,10 +38,11 @@ public final class FsDocument {
     public Long getLong(String key) {
         Object v = get(key);
         if (v == null) return null;
-        if (v instanceof Number n) return n.longValue();
+        if (v instanceof Number) return ((Number) v).longValue();
+        if (!(v instanceof String)) return null;
         try {
-            return Long.parseLong(String.valueOf(v));
-        } catch (Exception ignored) {
+            return Long.valueOf((String) v);
+        } catch (NumberFormatException ignored) {
             return null;
         }
     }
@@ -49,7 +50,7 @@ public final class FsDocument {
     public Boolean getBoolean(String key) {
         Object v = get(key);
         if (v == null) return null;
-        if (v instanceof Boolean b) return b;
+        if (v instanceof Boolean) return (Boolean) v;
         String s = String.valueOf(v).trim().toLowerCase();
         if ("true".equals(s)) return true;
         if ("false".equals(s)) return false;
@@ -59,8 +60,8 @@ public final class FsDocument {
     public Date getDate(String key) {
         Object v = get(key);
         if (v == null) return null;
-        if (v instanceof Date d) return d;
-        if (v instanceof Instant i) return Date.from(i);
+        if (v instanceof Date) return (Date) v;
+        if (v instanceof Instant) return Date.from((Instant) v);
         return null;
     }
 }
