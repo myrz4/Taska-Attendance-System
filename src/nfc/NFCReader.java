@@ -1,9 +1,11 @@
 package nfc;
 
-import com.fazecast.jSerialComm.SerialPort;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+
+import com.fazecast.jSerialComm.SerialPort;
+
 import javafx.application.Platform;
 import javafx.scene.control.Alert;
 
