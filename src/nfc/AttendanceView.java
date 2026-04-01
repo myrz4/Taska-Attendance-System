@@ -1,28 +1,12 @@
 package nfc;
 
-import java.io.IOException;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-
 import javafx.application.Platform;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-import javafx.collections.transformation.FilteredList;
 import javafx.geometry.Insets;
-import javafx.scene.chart.PieChart;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
-import javafx.scene.control.TableView;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
 
 public class AttendanceView {
 	private static AttendanceView currentInstance;
@@ -30,15 +14,15 @@ public class AttendanceView {
     private static void logError(String context, Exception error) {
         System.err.println("AttendanceView: " + context + " - " + error.getMessage());
     }
-    private VBox root;
-    private final TableView<AttendanceRecord> table;
-    private final ObservableList<AttendanceRecord> masterRecords = FXCollections.observableArrayList();
-    private final FilteredList<AttendanceRecord> filteredRecords = new FilteredList<>(masterRecords, p -> true);
-    private PieChart chart; // ✅ make it global
+    private javafx.scene.layout.VBox root;
+    private final javafx.scene.control.TableView<AttendanceRecord> table;
+    private final javafx.collections.ObservableList<AttendanceRecord> masterRecords = javafx.collections.FXCollections.observableArrayList();
+    private final javafx.collections.transformation.FilteredList<AttendanceRecord> filteredRecords = new javafx.collections.transformation.FilteredList<>(masterRecords, p -> true);
+    private javafx.scene.chart.PieChart chart;
     // ─── NEW: datePicker field ────────────────────────────────────────────────────
     private DatePicker datePicker;
     // ────────────────────────────────────────────────────────────────────────────────
-    private static final DateTimeFormatter DB_TIMESTAMP_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    private static final java.time.format.DateTimeFormatter DB_TIMESTAMP_FORMAT = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     private AttendanceDataSupport.AttendanceDataCache attendanceDataCache = AttendanceDataSupport.AttendanceDataCache.empty();
     private boolean active = false;
@@ -50,24 +34,24 @@ public class AttendanceView {
         currentInstance = this;
         active = true;
 
-        HBox dashboardHeader = AttendanceViewLayoutSupport.createDashboardHeader();
+        javafx.scene.layout.HBox dashboardHeader = AttendanceViewLayoutSupport.createDashboardHeader();
         
-        root = new VBox(10);
+        root = new javafx.scene.layout.VBox(10);
         root.setPadding(new Insets(20));
         root.setStyle("-fx-background-color: linear-gradient(to bottom right, #86d67f 0%, #76cc6e 100%);");
 
-        AttendanceViewLayoutSupport.DateControls dateControls = AttendanceViewLayoutSupport.createDateControls(LocalDate.now());
+        AttendanceViewLayoutSupport.DateControls dateControls = AttendanceViewLayoutSupport.createDateControls(java.time.LocalDate.now());
         datePicker = dateControls.datePicker;
         Button loadBtn = dateControls.loadButton;
         loadBtn.setOnAction(e -> {
-            LocalDate selectedDate = datePicker.getValue();
+            java.time.LocalDate selectedDate = datePicker.getValue();
             loadStudents(selectedDate);
         });
 
         root.getChildren().add(dateControls.bar);
 
         AttendanceViewLayoutSupport.FilterToolbar filterToolbar = AttendanceViewLayoutSupport.createFilterToolbar();
-        HBox header = filterToolbar.header;
+        javafx.scene.layout.HBox header = filterToolbar.header;
         ComboBox<String> reasonDropdown = filterToolbar.reasonDropdown;
         reasonDropdown.setOnAction(e -> {
             selectedReasonFilter = reasonDropdown.getValue();
@@ -107,7 +91,7 @@ public class AttendanceView {
         Button viewAuditBtn = filterToolbar.viewAuditBtn;
         viewAuditBtn.setOnAction(e -> showAttendanceAuditDialog());
 
-        table = new TableView<>();
+        table = new javafx.scene.control.TableView<>();
         AttendanceTableSupport.configureTable(
             table,
             this::showAttendanceAuditDialog,
@@ -118,18 +102,18 @@ public class AttendanceView {
         Label chartTitle = new Label("Today's Attendance");
         chartTitle.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
 
-        chart = new PieChart();
+        chart = new javafx.scene.chart.PieChart();
 
         Button refreshChart = AttendanceViewLayoutSupport.createActionButton("Refresh Chart");
         refreshChart.setOnAction(e -> updateChart(chart));
 
         root.getChildren().addAll(header, table, chartTitle, chart, refreshChart);
 
-        BorderPane mainLayout = new BorderPane();
+        javafx.scene.layout.BorderPane mainLayout = new javafx.scene.layout.BorderPane();
         mainLayout.setTop(dashboardHeader);
         mainLayout.setCenter(root);
 
-        this.root = new VBox();
+        this.root = new javafx.scene.layout.VBox();
         this.root.getChildren().add(mainLayout);
 
         Platform.runLater(() -> {
@@ -147,14 +131,14 @@ public class AttendanceView {
     private void preloadData() {
         try {
             attendanceDataCache = AttendanceDataSupport.preloadChildren(attendanceDataCache);
-        } catch (IOException | InterruptedException | IllegalStateException e) {
+        } catch (java.io.IOException | InterruptedException | IllegalStateException e) {
             logError("attendance preload failed", e);
         }
     }
     
     // ─── NEW: Revised loadStudents() with MIN/MAX ───────────────────────────────
     // Change method to accept date parameter
-    private void loadStudents(LocalDate date) {
+    private void loadStudents(java.time.LocalDate date) {
         masterRecords.clear();
         if (!UserSession.isLoggedIn()) return;
 
@@ -208,7 +192,7 @@ public class AttendanceView {
             return;
         }
 
-        Map<String, Object> payload = AttendanceOverrideSupport.buildPayload(
+        java.util.Map<String, Object> payload = AttendanceOverrideSupport.buildPayload(
             action,
             record,
             dialogResult.attendanceDate,
@@ -219,7 +203,7 @@ public class AttendanceView {
             dialogResult.checkOutText
         );
 
-        CompletableFuture.runAsync(() -> {
+        java.util.concurrent.CompletableFuture.runAsync(() -> {
             try {
                 FirebaseFunctionsClient.CallResult result = AttendanceOverrideSupport.submitOverride(payload);
                 Platform.runLater(() -> {
@@ -233,7 +217,7 @@ public class AttendanceView {
                 });
             } catch (IllegalArgumentException ex) {
                 Platform.runLater(() -> new Alert(Alert.AlertType.ERROR, ex.getMessage()).showAndWait());
-            } catch (IOException ex) {
+            } catch (java.io.IOException ex) {
                 Platform.runLater(() -> new Alert(Alert.AlertType.ERROR, "Attendance action failed: " + ex.getMessage()).showAndWait());
             }
         });
@@ -255,7 +239,7 @@ public class AttendanceView {
         AttendanceAuditDialogSupport.showAuditDialog(root == null || root.getScene() == null ? null : root.getScene().getWindow(), datePicker.getValue(), record);
     }
 
-    public VBox getRoot() {
+    public javafx.scene.layout.VBox getRoot() {
         return root;
     }
 
@@ -265,7 +249,7 @@ public class AttendanceView {
                 for (AttendanceRecord record : currentInstance.masterRecords) {
                     if (record.getChildId() == childId) {
                         record.setPresent(true);
-                        record.setCheckInFullTimestamp(LocalDateTime.now().format(DB_TIMESTAMP_FORMAT));
+                        record.setCheckInFullTimestamp(java.time.LocalDateTime.now().format(DB_TIMESTAMP_FORMAT));
                         break;
                     }
                 }
@@ -278,7 +262,7 @@ public class AttendanceView {
         });
     }
 
-    private void updateChart(PieChart chart) {
+    private void updateChart(javafx.scene.chart.PieChart chart) {
         long now = System.currentTimeMillis();
         if (now - lastChartUpdate < 400) return;
         lastChartUpdate = now;
@@ -299,7 +283,7 @@ public class AttendanceView {
         }
 
         // Refresh cached Firestore data off the UI thread, then update UI.
-        CompletableFuture
+        java.util.concurrent.CompletableFuture
             .runAsync(currentInstance::preloadData)
             .thenRun(() -> Platform.runLater(() -> {
                 currentInstance.loadStudents(currentInstance.datePicker.getValue());
@@ -310,11 +294,11 @@ public class AttendanceView {
             }));
     }
 
-    public static List<AttendanceRecord> getCurrentAttendanceState() {
+    public static java.util.List<AttendanceRecord> getCurrentAttendanceState() {
         if (currentInstance != null) {
             return currentInstance.masterRecords;
         }
-        return FXCollections.observableArrayList(); // fallback if view not open
+        return javafx.collections.FXCollections.observableArrayList();
     }
 
     // ✅ Static helper so NFCReader can trigger pie chart refresh

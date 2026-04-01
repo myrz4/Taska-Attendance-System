@@ -1,42 +1,32 @@
 package nfc;
 
-import java.util.Map;
 import java.util.Optional;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.collections.transformation.FilteredList;
-import javafx.collections.transformation.SortedList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Alert;
-import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 
-public class TeacherManagementView extends VBox {
+public class TeacherManagementView extends javafx.scene.layout.VBox {
 
-    private final TableView<Map<String, Object>> table = new TableView<>();
-    private final ObservableList<Map<String, Object>> master = FXCollections.observableArrayList();
-    private FilteredList<Map<String, Object>> filtered;
-    private SortedList<Map<String, Object>> sorted;
-    private TableColumn<Map<String, Object>, String> nameCol;
-    private Button addTeacherButton;
+    private final javafx.scene.control.TableView<java.util.Map<String, Object>> table = new javafx.scene.control.TableView<>();
+    private final ObservableList<java.util.Map<String, Object>> master = FXCollections.observableArrayList();
+    private final javafx.collections.transformation.FilteredList<java.util.Map<String, Object>> filtered;
+    private final javafx.collections.transformation.SortedList<java.util.Map<String, Object>> sorted;
+    private final javafx.scene.control.TableColumn<java.util.Map<String, Object>, String> nameCol;
+    private final javafx.scene.control.Button addTeacherButton;
 
     public TeacherManagementView() {
 
         // ===== HEADER BAR (COPIED FROM STAFF MANAGEMENT) =====
-        HBox headerBar = new HBox(18);
+        javafx.scene.layout.HBox headerBar = new javafx.scene.layout.HBox(18);
         headerBar.setAlignment(Pos.CENTER_LEFT);
         headerBar.setPrefHeight(70);
         headerBar.setMaxWidth(Double.MAX_VALUE);
@@ -57,7 +47,7 @@ public class TeacherManagementView extends VBox {
         headerBar.getChildren().addAll(honeyPot, title);
 
         // ===== MAIN BODY =====
-        VBox mainBody = new VBox(10);
+        javafx.scene.layout.VBox mainBody = new javafx.scene.layout.VBox(10);
         mainBody.setPadding(new Insets(20));
         mainBody.setAlignment(Pos.TOP_LEFT);
 
@@ -71,27 +61,27 @@ public class TeacherManagementView extends VBox {
             this::confirmDeleteTeacher,
             () -> showTeacherDialog(null)
         );
-        nameCol = tableBundle.nameCol;
-        addTeacherButton = tableBundle.addTeacherButton;
+        this.nameCol = tableBundle.nameCol;
+        this.addTeacherButton = tableBundle.addTeacherButton;
         mainBody.getChildren().addAll(searchTf, table, addTeacherButton);
 
         // ===== WRAPPER LAYOUT (SAME AS ADMINS) =====
-        BorderPane layout = new BorderPane();
+        javafx.scene.layout.BorderPane layout = new javafx.scene.layout.BorderPane();
         layout.setTop(headerBar);
         layout.setCenter(mainBody);
         layout.setStyle("-fx-background-color: #86d67f;");
 
-        VBox.setVgrow(layout, Priority.ALWAYS);
+        javafx.scene.layout.VBox.setVgrow(layout, javafx.scene.layout.Priority.ALWAYS);
         this.setFillWidth(true);
 
         getChildren().clear();
         getChildren().add(layout);
 
         // Filter + sort wiring (search box + default sort).
-        filtered = new FilteredList<>(master, r -> true);
-        sorted = new SortedList<>(filtered);
-        sorted.comparatorProperty().bind(table.comparatorProperty());
-        table.setItems(sorted);
+        this.filtered = new javafx.collections.transformation.FilteredList<>(master, r -> true);
+        this.sorted = new javafx.collections.transformation.SortedList<>(filtered);
+        this.sorted.comparatorProperty().bind(table.comparatorProperty());
+        table.setItems(this.sorted);
 
         TeacherManagementListSupport.configureSearch(searchTf, filtered);
 
@@ -103,11 +93,11 @@ public class TeacherManagementView extends VBox {
         TeacherManagementListSupport.loadTeachersAsync(master, table, nameCol, System.err::println);
     }
 
-    private void showTeacherDialog(Map<String, Object> data) {
+    private void showTeacherDialog(java.util.Map<String, Object> data) {
         TeacherDialog.open(data, this::loadTeachers);
     }
 
-    private void confirmDeleteTeacher(Map<String, Object> data) {
+    private void confirmDeleteTeacher(java.util.Map<String, Object> data) {
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
         alert.setTitle("Confirm Delete");
         alert.setHeaderText("Delete Teacher");

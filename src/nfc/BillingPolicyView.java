@@ -12,20 +12,16 @@ import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
-import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.FlowPane;
-import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
-import javafx.scene.layout.VBox;
 import javafx.stage.Window;
 import javafx.util.Duration;
 
-public class BillingPolicyView extends VBox {
+public class BillingPolicyView extends javafx.scene.layout.VBox {
     private final ComboBox<BillingPolicyWorkflowSupport.CatalogItemOption> catalogSelect = new ComboBox<>();
     private final ObservableList<BillingPolicyWorkflowSupport.CatalogItemOption> catalogs = FXCollections.observableArrayList();
     private final TableView<Row> table = new TableView<>();
@@ -39,9 +35,9 @@ public class BillingPolicyView extends VBox {
     private final Label healthLabel = new Label();
     private final Label liveHealthBadge = new Label("Live Backend: checking...");
     private final Label liveHealthMetaLabel = new Label("Last checked: pending");
-    private final Button liveHealthRefreshBtn = new Button("Refresh");
-    private final Button liveHealthDetailsBtn = new Button("Show Details");
-    private final VBox liveHealthDetailsBox = new VBox(4);
+    private final javafx.scene.control.Button liveHealthRefreshBtn = new javafx.scene.control.Button("Refresh");
+    private final javafx.scene.control.Button liveHealthDetailsBtn = new javafx.scene.control.Button("Show Details");
+    private final javafx.scene.layout.VBox liveHealthDetailsBox = new javafx.scene.layout.VBox(4);
     private final Label liveHealthVersionLabel = new Label("Version: -");
     private final Label liveHealthRowCountLabel = new Label("Rows: -");
     private final Label liveHealthTransitLabel = new Label("Resolved Default Transit: -");
@@ -53,14 +49,14 @@ public class BillingPolicyView extends VBox {
     private Map<String, Map<String, Long>> workingTable = new LinkedHashMap<>();
 
     public BillingPolicyView() {
-        setSpacing(10);
+        super(10);
         setPadding(new Insets(12));
 
         liveHealthBadge.setStyle("-fx-background-color: #fff3cd; -fx-text-fill: #7a5200; -fx-font-weight: bold; -fx-padding: 6 12 6 12; -fx-background-radius: 999;");
         liveHealthRefreshBtn.setStyle("-fx-font-size: 11px; -fx-font-weight: bold; -fx-padding: 4 8 4 8;");
         liveHealthRefreshBtn.setOnAction(e -> refreshLiveHealthStatus());
         liveHealthDetailsBtn.setOnAction(e -> toggleLiveHealthDetails());
-        HBox titleRow = BillingPolicyLayoutSupport.createTitleRow(liveHealthBadge, liveHealthRefreshBtn, liveHealthDetailsBtn);
+        javafx.scene.layout.HBox titleRow = BillingPolicyLayoutSupport.createTitleRow(liveHealthBadge, liveHealthRefreshBtn, liveHealthDetailsBtn);
 
         versionField.setPromptText("Version (e.g. pdf-2026-03-19)");
         versionField.setText("catalog-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmm")));
@@ -73,31 +69,31 @@ public class BillingPolicyView extends VBox {
         catalogSelect.setPrefWidth(340);
         catalogSelect.setOnAction(e -> onCatalogSelected());
 
-        Button refreshBtn = new Button("Refresh");
+        javafx.scene.control.Button refreshBtn = new javafx.scene.control.Button("Refresh");
         refreshBtn.setOnAction(e -> {
             reloadCatalogs();
             refreshLiveHealthStatus();
         });
 
-        Button seedDefaultBtn = new Button("Load Default Template");
+        javafx.scene.control.Button seedDefaultBtn = new javafx.scene.control.Button("Load Default Template");
         seedDefaultBtn.setOnAction(e -> loadDefaultTemplate());
 
-        Button saveNewBtn = new Button("Save As New Version");
+        javafx.scene.control.Button saveNewBtn = new javafx.scene.control.Button("Save As New Version");
         saveNewBtn.setOnAction(e -> saveAsNewCatalog());
 
-        Button activateBtn = new Button("Set Selected Active");
+        javafx.scene.control.Button activateBtn = new javafx.scene.control.Button("Set Selected Active");
         activateBtn.setOnAction(e -> activateSelectedCatalog());
 
-        Button healthBtn = new Button("Run Health Check");
+        javafx.scene.control.Button healthBtn = new javafx.scene.control.Button("Run Health Check");
         healthBtn.setOnAction(e -> runHealthCheckDialog());
 
-        Button auditBtn = new Button("View Audit Log");
+        javafx.scene.control.Button auditBtn = new javafx.scene.control.Button("View Audit Log");
         auditBtn.setOnAction(e -> showAuditLogDialog());
 
-        Button exportTxtBtn = new Button("Export Health TXT");
+        javafx.scene.control.Button exportTxtBtn = new javafx.scene.control.Button("Export Health TXT");
         exportTxtBtn.setOnAction(e -> exportHealthReportTxt());
 
-        Button exportJsonBtn = new Button("Export Health JSON");
+        javafx.scene.control.Button exportJsonBtn = new javafx.scene.control.Button("Export Health JSON");
         exportJsonBtn.setOnAction(e -> exportHealthReportJson());
 
         BillingPolicyUiSupport.configureActionButtons(
@@ -113,7 +109,7 @@ public class BillingPolicyView extends VBox {
             exportJsonBtn
         );
 
-        FlowPane topActions = BillingPolicyLayoutSupport.createTopActions(
+        javafx.scene.layout.FlowPane topActions = BillingPolicyLayoutSupport.createTopActions(
             catalogSelect,
             refreshBtn,
             seedDefaultBtn,
@@ -129,7 +125,7 @@ public class BillingPolicyView extends VBox {
 
         healthLabel.setStyle("-fx-font-weight: bold;");
         liveHealthMetaLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #476150;");
-        VBox detailsBox = BillingPolicyLayoutSupport.createLiveHealthDetailsBox(
+        javafx.scene.layout.VBox detailsBox = BillingPolicyLayoutSupport.createLiveHealthDetailsBox(
             liveHealthVersionLabel,
             liveHealthRowCountLabel,
             liveHealthTransitLabel,
@@ -167,16 +163,16 @@ public class BillingPolicyView extends VBox {
         selectedNonStaff.setPromptText("Non-staff (sen)");
         selectedNonStaff.setPrefWidth(140);
 
-        Button updateRowBtn = new Button("Update Row");
+        javafx.scene.control.Button updateRowBtn = new javafx.scene.control.Button("Update Row");
         updateRowBtn.setOnAction(e -> updateSelectedRow());
         BillingPolicyUiSupport.configureActionButtons(updateRowBtn);
 
-        FlowPane rowEditor = BillingPolicyLayoutSupport.createRowEditor(selectedCode, selectedStaff, selectedNonStaff, updateRowBtn);
+        javafx.scene.layout.FlowPane rowEditor = BillingPolicyLayoutSupport.createRowEditor(selectedCode, selectedStaff, selectedNonStaff, updateRowBtn);
 
         BorderPane wrapper = BillingPolicyLayoutSupport.createWrapper(topActions, table, rowEditor);
 
         getChildren().addAll(titleRow, healthLabel, liveHealthMetaLabel, liveHealthDetailsBox, wrapper);
-        VBox.setVgrow(wrapper, Priority.ALWAYS);
+        javafx.scene.layout.VBox.setVgrow(wrapper, Priority.ALWAYS);
 
         liveHealthTimeline = new Timeline(new KeyFrame(Duration.seconds(45), e -> refreshLiveHealthStatus()));
         liveHealthTimeline.setCycleCount(Timeline.INDEFINITE);

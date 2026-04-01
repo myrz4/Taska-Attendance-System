@@ -7,30 +7,23 @@ import java.util.Map;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.Label;
-import javafx.scene.control.TableView;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
-import javafx.scene.text.Font;
-import javafx.scene.text.FontWeight;
 
 public class monthlyReport {
     private List<FsDocument> cachedAttendance = new ArrayList<>();
     private Map<String, StudentInfo> childCache = new HashMap<>();
 
-    private final VBox root = new VBox(12);
-    private final TableView<StudentMonthlyAttendance> table = new TableView<>();
-    private final ComboBox<String> monthDropdown = new ComboBox<>();
-    private final ComboBox<Integer> yearDropdown = new ComboBox<>();
+    private final javafx.scene.layout.VBox root = new javafx.scene.layout.VBox(12);
+    private final javafx.scene.control.TableView<StudentMonthlyAttendance> table = new javafx.scene.control.TableView<>();
+    private final javafx.scene.control.ComboBox<String> monthDropdown = new javafx.scene.control.ComboBox<>();
+    private final javafx.scene.control.ComboBox<Integer> yearDropdown = new javafx.scene.control.ComboBox<>();
 
     public monthlyReport() {
         root.setPadding(new Insets(20));
         root.setAlignment(Pos.TOP_CENTER);
         root.setStyle("-fx-background-color:linear-gradient(to bottom right, #86d67f 0%, #76cc6e 100%);");
 
-        Label title = new Label("Monthly Attendance Report");
-        title.setFont(Font.font("Poppins", FontWeight.BOLD, 24));
+        javafx.scene.control.Label title = new javafx.scene.control.Label("Monthly Attendance Report");
+        title.setFont(javafx.scene.text.Font.font("Poppins", javafx.scene.text.FontWeight.BOLD, 24));
 
         // Month Dropdown
         monthDropdown.getItems().addAll(
@@ -52,8 +45,8 @@ public class monthlyReport {
         monthDropdown.setOnAction(e -> loadMonthlyReport());
         yearDropdown.setOnAction(e -> loadMonthlyReport());
 
-        HBox controls = new HBox(15, new Label("Select Month:"), monthDropdown,
-                                     new Label("Year:"), yearDropdown);
+        javafx.scene.layout.HBox controls = new javafx.scene.layout.HBox(15, new javafx.scene.control.Label("Select Month:"), monthDropdown,
+                         new javafx.scene.control.Label("Year:"), yearDropdown);
         controls.setAlignment(Pos.CENTER);
 
         MonthlyReportTableSupport.setupTable(
@@ -87,6 +80,7 @@ public class monthlyReport {
         );
     }
 
+    @SuppressWarnings("unused")
     static String formatReportTime(java.util.Date date) {
         if (date == null) return "-";
         java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("hh:mm a");
@@ -102,7 +96,7 @@ public class monthlyReport {
         System.out.println("✅ Monthly report loaded FAST for " + month + "/" + year);
     }
 
-    public VBox getRoot() {
+    public javafx.scene.layout.VBox getRoot() {
         return root;
     }
     // You will need to create this StudentMonthlyAttendance model class with properties

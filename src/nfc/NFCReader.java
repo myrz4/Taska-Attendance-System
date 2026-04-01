@@ -157,15 +157,19 @@ public class NFCReader implements Runnable {
                 return;
             }
 
-            if (result.status == NFCAttendanceSupport.AttendanceUpdateResult.Status.ALREADY_OPEN) {
-                Platform.runLater(() -> showAlert(
-                    result.childName + " is already checked in. Check-out now requires the parent QR scan in Teacher App.",
-                    Alert.AlertType.INFORMATION
-                ));
-            } else if (result.status == NFCAttendanceSupport.AttendanceUpdateResult.Status.ALREADY_CLOSED) {
-                Platform.runLater(() -> showAlert("Already checked out today for " + result.childName, Alert.AlertType.INFORMATION));
-            } else {
-                Platform.runLater(() -> showAlert("Attendance update failed: " + result.reason, Alert.AlertType.ERROR));
+            switch (result.status) {
+                case ALREADY_OPEN:
+                    Platform.runLater(() -> showAlert(
+                        result.childName + " is already checked in. Check-out now requires the parent QR scan in Teacher App.",
+                        Alert.AlertType.INFORMATION
+                    ));
+                    break;
+                case ALREADY_CLOSED:
+                    Platform.runLater(() -> showAlert("Already checked out today for " + result.childName, Alert.AlertType.INFORMATION));
+                    break;
+                default:
+                    Platform.runLater(() -> showAlert("Attendance update failed: " + result.reason, Alert.AlertType.ERROR));
+                    break;
             }
 
         } catch (RuntimeException | java.io.IOException | InterruptedException e) {

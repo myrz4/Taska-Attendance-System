@@ -1,25 +1,14 @@
 package nfc;
 
-import java.io.IOException;
-import java.time.LocalDate;
-
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Button;
-import javafx.scene.control.TableView;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.VBox;
-
 /**
  * Firestore-based ChildrenView
  * Fixed to properly handle Firestore field names and date parsing.
  */
-public class ChildrenView extends VBox {
+@SuppressWarnings("this-escape")
+public class ChildrenView extends javafx.scene.layout.VBox {
 
-    private final TableView<Child> table = new TableView<>();
-    private final ObservableList<Child> data = FXCollections.observableArrayList();
+    private final javafx.scene.control.TableView<Child> table = new javafx.scene.control.TableView<>();
+    private final javafx.collections.ObservableList<Child> data = javafx.collections.FXCollections.observableArrayList();
 
     private static void logError(String context, Exception error) {
         System.err.println("ChildrenView: " + context + " - " + error.getMessage());
@@ -28,11 +17,12 @@ public class ChildrenView extends VBox {
 
     public ChildrenView() {
         buildTable();
-        Button addChildBtn = ChildrenLayoutSupport.createAddChildButton(() -> CRUDDialogs.showChildDialog(null, true, this::reload));
-        VBox childrenTabContent = new VBox(10, table, addChildBtn);
-        VBox.setVgrow(table, Priority.ALWAYS);
+        javafx.scene.control.Button addChildBtn = ChildrenLayoutSupport.createAddChildButton(() -> CRUDDialogs.showChildDialog(null, true, () -> reload()));
+        javafx.scene.layout.VBox childrenTabContent = new javafx.scene.layout.VBox(10, table, addChildBtn);
+        javafx.scene.layout.VBox.setVgrow(table, javafx.scene.layout.Priority.ALWAYS);
 
-        BorderPane layout = ChildrenLayoutSupport.buildLayout(this, childrenTabContent);
+        javafx.scene.layout.BorderPane layout = ChildrenLayoutSupport.buildLayout(childrenTabContent);
+        this.setFillWidth(true);
         this.getChildren().add(layout);
 
         reload();
@@ -42,7 +32,7 @@ public class ChildrenView extends VBox {
         table.setItems(data);
         ChildrenTableSupport.setupTable(
             table,
-            this::showEdit,
+            child -> showEdit(child),
             child -> {
                 deleteChild(child);
                 data.remove(child);
@@ -57,7 +47,7 @@ public class ChildrenView extends VBox {
     }
 
     private void showEdit(Child c) {
-        CRUDDialogs.showChildDialog(c, false, this::reload);
+        CRUDDialogs.showChildDialog(c, false, () -> reload());
     }
 
     private void deleteChild(Child c) {
@@ -66,9 +56,9 @@ public class ChildrenView extends VBox {
             client.deleteDocument("children", c.getChildId());
 
             System.out.println("🗑 Deleted child " + c.getChildId());
-        } catch (IOException | InterruptedException | IllegalStateException ex) {
+        } catch (java.io.IOException | InterruptedException | IllegalStateException ex) {
             logError("failed to delete child", ex);
-            new Alert(Alert.AlertType.ERROR,
+            new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.ERROR,
                     "Failed to delete child: " + ex.getMessage())
                     .showAndWait();
         }
@@ -77,13 +67,13 @@ public class ChildrenView extends VBox {
     public static class Child {
         private final String childId;
         private final String name;
-        private final LocalDate birthDate;
+        private final java.time.LocalDate birthDate;
         private final String parentName;
         private final String parentRelationship;
         private final String parentContact;
         private final String nfcUid;
 
-        public Child(String childId, String name, LocalDate birthDate,
+        public Child(String childId, String name, java.time.LocalDate birthDate,
                 String parentName, String parentRelationship, String parentContact,
                 String nfcUid) {
             this.childId = childId;
@@ -97,7 +87,7 @@ public class ChildrenView extends VBox {
 
         public String getChildId() { return childId; }
         public String getName() { return name; }
-        public LocalDate getBirthDate() { return birthDate; }
+        public java.time.LocalDate getBirthDate() { return birthDate; }
         public String getParentName() { return parentName; }
         public String getParentRelationship() { return parentRelationship; }
         public String getParentContact() { return parentContact; }

@@ -17,7 +17,7 @@ final class ChildrenLayoutSupport {
     private ChildrenLayoutSupport() {
     }
 
-    static BorderPane buildLayout(VBox owner, VBox childrenContent) {
+    static BorderPane buildLayout(VBox childrenContent) {
         HBox headerBar = new HBox(18);
         headerBar.setAlignment(Pos.CENTER_LEFT);
         headerBar.setPrefHeight(70);
@@ -60,7 +60,6 @@ final class ChildrenLayoutSupport {
         layout.setStyle("-fx-background-color: linear-gradient(to bottom right, #86d67f 0%, #76cc6e 100%);");
 
         VBox.setVgrow(layout, Priority.ALWAYS);
-        owner.setFillWidth(true);
         return layout;
     }
 

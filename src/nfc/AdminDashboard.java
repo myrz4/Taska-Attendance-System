@@ -1,23 +1,14 @@
 package nfc;
 
-import javafx.application.Application;
 import javafx.application.Platform;
-import javafx.scene.Node;
-import javafx.scene.Scene;
-import javafx.scene.image.Image;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
-import javafx.stage.Stage;
 
-public class AdminDashboard extends Application {
+public class AdminDashboard extends javafx.application.Application {
     private static volatile boolean realtimeModeNoticeShown = false;
 
     private static AdminDashboard instance;
     private static AdminDashboardContentSupport.DashboardWidgets dashboardWidgets;
     private static boolean dashboardReady = false;
-    private StackPane contentPane;
+    private javafx.scene.layout.StackPane contentPane;
     private static NFCReader reader;
     private static Thread nfcReaderThread;
 
@@ -42,23 +33,23 @@ public class AdminDashboard extends Application {
     }
 
     @Override
-    public void start(Stage primaryStage) {
+    public void start(javafx.stage.Stage primaryStage) {
         primaryStage.setTitle("Admin Dashboard - Taska Attendance");
 
-        VBox mainLayout = new VBox();
+        javafx.scene.layout.VBox mainLayout = new javafx.scene.layout.VBox();
         mainLayout.setSpacing(0);
         mainLayout.setStyle(
         		"-fx-background-color: linear-gradient(to bottom right, #2E8B57 0%, #247a4b 100%);" // dark green outside
         	);
 
-        HBox topBar = AdminDashboardWindowSupport.createTopBar(primaryStage, this::closeApplication);
+        javafx.scene.layout.HBox topBar = AdminDashboardWindowSupport.createTopBar(primaryStage, this::closeApplication);
 
-        HBox bodyLayout = createBodyLayout();
+        javafx.scene.layout.HBox bodyLayout = createBodyLayout();
 
         mainLayout.getChildren().addAll(topBar, bodyLayout);
-        VBox.setVgrow(bodyLayout, Priority.ALWAYS);
+        javafx.scene.layout.VBox.setVgrow(bodyLayout, javafx.scene.layout.Priority.ALWAYS);
 
-        Scene scene = new Scene(mainLayout, 1000, 800);
+        javafx.scene.Scene scene = new javafx.scene.Scene(mainLayout, 1000, 800);
         java.net.URL css = getClass().getResource("style.css");
         if (css != null) scene.getStylesheets().add(css.toExternalForm());
         else System.out.println("⚠️ Missing: style.css");
@@ -95,22 +86,22 @@ public class AdminDashboard extends Application {
         //    this::loadTodayAttendanceRealtime, 15, 15, TimeUnit.SECONDS);
     }
 
-    private HBox createBodyLayout() {
-        HBox bodyLayout = new HBox();
+    private javafx.scene.layout.HBox createBodyLayout() {
+        javafx.scene.layout.HBox bodyLayout = new javafx.scene.layout.HBox();
         bodyLayout.setStyle("-fx-background-color: transparent;");
 
-        VBox sidebar = createSidebar();
-        contentPane = new StackPane();
+        javafx.scene.layout.VBox sidebar = createSidebar();
+        contentPane = new javafx.scene.layout.StackPane();
         contentPane.setStyle("-fx-background-color: transparent;");
 
         loadDashboardContent();
 
         bodyLayout.getChildren().addAll(sidebar, contentPane);
-        HBox.setHgrow(contentPane, Priority.ALWAYS);
+        javafx.scene.layout.HBox.setHgrow(contentPane, javafx.scene.layout.Priority.ALWAYS);
         return bodyLayout;
     }
 
-    private VBox createSidebar() {
+    private javafx.scene.layout.VBox createSidebar() {
         return AdminDashboardSidebarSupport.createSidebar(new AdminDashboardSidebarSupport.SidebarActions() {
             @Override
             public void showDashboard() {
@@ -170,11 +161,11 @@ public class AdminDashboard extends Application {
             }
 
             @Override
-            public void logout(Stage currentStage) {
+            public void logout(javafx.stage.Stage currentStage) {
                 shutdownReader();
 
                 LoginView loginView = new LoginView();
-                Stage loginStage = new Stage();
+                javafx.stage.Stage loginStage = new javafx.stage.Stage();
                 try {
                     loginView.start(loginStage);
                 } catch (Exception ex) {
@@ -195,7 +186,7 @@ public class AdminDashboard extends Application {
         setMainContent(mrv.getRoot());
     }
 
-    private void setMainContent(Node node) {
+    private void setMainContent(javafx.scene.Node node) {
         contentPane.getChildren().setAll(node);
     }
 
@@ -238,7 +229,7 @@ public class AdminDashboard extends Application {
     private static AdminDashboardContentSupport.DashboardActions newDashboardActions() {
         return new AdminDashboardContentSupport.DashboardActions() {
             @Override
-            public Image loadImage(String fileName) {
+            public javafx.scene.image.Image loadImage(String fileName) {
                 return AdminDashboardUtilitySupport.loadSafe(AdminDashboard.class, fileName, AdminDashboard::logError);
             }
 
@@ -276,7 +267,7 @@ public class AdminDashboard extends Application {
         AdminDashboardUtilitySupport.handleNfcAttendance(nfcUid, AdminDashboard::logError);
     }
 
-    public static void showToast(Stage owner, String message) {
+    public static void showToast(javafx.stage.Stage owner, String message) {
         AdminDashboardUtilitySupport.showToast(owner, message);
     }
 
