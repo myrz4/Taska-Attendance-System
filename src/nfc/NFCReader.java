@@ -303,7 +303,7 @@ public class NFCReader implements Runnable {
 
             switch (result.status) {
                 case ALREADY_OPEN:
-                    System.out.println("ℹ️ " + result.childName + " is already checked in. Check-out requires the parent QR scan in Teacher App.");
+                    System.out.println("ℹ️ " + result.childName + " is already checked in. Use parent QR pickup in Teacher App, or use the manual checkout override if needed.");
                     break;
                 case ALREADY_CLOSED:
                     System.out.println("ℹ️ Already checked out today for " + result.childName);

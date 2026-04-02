@@ -30,12 +30,15 @@
 #define BUZZER_CH 0
 #define BUZZER_FREQ 2000
 #define BUZZER_RES 8
+#define SAME_TAG_COOLDOWN_MS 5000
 
 LiquidCrystal_I2C lcd(0x27, 16, 2);
 Adafruit_PN532 nfc(SDA_PIN, SCL_PIN);
 FirebaseData fbdo;
 FirebaseAuth auth;
 FirebaseConfig config;
+String lastScannedUid = "";
+unsigned long lastScannedAtMs = 0;
 
 // ---------------- Helper Functions ---------------
 void beep(int ms = 120, int duty = 180) {
@@ -110,6 +113,55 @@ String getDateNow() {
   return String(buf);
 }
 
+String encodeLegacyUidDocId(const String &uid) {
+  String encoded;
+  encoded.reserve(uid.length() * 2 + 4);
+  for (size_t i = 0; i < uid.length(); i++) {
+    uint8_t value = static_cast<uint8_t>(uid.charAt(i));
+    if (value < 0x10) encoded += "0";
+    encoded += String(value, HEX);
+  }
+  encoded += "0D0A";
+  encoded.toUpperCase();
+  return encoded;
+}
+
+bool fetchChildDocumentByUid(const String &nfcUID, FirebaseJson &json, String &resolvedDocId) {
+  String primaryDocId = nfcUID;
+  String legacyDocId = encodeLegacyUidDocId(nfcUID);
+  String candidates[2] = {primaryDocId, legacyDocId};
+
+  for (int i = 0; i < 2; i++) {
+    String docId = candidates[i];
+    String childDocPath = "children/" + docId;
+    if (!Firebase.Firestore.getDocument(&fbdo, FIREBASE_PROJECT_ID, FIRESTORE_DB_ID, childDocPath.c_str())) {
+      continue;
+    }
+
+    json.setJsonData(fbdo.payload().c_str());
+    FirebaseJsonData storedUidResult;
+    json.get(storedUidResult, "fields/nfc_uid/stringValue");
+    String storedUid = storedUidResult.success ? cleanString(storedUidResult.stringValue) : "";
+    storedUid.toUpperCase();
+    if (storedUid == nfcUID) {
+      resolvedDocId = docId;
+      return true;
+    }
+  }
+
+  return false;
+}
+
+bool shouldIgnoreDuplicateScan(const String &nfcUID) {
+  unsigned long now = millis();
+  if (nfcUID == lastScannedUid && now - lastScannedAtMs < SAME_TAG_COOLDOWN_MS) {
+    return true;
+  }
+  lastScannedUid = nfcUID;
+  lastScannedAtMs = now;
+  return false;
+}
+
 // 🧩 Manual override for debugging or admin correction (optional)
 String selectedDate = ""; // leave empty for auto (today)
 
@@ -125,6 +177,7 @@ String getActiveDate() {
 void setup() {
   Serial.begin(115200);
   delay(1000);
+  WiFi.setSleep(false);
 
   // Initialize buzzer (PWM)
   ledcAttach(BUZZER_PIN, BUZZER_FREQ, BUZZER_RES);
@@ -198,23 +251,28 @@ void loop() {
   }
 
   String nfcUID = getUIDString(uid, uidLength);
+  if (shouldIgnoreDuplicateScan(nfcUID)) {
+    Serial.println("ℹ️ Duplicate scan ignored for UID: " + nfcUID);
+    delay(400);
+    return;
+  }
+
   Serial.println("\n================================");
   Serial.println("📇 Card UID: " + nfcUID);
   showLCD("Card Detected!", nfcUID);
   beep(200);
 
-  String childDocPath = "children/" + nfcUID;
-  if (!Firebase.Firestore.getDocument(&fbdo, FIREBASE_PROJECT_ID, FIRESTORE_DB_ID, childDocPath.c_str())) {
+  FirebaseJson json;
+  String resolvedChildDocId = "";
+  if (!fetchChildDocumentByUid(nfcUID, json, resolvedChildDocId)) {
     showLCD("No record", "Check card/rules");
     Serial.println("❌ Child lookup failed for UID: " + nfcUID);
-    Serial.println("   Reason: " + fbdo.errorReason());
+    Serial.println("   Reason: no matching child document found for direct or legacy UID path");
     delay(2000);
     lcdSplash();
     return;
   }
 
-  FirebaseJson json;
-  json.setJsonData(fbdo.payload().c_str());
   FirebaseJsonData result;
   String childId, childName, parentName, teacherName;
 
@@ -230,7 +288,7 @@ void loop() {
   if (childName == "") childName = "Unknown";
   if (parentName == "") parentName = "Unknown";
   if (teacherName == "") teacherName = "Unknown";
-  if (childId == "") childId = nfcUID;
+  if (childId == "") childId = resolvedChildDocId;
 
   Serial.println("✅ Found: " + childName + " | Parent: " + parentName + " | Teacher: " + teacherName);
 
@@ -277,20 +335,9 @@ void loop() {
     }
   } 
   else if (hasCheckIn && !hasCheckOut) {
-    Serial.println("🔵 Check-in found — performing CHECK-OUT");
-    FirebaseJson update;
-    update.set("fields/check_out_time/timestampValue", timestampNow);
-    update.set("fields/checkout_method/stringValue", "NFC");
-    update.set("fields/manualCheckout/booleanValue", false);
-
-    if (Firebase.Firestore.patchDocument(&fbdo, FIREBASE_PROJECT_ID, FIRESTORE_DB_ID,
-                                         docPath.c_str(), update.raw(),
-                                         "check_out_time,checkout_method,manualCheckout")) {
-      showLCD("Checked Out", childName);
-      beep(200);
-    } else {
-      showLCD("⚠️ Failed", "Check-Out Error");
-    }
+    Serial.println("ℹ️ Already checked in. Use parent QR pickup in Teacher App, or use manual checkout override if needed.");
+    showLCD("Already In", "QR or Manual");
+    beep(100);
   } 
   else if (hasCheckIn && hasCheckOut) {
     Serial.println("⚠️ Already checked out — new day or reset required");
@@ -302,7 +349,7 @@ else {
   Serial.println("🆕 No record — performing CHECK-IN");
   FirebaseJson content;
   content.set("fields/childId/stringValue", childId);
-  content.set("fields/childRef/referenceValue", "projects/" FIREBASE_PROJECT_ID "/databases/(default)/documents/children/" + nfcUID);
+  content.set("fields/childRef/referenceValue", "projects/" FIREBASE_PROJECT_ID "/databases/(default)/documents/children/" + resolvedChildDocId);
   content.set("fields/name/stringValue", childName);
   content.set("fields/parentName/stringValue", parentName);
   content.set("fields/teacher/stringValue", teacherName);

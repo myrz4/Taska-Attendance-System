@@ -116,7 +116,7 @@ final class AdminDashboardUtilitySupport {
                 Platform.runLater(() -> showAlert(successMessage, Alert.AlertType.INFORMATION));
             } else if (result.status == NFCAttendanceSupport.AttendanceUpdateResult.Status.ALREADY_OPEN) {
                 Platform.runLater(() -> showAlert(
-                    result.childName + " is already checked in. Check-out now requires the parent QR scan in Teacher App.",
+                    result.childName + " is already checked in. Use parent QR pickup in Teacher App. If QR is unavailable, use the existing manual checkout override.",
                     Alert.AlertType.INFORMATION
                 ));
             } else if (result.status == NFCAttendanceSupport.AttendanceUpdateResult.Status.ALREADY_CLOSED) {
