@@ -46,7 +46,7 @@ final class AdminDashboardWindowSupport {
 
     static Timeline startAutoRefresh(Runnable refreshAction) {
         Timeline autoRefreshTimeline = new Timeline(
-            new KeyFrame(Duration.seconds(5), event -> refreshAction.run())
+            new KeyFrame(Duration.seconds(2), event -> refreshAction.run())
         );
         autoRefreshTimeline.setCycleCount(Animation.INDEFINITE);
         autoRefreshTimeline.play();

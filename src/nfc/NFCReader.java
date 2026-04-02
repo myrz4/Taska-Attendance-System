@@ -10,15 +10,16 @@ import java.util.Locale;
 import com.fazecast.jSerialComm.SerialPort;
 
 import javafx.application.Platform;
-import javafx.scene.control.Alert;
 
 public class NFCReader implements Runnable {
-    private static final String DEFAULT_PORT = "auto";
+    private static final String DEFAULT_PORT = "disabled";
+    private static final int AUTO_ROTATE_EMPTY_READS = 8;
 
     private SerialPort serialPort;
     private final String requestedPortName;
     private volatile boolean running = true;
     private long lastWaitLogMs = 0L;
+    private int autoPortCursor = 0;
 
     private static void logError(String context, Exception error) {
         System.err.println("NFCReader: " + context + " - " + error.getMessage());
@@ -105,37 +106,63 @@ public class NFCReader implements Runnable {
     }
 
     private static String detectPreferredPortName() {
+        List<String> candidates = detectCandidatePortNames();
+        return candidates.isEmpty() ? null : candidates.get(0);
+    }
+
+    private static List<String> detectCandidatePortNames() {
         SerialPort[] ports = SerialPort.getCommPorts();
+        List<String> preferred = new ArrayList<>();
+        List<String> fallback = new ArrayList<>();
         if (ports == null || ports.length == 0) {
-            return null;
+            return preferred;
         }
 
-        SerialPort fallback = null;
         for (SerialPort port : ports) {
-            String systemName = String.valueOf(port.getSystemPortName()).toLowerCase(Locale.ROOT);
-            String descriptiveName = String.valueOf(port.getDescriptivePortName()).toLowerCase(Locale.ROOT);
-            String combined = systemName + " " + descriptiveName;
-            if (fallback == null) {
-                fallback = port;
-            }
-            if (combined.contains("cp210")
-                || combined.contains("ch340")
-                || combined.contains("usb serial")
-                || combined.contains("arduino")
-                || combined.contains("esp32")
-                || combined.contains("uart")) {
-                return String.valueOf(port.getSystemPortName());
+            String systemName = String.valueOf(port.getSystemPortName());
+            if (isLikelyScannerPort(port)) {
+                preferred.add(systemName);
+            } else {
+                fallback.add(systemName);
             }
         }
-        return fallback == null ? null : String.valueOf(fallback.getSystemPortName());
+
+        preferred.addAll(fallback);
+        return preferred;
+    }
+
+    private static boolean isLikelyScannerPort(SerialPort port) {
+        String systemName = String.valueOf(port.getSystemPortName()).toLowerCase(Locale.ROOT);
+        String descriptiveName = String.valueOf(port.getDescriptivePortName()).toLowerCase(Locale.ROOT);
+        String combined = systemName + " " + descriptiveName;
+        return combined.contains("cp210")
+            || combined.contains("ch340")
+            || combined.contains("usb serial")
+            || combined.contains("arduino")
+            || combined.contains("esp32")
+            || combined.contains("uart");
+    }
+
+    private String nextAutoPortName() {
+        List<String> candidates = detectCandidatePortNames();
+        if (candidates.isEmpty()) {
+            return null;
+        }
+        if (autoPortCursor >= candidates.size()) {
+            autoPortCursor = 0;
+        }
+        String portName = candidates.get(autoPortCursor);
+        autoPortCursor = (autoPortCursor + 1) % candidates.size();
+        return portName;
     }
 
     @Override
     public void run() {
         while (running && !Thread.currentThread().isInterrupted()) {
-            String activePortName = resolveUsablePortName(requestedPortName);
+            boolean autoMode = isAutoPortSelection(requestedPortName);
+            String activePortName = autoMode ? nextAutoPortName() : resolveUsablePortName(requestedPortName);
             if (activePortName == null) {
-                if (!isAutoPortSelection(requestedPortName)) {
+                if (!autoMode) {
                     logWaiting("Configured NFC port unavailable: " + requestedPortName + ". Available ports: " + availablePortsSummary());
                 } else {
                     logWaiting("Waiting for USB NFC scanner. Available ports: " + availablePortsSummary());
@@ -162,12 +189,19 @@ public class NFCReader implements Runnable {
             System.out.println("📡 Listening for NFC tags...");
 
             try (BufferedReader in = new BufferedReader(new InputStreamReader(serialPort.getInputStream(), StandardCharsets.UTF_8))) {
+                int emptyReadCount = 0;
 
                 while (running && serialPort != null && serialPort.isOpen()) {
                     String line = in.readLine();
                     if (line == null) {
+                        if (autoMode && ++emptyReadCount >= AUTO_ROTATE_EMPTY_READS) {
+                            System.out.println("ℹ️ No NFC data on " + activePortName + ". Trying next serial port.");
+                            break;
+                        }
                         continue;
                     }
+
+                    emptyReadCount = 0;
 
                     String tagId = extractUidFromLine(line);
                     if (tagId == null || tagId.isBlank()) {
@@ -258,48 +292,30 @@ public class NFCReader implements Runnable {
             if (result.status == NFCAttendanceSupport.AttendanceUpdateResult.Status.UNKNOWN_CARD
                 || result.status == NFCAttendanceSupport.AttendanceUpdateResult.Status.INVALID_UID) {
                 System.out.println("❌ Unknown card detected!");
-                Platform.runLater(() -> showAlert("❌ Unknown card detected!", Alert.AlertType.WARNING));
                 return;
             }
 
             if (result.status == NFCAttendanceSupport.AttendanceUpdateResult.Status.CHECKED_IN) {
                 System.out.println("✅ Attendance recorded (check-in) for: " + result.childName);
-                Platform.runLater(() -> showAlert("Check-in successful for " + result.childName, Alert.AlertType.INFORMATION));
-                Platform.runLater(() -> {
-                    AttendanceView.refreshUI();
-                    AttendanceView.updateChartFromStatic();
-                });
+                Platform.runLater(FirestoreService::safeRefresh);
                 return;
             }
 
             switch (result.status) {
                 case ALREADY_OPEN:
-                    Platform.runLater(() -> showAlert(
-                        result.childName + " is already checked in. Check-out now requires the parent QR scan in Teacher App.",
-                        Alert.AlertType.INFORMATION
-                    ));
+                    System.out.println("ℹ️ " + result.childName + " is already checked in. Check-out requires the parent QR scan in Teacher App.");
                     break;
                 case ALREADY_CLOSED:
-                    Platform.runLater(() -> showAlert("Already checked out today for " + result.childName, Alert.AlertType.INFORMATION));
+                    System.out.println("ℹ️ Already checked out today for " + result.childName);
                     break;
                 default:
-                    Platform.runLater(() -> showAlert("Attendance update failed: " + result.reason, Alert.AlertType.ERROR));
+                    System.out.println("❌ Attendance update failed: " + result.reason);
                     break;
             }
 
         } catch (RuntimeException | java.io.IOException | InterruptedException e) {
             logError("tag processing failed", e);
-            Platform.runLater(() ->
-                showAlert("Firestore error: " + e.getMessage(), Alert.AlertType.ERROR)
-            );
+            System.out.println("❌ Firestore error: " + e.getMessage());
         }
-    }
-
-    private static void showAlert(String msg, Alert.AlertType type) {
-        Alert alert = new Alert(type);
-        alert.setTitle("NFC Attendance");
-        alert.setHeaderText(null);
-        alert.setContentText(msg);
-        alert.show();
     }
 }
