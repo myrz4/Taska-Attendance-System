@@ -1,5 +1,6 @@
 package nfc;
 
+@SuppressWarnings("unused")
 final class AdminDashboardNfcLifecycleSupport {
     interface ErrorLogger {
         void log(String context, Exception error);
@@ -27,9 +28,10 @@ final class AdminDashboardNfcLifecycleSupport {
             return new ReaderSession(null, null);
         }
 
-        if (!NFCReader.isPortAvailable(portName)) {
-            System.out.println("ℹ️ NFC reader not started. Port " + portName + " is unavailable. Available ports: " + NFCReader.availablePortsSummary());
-            return new ReaderSession(null, null);
+        if (NFCReader.isAutoPortSelection(portName)) {
+            System.out.println("ℹ️ NFC reader auto-detect enabled. It will wait for a USB serial scanner if one is not connected yet.");
+        } else if (!NFCReader.isPortAvailable(portName)) {
+            System.out.println("ℹ️ NFC reader will wait for configured port " + portName + ". Available ports: " + NFCReader.availablePortsSummary());
         }
 
         NFCReader reader = new NFCReader(portName);

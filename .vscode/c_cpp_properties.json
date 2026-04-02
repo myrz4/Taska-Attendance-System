@@ -1,0 +1,33 @@
+{
+  "version": 4,
+  "configurations": [
+    {
+      "name": "Win32",
+      "includePath": [
+        "${workspaceFolder}/TaskaNFCAttendance/**",
+        "C:/Users/zafri/AppData/Local/Arduino15/packages/esp32/hardware/esp32/3.3.7/**",
+        "C:/Users/zafri/AppData/Local/Arduino15/packages/esp32/tools/esp32-libs/3.3.7/include/**",
+        "C:/Users/zafri/OneDrive/Documents/Arduino/libraries/**",
+        "C:/Users/zafri/AppData/Local/Arduino15/packages/esp32/tools/**",
+        "C:/Users/zafri/AppData/Local/Programs/Arduino IDE/resources/app/lib/backend/resources/**"
+      ],
+      "defines": [
+        "ARDUINO=10819",
+        "ARDUINO_ARCH_ESP32",
+        "ESP32=ESP32"
+      ],
+      "cStandard": "c11",
+      "cppStandard": "c++17",
+      "intelliSenseMode": "windows-gcc-x64",
+      "browse": {
+        "path": [
+          "${workspaceFolder}/TaskaNFCAttendance",
+          "C:/Users/zafri/AppData/Local/Arduino15/packages/esp32/hardware/esp32/3.3.7",
+          "C:/Users/zafri/AppData/Local/Arduino15/packages/esp32/tools/esp32-libs/3.3.7/include",
+          "C:/Users/zafri/OneDrive/Documents/Arduino/libraries"
+        ],
+        "limitSymbolsToIncludedHeaders": true
+      }
+    }
+  ]
+}

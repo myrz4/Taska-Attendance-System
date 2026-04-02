@@ -13,8 +13,8 @@
 #include "addons/RTDBHelper.h"
 
 // ---------------- Wi-Fi ----------------
-#define WIFI_SSID "Redmi Note 13 Pro 5G"
-#define WIFI_PASSWORD "88888888"
+#define WIFI_SSID "AnakAnakSyurga"
+#define WIFI_PASSWORD "Roundabout29"
 
 // ---------------- Firebase --------------
 #define API_KEY "AIzaSyBiuQTwMUfk-rpgp3I6GZ2-AZ6viNjaZq0"
@@ -22,6 +22,16 @@
 #define FIRESTORE_DB_ID "(default)"
 #define USER_EMAIL "esp32@taska.com"
 #define USER_PASSWORD "12345678"
+
+// ---------------- Scanner Mode ----------
+// Desktop fallback mode:
+// The device will try Wi-Fi + Firebase first. If cloud is unavailable,
+// it will fall back to USB scanner mode and emit `TAG:<UID>` on Serial
+// for the desktop app to process.
+#define USB_SERIAL_FALLBACK_ENABLED true
+#define WIFI_CONNECT_TIMEOUT_MS 15000
+#define FIREBASE_AUTH_TIMEOUT_MS 20000
+#define CLOUD_RETRY_INTERVAL_MS 10000
 
 // ---------------- Hardware --------------
 #define SDA_PIN 21
@@ -36,6 +46,9 @@ Adafruit_PN532 nfc(SDA_PIN, SCL_PIN);
 FirebaseData fbdo;
 FirebaseAuth auth;
 FirebaseConfig config;
+bool firebaseInitialized = false;
+bool cloudReady = false;
+unsigned long lastCloudRetryMs = 0;
 
 // ---------------- Helper Functions ---------------
 void beep(int ms = 120, int duty = 180) {
@@ -54,6 +67,10 @@ void showLCD(const String &line1, const String &line2 = "") {
 
 void lcdSplash() {
   showLCD("Taska NFC Ready", "Scan your card");
+}
+
+void lcdUsbFallback() {
+  showLCD("USB Scanner", "Scan your card");
 }
 
 String cleanString(String s) {
@@ -121,6 +138,69 @@ String getActiveDate() {
   return getDateNow(); // default to today
 }
 
+bool waitForTimeSync(unsigned long timeoutMs) {
+  configTime(28800, 0, "pool.ntp.org", "time.nist.gov");
+  unsigned long started = millis();
+  while (time(nullptr) < 100000) {
+    delay(500);
+    if (millis() - started > timeoutMs) {
+      return false;
+    }
+  }
+  return true;
+}
+
+bool connectCloud(bool showStatus) {
+  if (WiFi.status() != WL_CONNECTED) {
+    if (showStatus) {
+      showLCD("Connecting WiFi...");
+    }
+    WiFi.mode(WIFI_STA);
+    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+    unsigned long wifiStarted = millis();
+    while (WiFi.status() != WL_CONNECTED) {
+      delay(300);
+      if (millis() - wifiStarted > WIFI_CONNECT_TIMEOUT_MS) {
+        Serial.println("❌ Wi-Fi connection timeout");
+        return false;
+      }
+    }
+    Serial.println("✅ Wi-Fi Connected");
+  }
+
+  if (!waitForTimeSync(10000)) {
+    Serial.println("❌ Time sync timeout");
+    return false;
+  }
+  Serial.println("✅ Time OK!");
+
+  if (!firebaseInitialized) {
+    config.api_key = API_KEY;
+    auth.user.email = USER_EMAIL;
+    auth.user.password = USER_PASSWORD;
+    config.token_status_callback = tokenStatusCallback;
+    Firebase.begin(&config, &auth);
+    Firebase.reconnectWiFi(true);
+    firebaseInitialized = true;
+  }
+
+  if (showStatus) {
+    showLCD("Firebase Auth...", "Please wait");
+  }
+  Serial.print("⏳ Waiting for Firebase auth token");
+  unsigned long authStarted = millis();
+  while (!Firebase.ready()) {
+    Serial.print(".");
+    delay(300);
+    if (millis() - authStarted > FIREBASE_AUTH_TIMEOUT_MS) {
+      Serial.println("\n❌ Firebase auth timeout");
+      return false;
+    }
+  }
+  Serial.println("\n✅ Firebase Ready");
+  return true;
+}
+
 // ---------------- Setup -----------------
 void setup() {
   Serial.begin(115200);
@@ -145,37 +225,19 @@ void setup() {
   nfc.SAMConfig();
   Serial.println("✅ NFC Ready!");
 
-  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-  showLCD("Connecting WiFi...");
-  while (WiFi.status() != WL_CONNECTED) delay(300);
-  Serial.println("\n✅ Wi-Fi Connected");
-
-  configTime(28800, 0, "pool.ntp.org", "time.nist.gov");
-  while (time(nullptr) < 100000) delay(500);
-  Serial.println("✅ Time OK!");
-
-  config.api_key = API_KEY;
-  auth.user.email = USER_EMAIL;
-  auth.user.password = USER_PASSWORD;
-  config.token_status_callback = tokenStatusCallback;  // required for Firebase.ready() to work
-  Firebase.begin(&config, &auth);
-  Firebase.reconnectWiFi(true);
-
-  // Wait until Firebase auth token is ready before accepting scans
-  showLCD("Firebase Auth...", "Please wait");
-  Serial.print("⏳ Waiting for Firebase auth token");
-  unsigned long authTimeout = millis();
-  while (!Firebase.ready()) {
-    Serial.print(".");
-    delay(300);
-    if (millis() - authTimeout > 20000) {
-      Serial.println("\n❌ Firebase auth timed out — restarting");
-      showLCD("Auth timeout!", "Restarting...");
-      delay(2000);
-      ESP.restart();
+  cloudReady = connectCloud(true);
+  if (!cloudReady) {
+    Serial.println("ℹ️ Cloud unavailable. Falling back to USB scanner mode.");
+    if (USB_SERIAL_FALLBACK_ENABLED) {
+      Serial.println("✅ USB serial scanner fallback enabled");
+      Serial.println("ℹ️ Connect this device by USB; the desktop app will auto-detect the serial port.");
+      lcdUsbFallback();
+      delay(1200);
+    } else {
+      showLCD("Cloud Offline", "Check WiFi");
+      delay(1500);
     }
   }
-  Serial.println("\n✅ Firebase Ready");
 
   lcdSplash();
 }
@@ -185,11 +247,21 @@ void loop() {
   uint8_t uid[7];
   uint8_t uidLength;
 
-  // Keep Firebase token alive; show brief notice if not ready yet
-  if (!Firebase.ready()) {
-    showLCD("Reconnecting...", "Please wait");
-    delay(500);
-    return;
+  if (cloudReady && !Firebase.ready()) {
+    cloudReady = false;
+    lastCloudRetryMs = millis();
+    Serial.println("⚠️ Firebase not ready. Switching to USB fallback until cloud returns.");
+  }
+
+  if (!cloudReady && USB_SERIAL_FALLBACK_ENABLED && millis() - lastCloudRetryMs >= CLOUD_RETRY_INTERVAL_MS) {
+    lastCloudRetryMs = millis();
+    Serial.println("🔄 Retrying Wi-Fi/Firebase connection...");
+    cloudReady = connectCloud(false);
+    if (cloudReady) {
+      showLCD("Cloud Restored", "Ready to scan");
+      delay(1200);
+      lcdSplash();
+    }
   }
 
   if (!nfc.readPassiveTargetID(PN532_MIFARE_ISO14443A, uid, &uidLength)) {
@@ -202,6 +274,14 @@ void loop() {
   Serial.println("📇 Card UID: " + nfcUID);
   showLCD("Card Detected!", nfcUID);
   beep(200);
+
+  if (!cloudReady) {
+    Serial.println("TAG:" + nfcUID);
+    showLCD("USB Scan Sent", nfcUID);
+    delay(1200);
+    lcdSplash();
+    return;
+  }
 
   String childDocPath = "children/" + nfcUID;
   if (!Firebase.Firestore.getDocument(&fbdo, FIREBASE_PROJECT_ID, FIRESTORE_DB_ID, childDocPath.c_str())) {

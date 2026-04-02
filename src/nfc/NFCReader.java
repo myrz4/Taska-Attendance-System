@@ -1,8 +1,11 @@
 package nfc;
 
-import java.io.InputStream;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import com.fazecast.jSerialComm.SerialPort;
 
@@ -10,11 +13,12 @@ import javafx.application.Platform;
 import javafx.scene.control.Alert;
 
 public class NFCReader implements Runnable {
-    private static final String DEFAULT_PORT = "COM3";
+    private static final String DEFAULT_PORT = "auto";
 
     private SerialPort serialPort;
-    private final String portName;
+    private final String requestedPortName;
     private volatile boolean running = true;
+    private long lastWaitLogMs = 0L;
 
     private static void logError(String context, Exception error) {
         System.err.println("NFCReader: " + context + " - " + error.getMessage());
@@ -22,7 +26,7 @@ public class NFCReader implements Runnable {
     }
 
     public NFCReader(String portName) {
-        this.portName = portName;
+        this.requestedPortName = portName;
     }
 
     public static String resolveConfiguredPortName() {
@@ -40,6 +44,36 @@ public class NFCReader implements Runnable {
         }
 
         return configured;
+    }
+
+    public static boolean isAutoPortSelection(String portName) {
+        return portName == null || portName.isBlank() || "auto".equalsIgnoreCase(portName.trim());
+    }
+
+    public static String resolveUsablePortName(String requestedPortName) {
+        if (requestedPortName == null) {
+            return null;
+        }
+
+        String configured = requestedPortName.trim();
+        if (configured.isEmpty()) {
+            configured = DEFAULT_PORT;
+        }
+        if (configured.equalsIgnoreCase("disabled") || configured.equalsIgnoreCase("none")) {
+            return null;
+        }
+        if (isAutoPortSelection(configured)) {
+            return detectPreferredPortName();
+        }
+
+        for (SerialPort port : SerialPort.getCommPorts()) {
+            String systemName = String.valueOf(port.getSystemPortName());
+            String descriptiveName = String.valueOf(port.getDescriptivePortName());
+            if (configured.equalsIgnoreCase(systemName) || configured.equalsIgnoreCase(descriptiveName)) {
+                return systemName;
+            }
+        }
+        return null;
     }
 
     public static boolean isPortAvailable(String portName) {
@@ -65,16 +99,52 @@ public class NFCReader implements Runnable {
 
         List<String> names = new ArrayList<>();
         for (SerialPort port : ports) {
-            names.add(String.valueOf(port.getSystemPortName()));
+            names.add(String.valueOf(port.getSystemPortName()) + " (" + String.valueOf(port.getDescriptivePortName()) + ")");
         }
         return String.join(", ", names);
+    }
+
+    private static String detectPreferredPortName() {
+        SerialPort[] ports = SerialPort.getCommPorts();
+        if (ports == null || ports.length == 0) {
+            return null;
+        }
+
+        SerialPort fallback = null;
+        for (SerialPort port : ports) {
+            String systemName = String.valueOf(port.getSystemPortName()).toLowerCase(Locale.ROOT);
+            String descriptiveName = String.valueOf(port.getDescriptivePortName()).toLowerCase(Locale.ROOT);
+            String combined = systemName + " " + descriptiveName;
+            if (fallback == null) {
+                fallback = port;
+            }
+            if (combined.contains("cp210")
+                || combined.contains("ch340")
+                || combined.contains("usb serial")
+                || combined.contains("arduino")
+                || combined.contains("esp32")
+                || combined.contains("uart")) {
+                return String.valueOf(port.getSystemPortName());
+            }
+        }
+        return fallback == null ? null : String.valueOf(fallback.getSystemPortName());
     }
 
     @Override
     public void run() {
         while (running && !Thread.currentThread().isInterrupted()) {
+            String activePortName = resolveUsablePortName(requestedPortName);
+            if (activePortName == null) {
+                if (!isAutoPortSelection(requestedPortName)) {
+                    logWaiting("Configured NFC port unavailable: " + requestedPortName + ". Available ports: " + availablePortsSummary());
+                } else {
+                    logWaiting("Waiting for USB NFC scanner. Available ports: " + availablePortsSummary());
+                }
+                sleepQuietly(1500);
+                continue;
+            }
 
-            serialPort = SerialPort.getCommPort(portName);
+            serialPort = SerialPort.getCommPort(activePortName);
             serialPort.setBaudRate(115200);
             serialPort.setNumDataBits(8);
             serialPort.setNumStopBits(SerialPort.ONE_STOP_BIT);
@@ -82,30 +152,33 @@ public class NFCReader implements Runnable {
             serialPort.setComPortTimeouts(SerialPort.TIMEOUT_READ_SEMI_BLOCKING, 500, 0);
 
             if (serialPort.openPort()) {
-                System.out.println("✅ Serial port " + portName + " opened successfully!");
+                System.out.println("✅ Serial port " + activePortName + " opened successfully!");
             } else {
-                System.out.println("❌ Failed to open serial port " + portName + "!");
-                return;
+                System.out.println("❌ Failed to open serial port " + activePortName + "!");
+                sleepQuietly(1500);
+                continue;
             }
 
             System.out.println("📡 Listening for NFC tags...");
 
-            try (InputStream in = serialPort.getInputStream()) {
-                byte[] buffer = new byte[64];
+            try (BufferedReader in = new BufferedReader(new InputStreamReader(serialPort.getInputStream(), StandardCharsets.UTF_8))) {
 
                 while (running && serialPort != null && serialPort.isOpen()) {
-                    int len = in.read(buffer);
-                    if (len <= 0) {
+                    String line = in.readLine();
+                    if (line == null) {
                         continue;
                     }
 
-                    String tagId = bytesToHex(buffer, len).trim();
-                    if (tagId.length() >= 8 && tagId.length() <= 40) {
-                        System.out.println("🏷️ Tag detected: " + tagId);
-                        processTag(tagId);
-                    } else {
-                        System.out.println("⚠️ Ignored invalid tag: " + tagId);
+                    String tagId = extractUidFromLine(line);
+                    if (tagId == null || tagId.isBlank()) {
+                        if (!line.isBlank()) {
+                            System.out.println("📥 NFC serial: " + line.trim());
+                        }
+                        continue;
                     }
+
+                    System.out.println("🏷️ Tag detected: " + tagId);
+                    processTag(tagId);
                 }
 
             } catch (java.io.IOException | RuntimeException e) {
@@ -117,6 +190,8 @@ public class NFCReader implements Runnable {
                 }
                 serialPort = null;
             }
+
+            sleepQuietly(300);
         }
     }
 
@@ -128,12 +203,52 @@ public class NFCReader implements Runnable {
         }
     }
 
-    private String bytesToHex(byte[] bytes, int length) {
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < length; i++) {
-            sb.append(String.format("%02X", bytes[i]));
+    private void logWaiting(String message) {
+        long now = System.currentTimeMillis();
+        if (now - lastWaitLogMs >= 4000) {
+            System.out.println("ℹ️ " + message);
+            lastWaitLogMs = now;
         }
-        return sb.toString();
+    }
+
+    private void sleepQuietly(long millis) {
+        try {
+            Thread.sleep(millis);
+        } catch (InterruptedException ex) {
+            Thread.currentThread().interrupt();
+        }
+    }
+
+    private String extractUidFromLine(String line) {
+        String trimmed = line == null ? "" : line.trim();
+        if (trimmed.isEmpty()) {
+            return null;
+        }
+
+        String[] prefixes = {"TAG:", "UID:", "NFC Tag Detected:", "Card UID:", "📇 Card UID:"};
+        for (String prefix : prefixes) {
+            int idx = trimmed.indexOf(prefix);
+            if (idx >= 0) {
+                String candidate = trimmed.substring(idx + prefix.length()).trim();
+                String normalized = normalizeUidCandidate(candidate);
+                if (normalized != null) {
+                    return normalized;
+                }
+            }
+        }
+
+        return normalizeUidCandidate(trimmed);
+    }
+
+    private String normalizeUidCandidate(String value) {
+        if (value == null) {
+            return null;
+        }
+        String normalized = value.trim().toUpperCase(Locale.ROOT).replaceAll("[^0-9A-F]", "");
+        if (normalized.length() < 8 || normalized.length() > 40 || (normalized.length() % 2) != 0) {
+            return null;
+        }
+        return normalized;
     }
 
     private void processTag(String tagId) {
