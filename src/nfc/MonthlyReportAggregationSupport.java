@@ -11,10 +11,12 @@ import java.util.Map;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
+@SuppressWarnings("unused")
 final class MonthlyReportAggregationSupport {
     private MonthlyReportAggregationSupport() {
     }
 
+    @SuppressWarnings("unused")
     static List<AttendanceRow> getAttendanceRowsForStudentMonth(List<FsDocument> cachedAttendance, String childId, int month, int year) {
         List<AttendanceRow> rows = new ArrayList<>();
         try {
@@ -66,6 +68,7 @@ final class MonthlyReportAggregationSupport {
         return rows;
     }
 
+    @SuppressWarnings("unused")
     static ObservableList<StudentMonthlyAttendance> buildMonthlyReportData(
         List<FsDocument> cachedAttendance,
         Map<String, StudentInfo> childCache,

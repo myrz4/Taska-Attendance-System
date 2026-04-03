@@ -22,6 +22,7 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Screen;
 
+@SuppressWarnings("unused")
 final class CRUDChildDialogSupport {
     private static final DateTimeFormatter BILLING_PERIOD_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM");
 
@@ -270,7 +271,7 @@ final class CRUDChildDialogSupport {
         return java.util.UUID.randomUUID().toString().replace("-", "");
     }
 
-    enum FeePlanType {
+    public enum FeePlanType {
         MONTHLY_FULLTIME("monthly", "fulltime", "Monthly Full-Time"),
         TRANSIT_AUTO_MONTHLY("transit", "transit", "Transit Monthly (Auto by duration/attendance)"),
         TRANSIT_HALFDAY_MONTH("transit", "transit_halfday_month", "Transit 1/2 Day (Monthly)"),
@@ -309,7 +310,7 @@ final class CRUDChildDialogSupport {
         }
     }
 
-    enum TransitDurationHint {
+    public enum TransitDurationHint {
         AUTO(null, "Auto from attendance"),
         TWO_HOURS(2.0, "2 Hours / Short Transit"),
         HALF_DAY(4.0, "Half Day Transit");

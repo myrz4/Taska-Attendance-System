@@ -5,9 +5,11 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 
+@SuppressWarnings("unused")
 final class BillingLedgerInteractionSupport {
     private BillingLedgerInteractionSupport() {}
 
+    @SuppressWarnings("unused")
     static String buildParentFocusLabel(BillingLedgerView.LedgerRow row, Function<String, String> nullSafe) {
         if (row == null) {
             return "Parent Focus: none";
@@ -15,6 +17,7 @@ final class BillingLedgerInteractionSupport {
         return "Parent Focus: " + nullSafe.apply(row.getParentName()) + " (" + nullSafe.apply(row.getParentId()) + ")";
     }
 
+    @SuppressWarnings("unused")
     static BillingLedgerView.LedgerRow latestUnpaidInvoiceForParent(
         BillingLedgerView.LedgerRow selectedRow,
         List<BillingLedgerView.LedgerRow> allRows

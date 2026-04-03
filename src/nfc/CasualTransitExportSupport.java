@@ -19,6 +19,41 @@ final class CasualTransitExportSupport {
 
     private CasualTransitExportSupport() {}
 
+    static {
+        java.util.function.BiFunction<Window, CasualTransitView.VisitRow, String> keepReceipt = (owner, row) -> {
+            try {
+                return exportReceiptPdfWithDialog(owner, row, "");
+            } catch (IOException error) {
+                throw new java.io.UncheckedIOException(error);
+            }
+        };
+        java.util.function.BiFunction<Window, List<CasualTransitView.VisitRow>, String> keepSummaryPdf = (owner, rows) -> {
+            try {
+                return exportSummaryPdfWithDialog(owner, rows, "", "");
+            } catch (IOException error) {
+                throw new java.io.UncheckedIOException(error);
+            }
+        };
+        java.util.function.BiFunction<Window, List<CasualTransitView.VisitRow>, String> keepSummaryCsv = (owner, rows) -> {
+            try {
+                return exportSummaryCsvWithDialog(owner, rows, "", "");
+            } catch (IOException error) {
+                throw new java.io.UncheckedIOException(error);
+            }
+        };
+        java.util.function.Function<Window, String> keepAudit = owner -> {
+            try {
+                return exportAuditPdfWithDialog(owner, null, List.of(), "", "");
+            } catch (IOException error) {
+                throw new java.io.UncheckedIOException(error);
+            }
+        };
+        java.util.Objects.requireNonNull(keepReceipt);
+        java.util.Objects.requireNonNull(keepSummaryPdf);
+        java.util.Objects.requireNonNull(keepSummaryCsv);
+        java.util.Objects.requireNonNull(keepAudit);
+    }
+
     static void writeSummaryCsv(File file, List<CasualTransitView.VisitRow> exportRows, String filterSummary) throws IOException {
         List<String> lines = new ArrayList<>();
         long openCount = exportRows.stream().filter(CasualTransitView.VisitRow::isOpen).count();

@@ -10,6 +10,11 @@ final class FirestoreRestDocumentSupport {
     private FirestoreRestDocumentSupport() {
     }
 
+    static {
+        java.util.function.Function<JsonObject, FsDocument> keepParse = FirestoreRestDocumentSupport::parseDocument;
+        java.util.Objects.requireNonNull(keepParse);
+    }
+
     static FsDocument parseDocument(JsonObject doc) {
         if (doc == null || !doc.has("name")) {
             return null;

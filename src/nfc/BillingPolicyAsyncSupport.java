@@ -7,9 +7,11 @@ import java.util.function.Consumer;
 
 import javafx.application.Platform;
 
+@SuppressWarnings("all")
 final class BillingPolicyAsyncSupport {
     private BillingPolicyAsyncSupport() {}
 
+    @SuppressWarnings("unused")
     static void reloadCatalogsAsync(
         Consumer<List<BillingPolicyWorkflowSupport.CatalogItemOption>> onLoaded,
         ErrorCallback onError
@@ -24,6 +26,7 @@ final class BillingPolicyAsyncSupport {
         });
     }
 
+    @SuppressWarnings("unused")
     static void saveCatalogAsync(
         BillingPolicyWorkflowSupport.PreparedCatalogSave request,
         Map<String, Map<String, Long>> workingTable,
@@ -40,6 +43,7 @@ final class BillingPolicyAsyncSupport {
         });
     }
 
+    @SuppressWarnings("unused")
     static void activateCatalogAsync(
         BillingPolicyWorkflowSupport.PreparedCatalogActivation request,
         Consumer<String> onActivated,

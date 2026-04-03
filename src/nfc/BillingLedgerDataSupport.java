@@ -9,10 +9,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-final class BillingLedgerDataSupport {
+public final class BillingLedgerDataSupport {
     private BillingLedgerDataSupport() {}
 
-    static List<BillingLedgerView.LedgerRow> loadRows() {
+    public static List<BillingLedgerView.LedgerRow> loadRows() {
         try {
             FirestoreRestClient client = FirestoreRest.forCurrentUser();
             List<FsDocument> parents = client.listDocuments("parents");

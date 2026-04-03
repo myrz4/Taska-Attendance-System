@@ -16,6 +16,7 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Priority;
 import javafx.stage.Window;
 
+@SuppressWarnings("unused")
 final class CasualTransitDialogSupport {
     private CasualTransitDialogSupport() {}
 

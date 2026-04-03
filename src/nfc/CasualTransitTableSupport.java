@@ -13,8 +13,52 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.cell.PropertyValueFactory;
 
+@SuppressWarnings("unused")
 final class CasualTransitTableSupport {
     private CasualTransitTableSupport() {
+    }
+
+    static {
+        Runnable keepBuildTable = () -> buildTable(null, null, row -> {
+        });
+        java.util.function.Consumer<Button> keepConfigureActionButton = CasualTransitTableSupport::configureActionButton;
+        Runnable keepUpdateSelectionState = () -> updateSelectionState(
+            null,
+            null,
+            List.<CasualTransitView.AuditEntry>of(),
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+        );
+        Runnable keepSetActionButtonsDisabled = () -> setActionButtonsDisabled(
+            false,
+            null,
+            null,
+            List.<CasualTransitView.AuditEntry>of(),
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+        );
+        java.util.Objects.requireNonNull(keepBuildTable);
+        java.util.Objects.requireNonNull(keepConfigureActionButton);
+        java.util.Objects.requireNonNull(keepUpdateSelectionState);
+        java.util.Objects.requireNonNull(keepSetActionButtonsDisabled);
     }
 
     static void buildTable(

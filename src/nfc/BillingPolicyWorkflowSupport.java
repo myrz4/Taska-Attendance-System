@@ -8,6 +8,29 @@ import java.util.Map;
 final class BillingPolicyWorkflowSupport {
     private BillingPolicyWorkflowSupport() {}
 
+    static {
+        java.util.function.Supplier<List<CatalogItemOption>> keepLoad = () -> {
+            try {
+                return loadCatalogItems();
+            } catch (IOException error) {
+                throw new java.io.UncheckedIOException(error);
+            }
+        };
+        java.util.function.Function<String, PreparedCatalogSave> keepPrepareSave =
+            version -> prepareSaveRequest(version, Map.of(), "");
+        java.util.function.Function<CatalogItemOption, PreparedCatalogActivation> keepPrepareActivation =
+            option -> prepareActivationRequest(option, Map.of(), "");
+        CatalogItemOption catalogProbe = new CatalogItemOption("", "", false, Map.of());
+        PreparedCatalogSave saveProbe = PreparedCatalogSave.error("", "");
+        PreparedCatalogActivation activationProbe = PreparedCatalogActivation.error("", "");
+        java.util.Objects.requireNonNull(keepLoad);
+        java.util.Objects.requireNonNull(keepPrepareSave);
+        java.util.Objects.requireNonNull(keepPrepareActivation);
+        java.util.Objects.hash(catalogProbe.id, catalogProbe.version, catalogProbe.active, catalogProbe.doc);
+        java.util.Objects.hash(saveProbe.ok, saveProbe.header, saveProbe.message, saveProbe.version, saveProbe.defaultTransitCode);
+        java.util.Objects.hash(activationProbe.ok, activationProbe.header, activationProbe.message, activationProbe.catalogId, activationProbe.defaultTransitCode);
+    }
+
     static List<CatalogItemOption> loadCatalogItems() throws IOException {
         List<CatalogItemOption> items = new ArrayList<>();
         for (BillingPolicyCatalogRemoteSupport.CatalogDescriptor descriptor : BillingPolicyCatalogRemoteSupport.loadCatalogs()) {
@@ -70,7 +93,7 @@ final class BillingPolicyWorkflowSupport {
         return PreparedCatalogActivation.success(selectedCatalog.id, defaultTransitCode);
     }
 
-    static final class CatalogItemOption {
+    public static final class CatalogItemOption {
         final String id;
         final String version;
         final boolean active;

@@ -11,8 +11,22 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.control.Alert;
 
+@SuppressWarnings("unused")
 final class TeacherDataSupport {
     private TeacherDataSupport() {}
+
+    static {
+        java.util.function.Supplier<ObservableList<Map<String, Object>>> keepLoadTeachers = () -> {
+            try {
+                return loadTeachers();
+            } catch (IOException | InterruptedException ex) {
+                throw new RuntimeException(ex);
+            }
+        };
+        java.util.function.Function<Map<String, Object>, Boolean> keepDeleteTeacher = TeacherDataSupport::deleteTeacher;
+        java.util.Objects.requireNonNull(keepLoadTeachers);
+        java.util.Objects.requireNonNull(keepDeleteTeacher);
+    }
 
     static ObservableList<Map<String, Object>> loadTeachers() throws IOException, InterruptedException {
         FirestoreRestClient client = FirestoreRest.forCurrentUser();

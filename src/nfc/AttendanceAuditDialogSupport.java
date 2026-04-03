@@ -18,6 +18,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Window;
 
+@SuppressWarnings("unused")
 final class AttendanceAuditDialogSupport {
     private static final List<String> ATTENDANCE_AUDIT_ACTIONS = Arrays.asList(
         "all",

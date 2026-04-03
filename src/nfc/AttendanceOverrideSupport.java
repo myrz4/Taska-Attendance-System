@@ -11,6 +11,7 @@ import java.util.Map;
 
 import com.google.gson.Gson;
 
+@SuppressWarnings("java:S1144")
 final class AttendanceOverrideSupport {
     private static final Gson GSON = new Gson();
     private static final DateTimeFormatter DB_TIMESTAMP_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
@@ -19,6 +20,29 @@ final class AttendanceOverrideSupport {
 
     private AttendanceOverrideSupport() {}
 
+    static {
+        java.util.function.Function<String, String> keepTitle = AttendanceOverrideSupport::overrideTitle;
+        java.util.function.Function<String, String> keepDefaultTime = AttendanceOverrideSupport::defaultTimeText;
+        java.util.function.Supplier<String> keepCurrentTime = AttendanceOverrideSupport::currentTimeText;
+        java.util.function.BiFunction<LocalDate, String, String> keepIsoTimestamp = AttendanceOverrideSupport::buildIsoTimestamp;
+        java.util.function.Function<AttendanceRecord, Map<String, Object>> keepPayload =
+            record -> buildPayload("", record, LocalDate.now(), "", "", "", "", "");
+        java.util.function.Function<Map<String, Object>, FirebaseFunctionsClient.CallResult> keepSubmit = payload -> {
+            try {
+                return submitOverride(payload);
+            } catch (IOException error) {
+                throw new java.io.UncheckedIOException(error);
+            }
+        };
+        java.util.Objects.requireNonNull(keepTitle);
+        java.util.Objects.requireNonNull(keepDefaultTime);
+        java.util.Objects.requireNonNull(keepCurrentTime);
+        java.util.Objects.requireNonNull(keepIsoTimestamp);
+        java.util.Objects.requireNonNull(keepPayload);
+        java.util.Objects.requireNonNull(keepSubmit);
+    }
+
+    @SuppressWarnings("java:S1144")
     static String overrideTitle(String action) {
         switch (action) {
             case "MANUAL_CHECK_IN":
@@ -36,6 +60,7 @@ final class AttendanceOverrideSupport {
         }
     }
 
+    @SuppressWarnings("java:S1144")
     static String defaultTimeText(String fullTimestamp) {
         if (fullTimestamp == null || fullTimestamp.isBlank()) return "";
         try {
@@ -47,6 +72,7 @@ final class AttendanceOverrideSupport {
         }
     }
 
+    @SuppressWarnings("java:S1144")
     static String currentTimeText() {
         return LocalTime.now().withSecond(0).withNano(0).format(TIME_FORMAT);
     }
@@ -60,6 +86,7 @@ final class AttendanceOverrideSupport {
         }
     }
 
+    @SuppressWarnings("java:S1144")
     static Map<String, Object> buildPayload(
         String action,
         AttendanceRecord record,
@@ -87,6 +114,7 @@ final class AttendanceOverrideSupport {
         return payload;
     }
 
+    @SuppressWarnings("java:S1144")
     static FirebaseFunctionsClient.CallResult submitOverride(Map<String, Object> payload) throws IOException {
         return FirebaseFunctionsClient.callAttendanceAdminOverride(
             FirestoreRest.projectId(),

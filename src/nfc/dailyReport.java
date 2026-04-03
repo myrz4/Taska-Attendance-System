@@ -9,9 +9,6 @@ import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.scene.text.FontWeight;
 
-import java.io.File;
-import java.time.LocalDate;
-
 public class dailyReport {
     private final VBox root;
     private final DatePicker datePicker;
@@ -32,7 +29,7 @@ public class dailyReport {
         dateRow.setAlignment(Pos.CENTER_LEFT);
         Label dateLabel = new Label("Select Date:");
         dateLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
-        datePicker = new DatePicker(LocalDate.now());
+        datePicker = new DatePicker(java.time.LocalDate.now());
         datePicker.setPrefWidth(160);
         datePicker.valueProperty().addListener((obs, old, selected) -> loadAttendance(selected));
         dateRow.getChildren().addAll(dateLabel, datePicker);
@@ -42,7 +39,7 @@ public class dailyReport {
         DailyReportTableSupport.setupTable(table);
 
         // Load for today on startup
-        loadAttendance(LocalDate.now());
+        loadAttendance(java.time.LocalDate.now());
 
         root.getChildren().addAll(title, dateRow, table);
 
@@ -51,7 +48,7 @@ public class dailyReport {
         generateAllBtn.setFont(javafx.scene.text.Font.font("Poppins", 16));
         generateAllBtn.setStyle("-fx-background-color:#FFCB3C;-fx-background-radius:18;-fx-font-weight:bold;");
         generateAllBtn.setOnAction(e -> {
-            LocalDate selectedDate = datePicker.getValue();
+            java.time.LocalDate selectedDate = datePicker.getValue();
             showDailyReportPreview(selectedDate, FXCollections.observableArrayList(table.getItems()));
         });
 
@@ -59,24 +56,15 @@ public class dailyReport {
         root.getChildren().add(generateAllBtn);
     }
 
-    private void showDailyReportPreview(LocalDate date, ObservableList<AttendanceRow> rows) {
+    private void showDailyReportPreview(java.time.LocalDate date, ObservableList<AttendanceRow> rows) {
         DailyReportPreviewSupport.showDailyReportPreview(getClass(), date, rows);
-    }
-
-    private void generateDailyPDF(File file, LocalDate date, ObservableList<AttendanceRow> rows) {
-        DailyReportPreviewSupport.generateDailyPDF(getClass(), file, date, rows);
     }
 
     public Node getRoot() {
         return root;
     }
 
-    // Table setup
-    private void setupTable() {
-        DailyReportTableSupport.setupTable(table);
-    }
-
-    private void loadAttendance(LocalDate date) {
+    private void loadAttendance(java.time.LocalDate date) {
         table.getItems().clear();
         table.setItems(DailyReportDataSupport.loadAttendance(date));
     }

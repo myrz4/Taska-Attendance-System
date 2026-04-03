@@ -12,10 +12,12 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 
+@SuppressWarnings("unused")
 final class TeacherManagementListSupport {
     private TeacherManagementListSupport() {
     }
 
+    @SuppressWarnings("unused")
     static void configureSearch(TextField searchTf, FilteredList<Map<String, Object>> filtered) {
         searchTf.textProperty().addListener((obs, oldValue, newValue) -> {
             final String query = (newValue == null ? "" : newValue.trim().toLowerCase());
@@ -49,6 +51,7 @@ final class TeacherManagementListSupport {
         table.sort();
     }
 
+    @SuppressWarnings("unused")
     static void loadTeachersAsync(
         ObservableList<Map<String, Object>> master,
         TableView<Map<String, Object>> table,

@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+@SuppressWarnings("unused")
 final class AttendanceDataSupport {
     private AttendanceDataSupport() {}
 
@@ -24,6 +25,7 @@ final class AttendanceDataSupport {
         return (cache == null ? AttendanceDataCache.empty() : cache).withChildren(children);
     }
 
+    @SuppressWarnings("unused")
     static AttendanceLoadResult loadRecords(LocalDate date, AttendanceDataCache cache) throws Exception {
         AttendanceDataCache resolvedCache = preloadChildren(cache);
         AttendanceQueryResult attendanceQuery = getAttendanceDocsForDate(date, resolvedCache);
@@ -84,13 +86,17 @@ final class AttendanceDataSupport {
             return new AttendanceDataCache(children, date, value);
         }
 
+        @SuppressWarnings("unused")
         AttendanceDataCache clearAttendance() {
             return new AttendanceDataCache(children, null, List.of());
         }
     }
 
+    @SuppressWarnings("unused")
     static final class AttendanceLoadResult {
+        @SuppressWarnings("unused")
         final AttendanceDataCache cache;
+        @SuppressWarnings("unused")
         final List<AttendanceRecord> records;
 
         AttendanceLoadResult(AttendanceDataCache cache, List<AttendanceRecord> records) {

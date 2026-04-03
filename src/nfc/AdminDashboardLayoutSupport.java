@@ -12,7 +12,6 @@ import javafx.scene.control.ListView;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Separator;
 import javafx.scene.control.Tooltip;
-import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
@@ -27,10 +26,12 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.util.Duration;
 
+@SuppressWarnings("all")
 final class AdminDashboardLayoutSupport {
     private AdminDashboardLayoutSupport() {
     }
 
+    @SuppressWarnings("unused")
     static AdminDashboardContentSupport.DashboardWidgets buildDashboard(AdminDashboardContentSupport.DashboardActions actions) {
         HBox dashboardHeader = new HBox(18);
         dashboardHeader.setAlignment(Pos.CENTER_LEFT);

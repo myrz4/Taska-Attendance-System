@@ -6,10 +6,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@SuppressWarnings("all")
 final class MonthlyReportDataSupport {
     private MonthlyReportDataSupport() {
     }
 
+    @SuppressWarnings("unused")
     static List<FsDocument> preloadAttendance() {
         try {
             FirestoreRestClient client = FirestoreRest.forCurrentUser();
@@ -22,6 +24,7 @@ final class MonthlyReportDataSupport {
         }
     }
 
+    @SuppressWarnings("unused")
     static Map<String, StudentInfo> preloadChildren() {
         Map<String, StudentInfo> childCache = new HashMap<>();
         try {
@@ -45,10 +48,12 @@ final class MonthlyReportDataSupport {
         return childCache;
     }
 
+    @SuppressWarnings("unused")
     static List<AttendanceRow> getAttendanceRowsForStudentMonth(List<FsDocument> cachedAttendance, String childId, int month, int year) {
         return MonthlyReportAggregationSupport.getAttendanceRowsForStudentMonth(cachedAttendance, childId, month, year);
     }
 
+    @SuppressWarnings("unused")
     static javafx.collections.ObservableList<StudentMonthlyAttendance> buildMonthlyReportData(
         List<FsDocument> cachedAttendance,
         Map<String, StudentInfo> childCache,

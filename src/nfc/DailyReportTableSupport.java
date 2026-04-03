@@ -14,6 +14,11 @@ final class DailyReportTableSupport {
     private DailyReportTableSupport() {
     }
 
+    static {
+        java.util.function.Consumer<TableView<AttendanceRow>> keepSetup = DailyReportTableSupport::setupTable;
+        java.util.Objects.requireNonNull(keepSetup);
+    }
+
     static void setupTable(TableView<AttendanceRow> table) {
         DateTimeFormatter dbFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         DateTimeFormatter displayFormatter = DateTimeFormatter.ofPattern("hh:mm a");

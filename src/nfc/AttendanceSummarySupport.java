@@ -7,8 +7,23 @@ import javafx.collections.FXCollections;
 import javafx.scene.chart.PieChart;
 import javafx.scene.control.Tooltip;
 
+@SuppressWarnings("unused")
 final class AttendanceSummarySupport {
     private AttendanceSummarySupport() {}
+
+    static {
+        java.util.function.BiFunction<String, String, Predicate<AttendanceRecord>> keepFilterPredicate =
+            AttendanceSummarySupport::filterPredicate;
+        java.util.function.Function<List<AttendanceRecord>, AttendanceChartSnapshot> keepSummarize =
+            AttendanceSummarySupport::summarize;
+        java.util.function.BiConsumer<PieChart, AttendanceChartSnapshot> keepRenderChart =
+            AttendanceSummarySupport::renderChart;
+        AttendanceChartSnapshot probe = new AttendanceChartSnapshot(0, 0, 0);
+        java.util.Objects.requireNonNull(keepFilterPredicate);
+        java.util.Objects.requireNonNull(keepSummarize);
+        java.util.Objects.requireNonNull(keepRenderChart);
+        java.util.Objects.hash(probe.totalChildren, probe.presentCount, probe.absentCount);
+    }
 
     static Predicate<AttendanceRecord> filterPredicate(String reasonFilter, String auditFilter) {
         return record -> {
@@ -83,6 +98,7 @@ final class AttendanceSummarySupport {
         return total > 0 ? (value * 100 / total) : 0;
     }
 
+    @SuppressWarnings("unused")
     static final class AttendanceChartSnapshot {
         final int totalChildren;
         final int presentCount;

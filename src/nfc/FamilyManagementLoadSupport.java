@@ -1,12 +1,12 @@
 package nfc;
 
 import java.io.IOException;
-import java.util.function.Consumer;
 
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.scene.control.Alert;
 
+@SuppressWarnings("unused")
 final class FamilyManagementLoadSupport {
     private FamilyManagementLoadSupport() {
     }
@@ -15,6 +15,7 @@ final class FamilyManagementLoadSupport {
         void log(String context, Exception error);
     }
 
+    @SuppressWarnings("unused")
     static void reloadChildren(
         ObservableList<ChildrenView.Child> data,
         ErrorLogger logger
@@ -38,6 +39,7 @@ final class FamilyManagementLoadSupport {
         });
     }
 
+    @SuppressWarnings("unused")
     static void reloadParents(
         ObservableList<ParentsPane.ParentRecord> data,
         ErrorLogger logger

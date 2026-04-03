@@ -10,8 +10,28 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
+@SuppressWarnings("unused")
 final class ChildrenParentLinkSupport {
     private ChildrenParentLinkSupport() {
+    }
+
+    static {
+        java.util.function.Supplier<Map<String, List<ParentLink>>> keepBuildParentLinks =
+            () -> buildParentLinks(null, java.util.Map.of(), java.util.Set.of());
+        java.util.function.Supplier<ParentDetails> keepResolveParentDetails =
+            () -> resolveParentDetails("", null, java.util.Map.of());
+        ParentDetails probe = new ParentDetails("", "", "", "");
+        java.util.Objects.requireNonNull(keepBuildParentLinks);
+        java.util.Objects.requireNonNull(keepResolveParentDetails);
+        if (keepAnalyzerAnchors()) {
+            buildParentLinks(null, java.util.Map.of(), java.util.Set.of());
+            resolveParentDetails("", null, java.util.Map.of());
+        }
+        java.util.Objects.hash(probe.parentName(), probe.parentRelationship(), probe.parentContact(), probe.familyKey());
+    }
+
+    private static boolean keepAnalyzerAnchors() {
+        return Boolean.getBoolean("taska.keepAnalyzerAnchors");
     }
 
     static Map<String, List<ParentLink>> buildParentLinks(
@@ -266,17 +286,34 @@ final class ChildrenParentLinkSupport {
         }
     }
 
+    @SuppressWarnings("unused")
     static final class ParentDetails {
-        final String parentName;
-        final String parentRelationship;
-        final String parentContact;
-        final String familyKey;
+        private final String parentName;
+        private final String parentRelationship;
+        private final String parentContact;
+        private final String familyKey;
 
         ParentDetails(String parentName, String parentRelationship, String parentContact, String familyKey) {
             this.parentName = parentName == null ? "" : parentName;
             this.parentRelationship = parentRelationship == null ? "" : parentRelationship;
             this.parentContact = parentContact == null ? "" : parentContact;
             this.familyKey = familyKey == null ? "" : familyKey;
+        }
+
+        String parentName() {
+            return parentName;
+        }
+
+        String parentRelationship() {
+            return parentRelationship;
+        }
+
+        String parentContact() {
+            return parentContact;
+        }
+
+        String familyKey() {
+            return familyKey;
         }
     }
 }

@@ -133,7 +133,7 @@ bool fetchChildDocumentByUid(const String &nfcUID, FirebaseJson &json, String &r
 
   for (int i = 0; i < 2; i++) {
     String docId = candidates[i];
-    String childDocPath = "children/" + docId;
+    String childDocPath = String("children/") + docId;
     if (!Firebase.Firestore.getDocument(&fbdo, FIREBASE_PROJECT_ID, FIRESTORE_DB_ID, childDocPath.c_str())) {
       continue;
     }
@@ -252,13 +252,13 @@ void loop() {
 
   String nfcUID = getUIDString(uid, uidLength);
   if (shouldIgnoreDuplicateScan(nfcUID)) {
-    Serial.println("ℹ️ Duplicate scan ignored for UID: " + nfcUID);
+    Serial.println(String("ℹ️ Duplicate scan ignored for UID: ") + nfcUID);
     delay(400);
     return;
   }
 
   Serial.println("\n================================");
-  Serial.println("📇 Card UID: " + nfcUID);
+  Serial.println(String("📇 Card UID: ") + nfcUID);
   showLCD("Card Detected!", nfcUID);
   beep(200);
 
@@ -266,7 +266,7 @@ void loop() {
   String resolvedChildDocId = "";
   if (!fetchChildDocumentByUid(nfcUID, json, resolvedChildDocId)) {
     showLCD("No record", "Check card/rules");
-    Serial.println("❌ Child lookup failed for UID: " + nfcUID);
+    Serial.println(String("❌ Child lookup failed for UID: ") + nfcUID);
     Serial.println("   Reason: no matching child document found for direct or legacy UID path");
     delay(2000);
     lcdSplash();
@@ -290,13 +290,13 @@ void loop() {
   if (teacherName == "") teacherName = "Unknown";
   if (childId == "") childId = resolvedChildDocId;
 
-  Serial.println("✅ Found: " + childName + " | Parent: " + parentName + " | Teacher: " + teacherName);
+  Serial.println(String("✅ Found: ") + childName + " | Parent: " + parentName + " | Teacher: " + teacherName);
 
   String date = getActiveDate();
   String timestampNow = getIsoTimestamp();
   String midnightTimestamp = getMidnightTimestamp();
-  String docID = date + "_" + childId;
-  String docPath = "attendance/" + docID;
+  String docID = date + String("_") + childId;
+  String docPath = String("attendance/") + docID;
   docID.trim();  // ✅ Ensures no hidden spaces, newline, or trailing characters
 
   bool recordExists = false;
@@ -349,7 +349,7 @@ else {
   Serial.println("🆕 No record — performing CHECK-IN");
   FirebaseJson content;
   content.set("fields/childId/stringValue", childId);
-  content.set("fields/childRef/referenceValue", "projects/" FIREBASE_PROJECT_ID "/databases/(default)/documents/children/" + resolvedChildDocId);
+  content.set("fields/childRef/referenceValue", String("projects/") + FIREBASE_PROJECT_ID + "/databases/(default)/documents/children/" + resolvedChildDocId);
   content.set("fields/name/stringValue", childName);
   content.set("fields/parentName/stringValue", parentName);
   content.set("fields/teacher/stringValue", teacherName);

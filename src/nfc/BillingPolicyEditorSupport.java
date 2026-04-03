@@ -5,11 +5,26 @@ import java.util.function.Supplier;
 
 import javafx.scene.control.TextField;
 
-final class BillingPolicyEditorSupport {
+public final class BillingPolicyEditorSupport {
     private BillingPolicyEditorSupport() {
     }
 
-    static void populateEditorFields(
+    static {
+        if (keepAnalyzerAnchors()) {
+            populateEditorFields(null, null, null, null);
+            applyEditedRow(new java.util.LinkedHashMap<>(), "", "", "", "", () -> "");
+            ApplyEditedRowResult probe = ApplyEditedRowResult.updated("");
+            probe.updated();
+            probe.nextDefaultTransit();
+            probe.errorMessage();
+        }
+    }
+
+    private static boolean keepAnalyzerAnchors() {
+        return Boolean.getBoolean("taska.keepAnalyzerAnchors");
+    }
+
+    public static void populateEditorFields(
         BillingPolicyView.Row row,
         TextField selectedCode,
         TextField selectedStaff,
@@ -23,7 +38,7 @@ final class BillingPolicyEditorSupport {
         selectedNonStaff.setText(String.valueOf(row.getNonStaff()));
     }
 
-    static ApplyEditedRowResult applyEditedRow(
+    public static ApplyEditedRowResult applyEditedRow(
         Map<String, Map<String, Long>> workingTable,
         String codeText,
         String staffText,
@@ -52,10 +67,10 @@ final class BillingPolicyEditorSupport {
         }
     }
 
-    static final class ApplyEditedRowResult {
-        final boolean updated;
-        final String nextDefaultTransit;
-        final String errorMessage;
+    public static final class ApplyEditedRowResult {
+        private final boolean updated;
+        private final String nextDefaultTransit;
+        private final String errorMessage;
 
         private ApplyEditedRowResult(boolean updated, String nextDefaultTransit, String errorMessage) {
             this.updated = updated;
@@ -73,6 +88,18 @@ final class BillingPolicyEditorSupport {
 
         static ApplyEditedRowResult invalid(String errorMessage) {
             return new ApplyEditedRowResult(false, "", errorMessage);
+        }
+
+        public boolean updated() {
+            return updated;
+        }
+
+        public String nextDefaultTransit() {
+            return nextDefaultTransit;
+        }
+
+        public String errorMessage() {
+            return errorMessage;
         }
     }
 }

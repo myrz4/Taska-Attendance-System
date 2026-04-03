@@ -27,6 +27,7 @@ import com.lowagie.text.pdf.draw.LineSeparator;
 
 import javafx.collections.ObservableList;
 
+@SuppressWarnings("unused")
 final class DailyReportPdfSupport {
     private DailyReportPdfSupport() {
     }

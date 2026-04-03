@@ -10,11 +10,11 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.time.Duration;
 
-final class RemoteImageFetcher {
+public final class RemoteImageFetcher {
     private RemoteImageFetcher() {
     }
 
-    static void downloadToFile(String url, Path target) throws IOException, InterruptedException {
+    public static void downloadToFile(String url, Path target) throws IOException, InterruptedException {
         if (url == null || url.isBlank() || target == null) {
             return;
         }

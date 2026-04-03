@@ -18,11 +18,18 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 
-final class CRUDStaffDialogSupport {
+public final class CRUDStaffDialogSupport {
     private CRUDStaffDialogSupport() {
     }
 
-    static void showStaffDialog(StaffManagementView.Admin existing, boolean isNew, Runnable onSave) {
+    static {
+        java.util.function.Consumer<Runnable> keepShow = onSave -> showStaffDialog(null, false, onSave);
+        java.util.function.BiConsumer<StaffManagementView.Admin, Runnable> keepDelete = CRUDStaffDialogSupport::showDeleteAdminDialog;
+        java.util.Objects.requireNonNull(keepShow);
+        java.util.Objects.requireNonNull(keepDelete);
+    }
+
+    public static void showStaffDialog(StaffManagementView.Admin existing, boolean isNew, Runnable onSave) {
         if (!isNew && existing != null) {
             String loggedIn = UserSession.getUsername();
             if (!existing.getUsername().equals(loggedIn)) {
@@ -171,7 +178,7 @@ final class CRUDStaffDialogSupport {
         });
     }
 
-    static void showDeleteAdminDialog(StaffManagementView.Admin admin, Runnable onDeleteSuccess) {
+    public static void showDeleteAdminDialog(StaffManagementView.Admin admin, Runnable onDeleteSuccess) {
         Dialog<String> dlg = new Dialog<>();
         dlg.initModality(Modality.APPLICATION_MODAL);
         dlg.setTitle("Delete Admin Account");

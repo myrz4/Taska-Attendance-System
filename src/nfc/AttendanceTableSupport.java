@@ -17,9 +17,11 @@ import javafx.scene.control.TableView;
 import javafx.stage.FileChooser;
 import javafx.stage.Window;
 
+@SuppressWarnings("unused")
 final class AttendanceTableSupport {
     private AttendanceTableSupport() {}
 
+    @SuppressWarnings("unused")
     static void configureTable(
         TableView<AttendanceRecord> table,
         Consumer<AttendanceRecord> showAuditAction,

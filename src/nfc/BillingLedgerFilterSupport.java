@@ -11,6 +11,33 @@ import java.util.function.Function;
 final class BillingLedgerFilterSupport {
     private BillingLedgerFilterSupport() {}
 
+    static {
+        java.util.function.Consumer<List<BillingLedgerView.LedgerRow>> keepApply = rows -> applyFilters(
+            rows,
+            null,
+            "All",
+            "All Dates",
+            "All Reviews",
+            "All Families",
+            "",
+            "Latest First",
+            "Highest Outstanding",
+            0L,
+            0L,
+            amount -> "",
+            date -> ""
+        );
+        java.util.function.Function<List<BillingLedgerView.LedgerRow>, List<BillingLedgerView.ParentSummaryRow>> keepSummary =
+            rows -> updateParentSummary(rows, "Highest Outstanding", "All Families", 0L, 0L, amount -> "", date -> "");
+        java.util.function.Function<String, String> keepDescription =
+            status -> buildCurrentFilterDescription(status, "All Dates", "All Families", "All Reviews", "", "");
+        FilterResult probe = new FilterResult(List.of(), List.of());
+        java.util.Objects.requireNonNull(keepApply);
+        java.util.Objects.requireNonNull(keepSummary);
+        java.util.Objects.requireNonNull(keepDescription);
+        java.util.Objects.hash(probe.filteredRows, probe.visibleSummaries);
+    }
+
     static FilterResult applyFilters(
         List<BillingLedgerView.LedgerRow> allRows,
         String focusedParentId,

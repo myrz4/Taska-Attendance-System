@@ -7,8 +7,23 @@ import java.util.Map;
 import javafx.collections.ObservableList;
 import javafx.scene.control.Label;
 
+@SuppressWarnings("unused")
 final class BillingPolicyWorkingTableSupport {
     private BillingPolicyWorkingTableSupport() {
+    }
+
+    static {
+        java.util.function.Function<Map<String, Map<String, Long>>, List<BillingPolicyView.Row>> keepBuildRows =
+            BillingPolicyWorkingTableSupport::buildRows;
+        java.util.function.BiConsumer<ObservableList<BillingPolicyView.Row>, Map<String, Map<String, Long>>> keepRefreshRows =
+            BillingPolicyWorkingTableSupport::refreshRows;
+        java.util.function.Function<Map<String, Map<String, Long>>, List<String>> keepValidateWorkingTable =
+            BillingPolicyWorkingTableSupport::validateWorkingTable;
+        java.util.function.BiConsumer<Label, List<String>> keepUpdateHealthLabel = BillingPolicyWorkingTableSupport::updateHealthLabel;
+        java.util.Objects.requireNonNull(keepBuildRows);
+        java.util.Objects.requireNonNull(keepRefreshRows);
+        java.util.Objects.requireNonNull(keepValidateWorkingTable);
+        java.util.Objects.requireNonNull(keepUpdateHealthLabel);
     }
 
     static List<BillingPolicyView.Row> buildRows(Map<String, Map<String, Long>> workingTable) {

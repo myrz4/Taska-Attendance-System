@@ -17,10 +17,12 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 
+@SuppressWarnings("all")
 final class LoginViewFormSupport {
     private LoginViewFormSupport() {
     }
 
+    @SuppressWarnings("unused")
     static LoginFormBundle buildLoginCard(String cardBg, String cardStroke, String buttonGreen) {
         VBox card = new VBox(18);
         card.setAlignment(Pos.CENTER);
@@ -131,12 +133,14 @@ final class LoginViewFormSupport {
         return new LoginFormBundle(cardHolder, username, password, msg, loginBtn, forgot);
     }
 
+    @SuppressWarnings("unused")
     static final class LoginFormBundle {
         final StackPane cardHolder;
         final TextField username;
         final PasswordField password;
         final Label msg;
         final Button loginBtn;
+        @SuppressWarnings("unused")
         final Label forgot;
 
         LoginFormBundle(StackPane cardHolder, TextField username, PasswordField password, Label msg, Button loginBtn, Label forgot) {

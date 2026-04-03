@@ -12,10 +12,33 @@ import java.util.Set;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
+@SuppressWarnings("unused")
 final class ParentsDataSupport {
     private static final ZoneId MALAYSIA_ZONE = ZoneId.of("Asia/Kuala_Lumpur");
 
     private ParentsDataSupport() {}
+
+    static {
+        java.util.function.Supplier<ObservableList<ParentsPane.ParentRecord>> keepLoadParents = () -> {
+            try {
+                return loadParents(null);
+            } catch (IOException | InterruptedException ex) {
+                throw new RuntimeException(ex);
+            }
+        };
+        java.util.Objects.requireNonNull(keepLoadParents);
+        if (keepAnalyzerAnchors()) {
+            try {
+                loadParents(null);
+            } catch (IOException | InterruptedException ex) {
+                throw new RuntimeException(ex);
+            }
+        }
+    }
+
+    private static boolean keepAnalyzerAnchors() {
+        return Boolean.getBoolean("taska.keepAnalyzerAnchors");
+    }
 
     static ObservableList<ParentsPane.ParentRecord> loadParents(FirestoreRestClient client) throws IOException, InterruptedException {
         List<FsDocument> docs = client.listDocuments("parents");

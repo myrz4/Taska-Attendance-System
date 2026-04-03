@@ -71,11 +71,11 @@ public class LoginView extends Application {
 
         // Layering: frame at back, then header/logo, then card
         root.getChildren().addAll(
-            scaffold.outerFrame,
-            scaffold.innerFrame,
-            scaffold.decorLayer,
-            scaffold.header,
-            scaffold.logoBox,
+            scaffold.outerFrame(),
+            scaffold.innerFrame(),
+            scaffold.decorLayer(),
+            scaffold.header(),
+            scaffold.logoBox(),
             form.cardHolder
         );
 

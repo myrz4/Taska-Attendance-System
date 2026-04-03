@@ -4,14 +4,17 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+@SuppressWarnings("all")
 final class BillingPolicyHealthSupport {
     private BillingPolicyHealthSupport() {
     }
 
+    @SuppressWarnings("unused")
     static BillingPolicyRemoteSupport.RemoteHealthSnapshot unavailableSnapshot(String message) {
         return new BillingPolicyRemoteSupport.RemoteHealthSnapshot(false, false, message, "-", "-", "-", "unknown", "unknown");
     }
 
+    @SuppressWarnings("unused")
     static BillingPolicyRemoteSupport.RemoteHealthSnapshot errorSnapshot(Exception ex) {
         return new BillingPolicyRemoteSupport.RemoteHealthSnapshot(
             false,
@@ -25,6 +28,7 @@ final class BillingPolicyHealthSupport {
         );
     }
 
+    @SuppressWarnings("unused")
     static BillingPolicyRemoteSupport.RemoteHealthSnapshot buildSnapshot(boolean ok, String reason, Map<?, ?> result) {
         Map<?, ?> health = (result != null && result.get("health") instanceof Map)
             ? (Map<?, ?>) result.get("health")

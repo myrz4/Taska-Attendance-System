@@ -7,11 +7,11 @@ import java.util.function.Consumer;
 
 import javafx.application.Platform;
 
-final class CasualTransitWorkflowSupport {
+public final class CasualTransitWorkflowSupport {
     private CasualTransitWorkflowSupport() {
     }
 
-    static void reloadVisitsAsync(
+    public static void reloadVisitsAsync(
         Consumer<List<CasualTransitView.VisitRow>> onLoaded,
         Consumer<String> onError
     ) {
@@ -26,7 +26,7 @@ final class CasualTransitWorkflowSupport {
             }));
     }
 
-    static void loadAuditHistoryAsync(
+    public static void loadAuditHistoryAsync(
         String visitId,
         Consumer<List<CasualTransitView.AuditEntry>> onLoaded,
         Consumer<String> onError
@@ -42,7 +42,7 @@ final class CasualTransitWorkflowSupport {
             }));
     }
 
-    static void createVisitAsync(
+    public static void createVisitAsync(
         Map<String, String> values,
         Runnable onSuccess,
         Consumer<String> onError
@@ -58,7 +58,7 @@ final class CasualTransitWorkflowSupport {
             }));
     }
 
-    static void checkoutVisitAsync(
+    public static void checkoutVisitAsync(
         CasualTransitView.VisitRow row,
         Map<String, String> values,
         Runnable onSuccess,
@@ -75,7 +75,7 @@ final class CasualTransitWorkflowSupport {
             }));
     }
 
-    static void overrideVisitAsync(
+    public static void overrideVisitAsync(
         String action,
         CasualTransitView.VisitRow row,
         Map<String, String> values,
@@ -93,7 +93,7 @@ final class CasualTransitWorkflowSupport {
             }));
     }
 
-    static String rootMessage(Throwable error) {
+    public static String rootMessage(Throwable error) {
         Throwable current = error;
         while (current.getCause() != null) {
             current = current.getCause();

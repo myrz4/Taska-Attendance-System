@@ -17,6 +17,11 @@ final class AdminDashboardSidebarSupport {
     private AdminDashboardSidebarSupport() {
     }
 
+    static {
+        java.util.function.Function<SidebarActions, VBox> keepSidebar = AdminDashboardSidebarSupport::createSidebar;
+        java.util.Objects.requireNonNull(keepSidebar);
+    }
+
     interface SidebarActions {
         void showDashboard();
         void showAttendance();

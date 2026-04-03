@@ -8,6 +8,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -15,6 +16,12 @@ final class AttendanceRecordDataSupport {
     private static final DateTimeFormatter DB_TIMESTAMP_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     private AttendanceRecordDataSupport() {
+    }
+
+    static {
+        java.util.function.BiFunction<List<FsDocument>, List<FsDocument>, List<AttendanceRecord>> keepBuild =
+            AttendanceRecordDataSupport::buildRecords;
+        java.util.Objects.requireNonNull(keepBuild);
     }
 
     static List<AttendanceRecord> buildRecords(List<FsDocument> children, List<FsDocument> attendanceDocs) {
@@ -34,7 +41,7 @@ final class AttendanceRecordDataSupport {
                 childIdToChildDocId.put(numericId, child.getId());
             }
             if (uid != null && !uid.isBlank()) {
-                nfcUidToChildDocId.put(uid, child.getId());
+                putUidMapping(nfcUidToChildDocId, uid, child.getId());
             }
         }
 
@@ -48,8 +55,9 @@ final class AttendanceRecordDataSupport {
 
         List<AttendanceRecord> records = new ArrayList<>();
         for (FsDocument child : children) {
-            AttendanceRecord record = new AttendanceRecord(child.getId(), child.getString("name"), child.getString("nfc_uid"));
-            applyAttendance(record, child.getString("name"), attendanceMap.get(child.getId()));
+            String childName = firstNonBlank(child.getString("name"), child.getString("childName"));
+            AttendanceRecord record = new AttendanceRecord(child.getId(), childName, child.getString("nfc_uid"));
+            applyAttendance(record, childName, attendanceMap.get(child.getId()));
             records.add(record);
         }
         return records;
@@ -62,7 +70,12 @@ final class AttendanceRecordDataSupport {
         Map<String, String> nfcUidToChildDocId,
         Set<String> allChildDocIds
     ) {
-        String childDocId = attendanceDoc.getString("childId");
+        String childDocId = firstNonBlank(
+            attendanceDoc.getString("childId"),
+            extractChildIdFromRef(attendanceDoc.get("childRef")),
+            extractChildIdFromRef(attendanceDoc.get("child_ref")),
+            attendanceDoc.getString("nfc_uid")
+        );
 
         if (childDocId == null || childDocId.isBlank()) {
             Long numericChildId = attendanceDoc.getLong("child_id");
@@ -77,8 +90,15 @@ final class AttendanceRecordDataSupport {
             }
         }
 
+        if (childDocId == null || childDocId.isBlank()) {
+            String attendanceId = attendanceDoc.getId();
+            if (attendanceId != null && attendanceId.contains("_")) {
+                childDocId = attendanceId.substring(attendanceId.indexOf('_') + 1).trim();
+            }
+        }
+
         if (childDocId != null && !childDocId.isBlank() && !allChildDocIds.contains(childDocId)) {
-            String mapped = nfcUidToChildDocId.get(childDocId);
+            String mapped = lookupUidMapping(nfcUidToChildDocId, childDocId);
             if (mapped != null && !mapped.isBlank()) {
                 childDocId = mapped;
             }
@@ -91,7 +111,12 @@ final class AttendanceRecordDataSupport {
             return;
         }
 
-        record.nameProperty().set(childName);
+        record.nameProperty().set(firstNonBlank(
+            childName,
+            attendanceDoc.getString("name"),
+            attendanceDoc.getString("childName"),
+            attendanceDoc.getString("child_name")
+        ));
 
         Boolean presentFlag = attendanceDoc.getBoolean("isPresent");
         if (presentFlag == null) {
@@ -165,5 +190,63 @@ final class AttendanceRecordDataSupport {
             return "";
         }
         return String.valueOf(value).trim();
+    }
+
+    private static String extractChildIdFromRef(Object raw) {
+        if (!(raw instanceof String)) {
+            return "";
+        }
+        String value = ((String) raw).trim();
+        if (value.isEmpty()) {
+            return "";
+        }
+        String path = value.startsWith("/") ? value.substring(1) : value;
+        int index = path.indexOf("children/");
+        if (index < 0) {
+            return "";
+        }
+        String tail = path.substring(index + "children/".length());
+        int slash = tail.indexOf('/');
+        return slash >= 0 ? tail.substring(0, slash).trim() : tail.trim();
+    }
+
+    private static void putUidMapping(Map<String, String> target, String uid, String value) {
+        if (target == null) {
+            return;
+        }
+        String rawKey = uid == null ? "" : uid.trim();
+        String mappedValue = value == null ? "" : value.trim();
+        if (rawKey.isBlank() || mappedValue.isBlank()) {
+            return;
+        }
+        target.put(rawKey, mappedValue);
+
+        String normalizedKey = normalizeLookupKey(rawKey);
+        if (!normalizedKey.isBlank()) {
+            target.put(normalizedKey, mappedValue);
+        }
+    }
+
+    private static String lookupUidMapping(Map<String, String> target, String key) {
+        if (target == null) {
+            return "";
+        }
+        String rawKey = key == null ? "" : key.trim();
+        if (rawKey.isBlank()) {
+            return "";
+        }
+
+        String mapped = target.get(rawKey);
+        if (mapped != null && !mapped.isBlank()) {
+            return mapped;
+        }
+
+        String normalizedKey = normalizeLookupKey(rawKey);
+        mapped = target.get(normalizedKey);
+        return mapped == null ? "" : mapped;
+    }
+
+    private static String normalizeLookupKey(String value) {
+        return value == null ? "" : value.trim().toUpperCase(Locale.ROOT);
     }
 }

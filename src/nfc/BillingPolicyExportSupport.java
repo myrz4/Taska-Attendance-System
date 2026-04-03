@@ -11,6 +11,7 @@ import com.google.gson.GsonBuilder;
 
 import javafx.stage.Window;
 
+@SuppressWarnings("unused")
 final class BillingPolicyExportSupport {
     private static final Gson GSON_PRETTY = new GsonBuilder().setPrettyPrinting().create();
 

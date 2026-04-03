@@ -21,6 +21,7 @@ import javafx.scene.image.Image;
  * - Otherwise returns an Image from the remote URL (backgroundLoading=true)
  *   and downloads to disk in the background for faster subsequent runs.
  */
+@SuppressWarnings({"java:S1128", "java:S2221"})
 public final class ImageCache {
 
     private static final Path CACHE_DIR = initCacheDir();
@@ -39,7 +40,7 @@ public final class ImageCache {
             Path dir = Paths.get(System.getProperty("user.home"), ".taskazurah", "image_cache");
             Files.createDirectories(dir);
             return dir;
-        } catch (Exception e) {
+        } catch (IOException | SecurityException e) {
             // Fallback to current directory.
             return Paths.get("image_cache");
         }
@@ -82,7 +83,9 @@ public final class ImageCache {
         CompletableFuture.runAsync(() -> {
             try {
                 RemoteImageFetcher.downloadToFile(normalized, cached);
-            } catch (Exception ignored) {
+            } catch (IOException | RuntimeException ignored) {
+            } catch (InterruptedException ignored) {
+                Thread.currentThread().interrupt();
             } finally {
                 IN_FLIGHT.remove(normalized);
             }
@@ -97,7 +100,7 @@ public final class ImageCache {
             String ext = guessExtension(u);
             String hash = sha256Hex(u);
             return CACHE_DIR.resolve(hash + ext);
-        } catch (Exception e) {
+        } catch (java.security.NoSuchAlgorithmException | RuntimeException e) {
             return null;
         }
     }
@@ -113,7 +116,7 @@ public final class ImageCache {
         return ".img";
     }
 
-    private static String sha256Hex(String input) throws Exception {
+    private static String sha256Hex(String input) throws java.security.NoSuchAlgorithmException {
         MessageDigest md = MessageDigest.getInstance("SHA-256");
         byte[] dig = md.digest(input.getBytes(java.nio.charset.StandardCharsets.UTF_8));
         StringBuilder sb = new StringBuilder(dig.length * 2);

@@ -11,10 +11,12 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 
+@SuppressWarnings("unused")
 final class BillingPolicyLayoutSupport {
     private BillingPolicyLayoutSupport() {
     }
 
+    @SuppressWarnings("unused")
     static HBox createTitleRow(Label liveHealthBadge, Button liveHealthRefreshBtn, Button liveHealthDetailsBtn) {
         Label title = new Label("Billing Policy Catalog");
         title.setStyle("-fx-font-size: 28px; -fx-font-weight: bold; -fx-text-fill: #1d2f24;");
@@ -24,6 +26,7 @@ final class BillingPolicyLayoutSupport {
         return titleRow;
     }
 
+    @SuppressWarnings("unused")
     static VBox createLiveHealthDetailsBox(
         Label liveHealthVersionLabel,
         Label liveHealthRowCountLabel,
@@ -46,6 +49,7 @@ final class BillingPolicyLayoutSupport {
         return liveHealthDetailsBox;
     }
 
+    @SuppressWarnings("unused")
     static FlowPane createTopActions(
         javafx.scene.control.ComboBox<BillingPolicyWorkflowSupport.CatalogItemOption> catalogSelect,
         Button refreshBtn,
@@ -74,6 +78,7 @@ final class BillingPolicyLayoutSupport {
         );
     }
 
+    @SuppressWarnings("unused")
     static FlowPane createRowEditor(
         TextField selectedCode,
         TextField selectedStaff,
@@ -89,6 +94,7 @@ final class BillingPolicyLayoutSupport {
         );
     }
 
+    @SuppressWarnings("unused")
     static BorderPane createWrapper(FlowPane topActions, javafx.scene.control.TableView<BillingPolicyView.Row> table, FlowPane rowEditor) {
         BorderPane wrapper = new BorderPane();
         wrapper.setTop(topActions);

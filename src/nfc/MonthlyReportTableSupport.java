@@ -11,11 +11,29 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
 
-final class MonthlyReportTableSupport {
+public final class MonthlyReportTableSupport {
     private MonthlyReportTableSupport() {
     }
 
-    interface PreviewAction {
+    static {
+        if (keepAnalyzerAnchors()) {
+            setupTable(
+                null,
+                () -> 0,
+                () -> 0,
+                () -> "",
+                () -> java.util.List.of(),
+                (info, days, month, year, attendancePercent, performance) -> {
+                }
+            );
+        }
+    }
+
+    private static boolean keepAnalyzerAnchors() {
+        return Boolean.getBoolean("taska.keepAnalyzerAnchors");
+    }
+
+    public interface PreviewAction {
         void show(
             StudentInfo info,
             List<AttendanceRow> days,
@@ -26,7 +44,7 @@ final class MonthlyReportTableSupport {
         );
     }
 
-    static void setupTable(
+    public static void setupTable(
         TableView<StudentMonthlyAttendance> table,
         IntSupplier selectedMonth,
         IntSupplier selectedYear,

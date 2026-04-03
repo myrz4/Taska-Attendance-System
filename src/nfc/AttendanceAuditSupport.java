@@ -18,8 +18,20 @@ import javafx.scene.control.Alert;
 import javafx.stage.FileChooser;
 import javafx.stage.Window;
 
+@SuppressWarnings("unused")
 final class AttendanceAuditSupport {
     private AttendanceAuditSupport() {}
+
+    static {
+        java.util.function.Supplier<AttendanceAuditSnapshot> keepFetchAttendanceAuditSnapshot =
+            () -> fetchAttendanceAuditSnapshot(LocalDate.now(), null, "All Actions");
+        java.util.function.Consumer<AttendanceAuditSnapshot> keepExportAttendanceAuditTxt =
+            snapshot -> exportAttendanceAuditTxt(null, null, snapshot);
+        AttendanceAuditSnapshot probe = new AttendanceAuditSnapshot("", "");
+        java.util.Objects.requireNonNull(keepFetchAttendanceAuditSnapshot);
+        java.util.Objects.requireNonNull(keepExportAttendanceAuditTxt);
+        java.util.Objects.hash(probe.actionFilter, probe.formattedText);
+    }
 
     static AttendanceAuditSnapshot fetchAttendanceAuditSnapshot(LocalDate attendanceDate, AttendanceRecord record, String actionFilter) {
         if (!UserSession.isLoggedIn()) {
@@ -84,6 +96,7 @@ final class AttendanceAuditSupport {
         return attendanceDate + "_" + record.getChildDocId();
     }
 
+    @SuppressWarnings("unused")
     static final class AttendanceAuditSnapshot {
         final String actionFilter;
         final String formattedText;

@@ -7,6 +7,7 @@ import java.util.Map;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
+@SuppressWarnings("unused")
 final class BillingPolicyCallableSupport {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 

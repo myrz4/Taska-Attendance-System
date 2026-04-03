@@ -17,6 +17,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Window;
 
+@SuppressWarnings("all")
 final class BillingPolicyAuditDialogSupport {
     private static final List<String> AUDIT_ACTION_OPTIONS = java.util.Arrays.asList(
         "all",
@@ -27,6 +28,7 @@ final class BillingPolicyAuditDialogSupport {
     private BillingPolicyAuditDialogSupport() {
     }
 
+    @SuppressWarnings("unused")
     static void showAuditLogDialog(Window owner, BillingPolicyStatusSupport.AlertSink alerts) {
         Alert auditDialog = new Alert(Alert.AlertType.INFORMATION);
         auditDialog.setHeaderText("Recent Billing Audit Log");

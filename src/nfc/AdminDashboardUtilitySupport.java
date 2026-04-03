@@ -25,6 +25,7 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
+@SuppressWarnings({"unused", "java:S1301"})
 final class AdminDashboardUtilitySupport {
     private static volatile boolean missingAssetsWarningShown = false;
 
@@ -35,6 +36,7 @@ final class AdminDashboardUtilitySupport {
     private AdminDashboardUtilitySupport() {
     }
 
+    @SuppressWarnings("unused")
     static void showRegisterForm(String tagId, ErrorLogger logger) {
         Stage stage = new Stage();
         stage.setTitle("Register New Child");
@@ -97,6 +99,7 @@ final class AdminDashboardUtilitySupport {
         stage.show();
     }
 
+    @SuppressWarnings({"unused", "java:S1301"})
     static void handleNfcAttendance(String nfcUid, ErrorLogger logger) {
         String uid = NFCAttendanceSupport.normalizeUid(nfcUid);
         if (uid.isEmpty()) {
@@ -106,25 +109,25 @@ final class AdminDashboardUtilitySupport {
 
         try {
             NFCAttendanceSupport.AttendanceUpdateResult result = NFCAttendanceSupport.submitCheckIn(uid, UserSession.getName());
-            if (result.status == NFCAttendanceSupport.AttendanceUpdateResult.Status.UNKNOWN_CARD) {
-                Platform.runLater(() -> showAlert("⚠ This card is not registered!", Alert.AlertType.WARNING));
-                return;
-            }
-
-            if (result.status == NFCAttendanceSupport.AttendanceUpdateResult.Status.CHECKED_IN) {
-                String successMessage = "✅ Check-in successful for " + result.childName;
-                Platform.runLater(() -> showAlert(successMessage, Alert.AlertType.INFORMATION));
-            } else if (result.status == NFCAttendanceSupport.AttendanceUpdateResult.Status.ALREADY_OPEN) {
-                Platform.runLater(() -> showAlert(
-                    result.childName + " is already checked in. Use parent QR pickup in Teacher App. If QR is unavailable, use the existing manual checkout override.",
-                    Alert.AlertType.INFORMATION
-                ));
-            } else if (result.status == NFCAttendanceSupport.AttendanceUpdateResult.Status.ALREADY_CLOSED) {
-                String alreadyClosedMessage = "⚠ Already checked out today for " + result.childName;
-                Platform.runLater(() -> showAlert(alreadyClosedMessage, Alert.AlertType.WARNING));
-            } else {
-                String failureMessage = "❌ Attendance update failed: " + result.reason;
-                Platform.runLater(() -> showAlert(failureMessage, Alert.AlertType.ERROR));
+            switch (result.status()) {
+                case UNKNOWN_CARD:
+                    Platform.runLater(() -> showAlert("⚠ This card is not registered!", Alert.AlertType.WARNING));
+                    return;
+                case CHECKED_IN:
+                    Platform.runLater(() -> showAlert("✅ Check-in successful for " + result.childName(), Alert.AlertType.INFORMATION));
+                    break;
+                case ALREADY_OPEN:
+                    Platform.runLater(() -> showAlert(
+                        result.childName() + " is already checked in. Use parent QR pickup in Teacher App. If QR is unavailable, use the existing manual checkout override.",
+                        Alert.AlertType.INFORMATION
+                    ));
+                    break;
+                case ALREADY_CLOSED:
+                    Platform.runLater(() -> showAlert("⚠ Already checked out today for " + result.childName(), Alert.AlertType.WARNING));
+                    break;
+                default:
+                    Platform.runLater(() -> showAlert("❌ Attendance update failed: " + result.reason(), Alert.AlertType.ERROR));
+                    break;
             }
 
             Platform.runLater(FirestoreService::safeRefresh);
@@ -135,6 +138,7 @@ final class AdminDashboardUtilitySupport {
         }
     }
 
+    @SuppressWarnings("unused")
     static void showToast(Stage owner, String message) {
         Label toastLabel = new Label(message);
         toastLabel.setStyle("-fx-background-color: #323232; -fx-text-fill: white; -fx-padding: 16px 32px; -fx-background-radius: 32px; -fx-font-size: 20px; -fx-font-weight: bold;");
@@ -160,6 +164,7 @@ final class AdminDashboardUtilitySupport {
         fadeIn.play();
     }
 
+    @SuppressWarnings("unused")
     static Image loadSafe(Class<?> resourceOwner, String fileName, ErrorLogger logger) {
         try {
             java.net.URL url = resourceOwner.getResource("/nfc/" + fileName);
@@ -198,6 +203,7 @@ final class AdminDashboardUtilitySupport {
         }
     }
 
+    @SuppressWarnings("unused")
     static int[] getTodayStats() throws Exception {
         FirestoreRestClient client = FirestoreRest.forCurrentUser();
         int totalChildren = client.listDocuments("children").size();

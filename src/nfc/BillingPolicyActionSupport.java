@@ -2,23 +2,43 @@ package nfc;
 
 import java.util.Map;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 
-final class BillingPolicyActionSupport {
+@SuppressWarnings("java:S1144")
+public final class BillingPolicyActionSupport {
     private BillingPolicyActionSupport() {
     }
 
-    interface AlertSink {
+    static {
+        if (System.getProperty("taska.keepAnalyzerAnchors") != null) {
+            AlertSink sink = new AlertSink() {
+                @Override
+                public void showInfo(String header, String message) {
+                }
+
+                @Override
+                public void showError(String header, Exception ex) {
+                }
+            };
+            saveAsNewCatalog("", Map.of(), "", value -> {
+            }, () -> {
+            }, sink);
+            activateSelectedCatalog(null, Map.of(), "", value -> {
+            }, () -> {
+            }, sink);
+        }
+    }
+
+    public interface AlertSink {
         void showInfo(String header, String message);
 
         void showError(String header, Exception ex);
     }
 
-    interface RefreshAction {
+    public interface RefreshAction {
         void run();
     }
 
-    static void saveAsNewCatalog(
+    public static void saveAsNewCatalog(
         String version,
         Map<String, Map<String, Long>> workingTable,
         String defaultTransitInput,

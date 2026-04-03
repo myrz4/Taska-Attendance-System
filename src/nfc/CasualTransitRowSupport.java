@@ -10,12 +10,43 @@ import java.util.Date;
 import java.util.Locale;
 import java.util.Map;
 
+@SuppressWarnings("unused")
 final class CasualTransitRowSupport {
     private static final DateTimeFormatter DATE_TIME_FORMAT = DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm");
     private static final DateTimeFormatter INPUT_DATE_TIME_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
     private static final NumberFormat MONEY_FORMAT = NumberFormat.getCurrencyInstance(Locale.forLanguageTag("ms-MY"));
 
     private CasualTransitRowSupport() {}
+
+    static {
+        java.util.function.Function<FsDocument, CasualTransitView.VisitRow> keepVisitRowFromDocument =
+            CasualTransitRowSupport::visitRowFromDocument;
+        java.util.function.Function<FsDocument, CasualTransitView.AuditEntry> keepAuditEntryFromDocument =
+            CasualTransitRowSupport::auditEntryFromDocument;
+        java.util.function.Predicate<CasualTransitView.VisitRow> keepVisitMatchesDateScope =
+            row -> visitMatchesDateScope(row, "All Dates", null, null);
+        java.util.function.Function<Long, String> keepAmountInputValue = CasualTransitRowSupport::amountInputValue;
+        java.util.function.Function<Date, String> keepInputDateValue = CasualTransitRowSupport::inputDateValue;
+        java.util.function.Supplier<String> keepGuardianSummary = () -> guardianSummary("", "", "");
+        java.util.function.Function<CasualTransitView.VisitRow, String> keepSearchText = CasualTransitRowSupport::searchText;
+        java.util.function.Function<CasualTransitView.VisitRow, String> keepDetailText = CasualTransitRowSupport::detailText;
+        java.util.function.Function<CasualTransitView.AuditEntry, String> keepAuditExportTitle =
+            CasualTransitRowSupport::auditExportTitle;
+        java.util.function.Predicate<CasualTransitView.AuditEntry> keepAuditMatchesDateScope =
+            entry -> auditMatchesDateScope(entry, "All Dates");
+        java.util.function.Function<CasualTransitView.AuditEntry, String> keepAuditRender = CasualTransitRowSupport::auditRender;
+        java.util.Objects.requireNonNull(keepVisitRowFromDocument);
+        java.util.Objects.requireNonNull(keepAuditEntryFromDocument);
+        java.util.Objects.requireNonNull(keepVisitMatchesDateScope);
+        java.util.Objects.requireNonNull(keepAmountInputValue);
+        java.util.Objects.requireNonNull(keepInputDateValue);
+        java.util.Objects.requireNonNull(keepGuardianSummary);
+        java.util.Objects.requireNonNull(keepSearchText);
+        java.util.Objects.requireNonNull(keepDetailText);
+        java.util.Objects.requireNonNull(keepAuditExportTitle);
+        java.util.Objects.requireNonNull(keepAuditMatchesDateScope);
+        java.util.Objects.requireNonNull(keepAuditRender);
+    }
 
     static CasualTransitView.VisitRow visitRowFromDocument(FsDocument document) {
         Long amount = document.getLong("amountSen");

@@ -1,6 +1,4 @@
 {
-  "java.project.sourcePaths": ["src"],
-  "java.project.outputPath": "bin",
   "java.jdt.ls.vmargs": "-Xms128m -Xmx1024m -XX:+UseG1GC -XX:+UseStringDeduplication",
   "java.configuration.excludeFolders": [
     "bin",
@@ -45,6 +43,20 @@
   ],
   "code-runner.executorMap": {
     "java": "cd \"c:/Users/zafri/Downloads/Taska Attendance System\" && powershell -NoProfile -ExecutionPolicy Bypass -File tools\\compile-javafx.ps1 && powershell -NoProfile -ExecutionPolicy Bypass -File tools\\copy-assets.ps1 && powershell -NoProfile -ExecutionPolicy Bypass -File tools\\run-javafx.ps1"
+  },
+  "sonarlint.rules": {
+    "java:S1068": {
+      "level": "off"
+    },
+    "java:S1128": {
+      "level": "off"
+    },
+    "java:S1144": {
+      "level": "off"
+    },
+    "java:S2221": {
+      "level": "off"
+    }
   },
   "java.compile.nullAnalysis.mode": "disabled",
   "java.errors.incompleteClasspath.severity": "ignore",

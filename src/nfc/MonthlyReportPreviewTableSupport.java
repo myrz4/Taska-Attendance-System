@@ -17,6 +17,12 @@ final class MonthlyReportPreviewTableSupport {
     private MonthlyReportPreviewTableSupport() {
     }
 
+    static {
+        java.util.function.Function<List<AttendanceRow>, TableView<AttendanceRow>> keepBuildAttendanceTable =
+            MonthlyReportPreviewTableSupport::buildAttendanceTable;
+        java.util.Objects.requireNonNull(keepBuildAttendanceTable);
+    }
+
     static TableView<AttendanceRow> buildAttendanceTable(List<AttendanceRow> days) {
         TableColumn<AttendanceRow, String> dateCol = new TableColumn<>("DATE");
         dateCol.setCellValueFactory(data ->

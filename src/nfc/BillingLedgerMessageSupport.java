@@ -2,8 +2,17 @@ package nfc;
 
 import java.util.Map;
 
+@SuppressWarnings("unused")
 final class BillingLedgerMessageSupport {
     private BillingLedgerMessageSupport() {
+    }
+
+    static {
+        java.util.function.Function<Map<?, ?>, String> keepBuildInvoiceGenerationSummary =
+            BillingLedgerMessageSupport::buildInvoiceGenerationSummary;
+        java.util.function.Function<Throwable, String> keepRootMessage = BillingLedgerMessageSupport::rootMessage;
+        java.util.Objects.requireNonNull(keepBuildInvoiceGenerationSummary);
+        java.util.Objects.requireNonNull(keepRootMessage);
     }
 
     static String buildInvoiceGenerationSummary(Map<?, ?> result) {

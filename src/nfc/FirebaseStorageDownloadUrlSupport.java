@@ -2,8 +2,22 @@ package nfc;
 
 import com.google.gson.JsonObject;
 
+@SuppressWarnings("unused")
 final class FirebaseStorageDownloadUrlSupport {
     private FirebaseStorageDownloadUrlSupport() {
+    }
+
+    static {
+        java.util.function.Function<JsonObject, String> keepBuildDownloadUrl =
+            object -> buildDownloadUrl("", "", object);
+        java.util.Objects.requireNonNull(keepBuildDownloadUrl);
+        if (keepAnalyzerAnchors()) {
+            buildDownloadUrl("", "", null);
+        }
+    }
+
+    private static boolean keepAnalyzerAnchors() {
+        return Boolean.getBoolean("taska.keepAnalyzerAnchors");
     }
 
     static String buildDownloadUrl(String bucket, String encodedName, JsonObject object) {

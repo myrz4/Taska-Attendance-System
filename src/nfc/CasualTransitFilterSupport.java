@@ -5,11 +5,13 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Locale;
 
+@SuppressWarnings("unused")
 final class CasualTransitFilterSupport {
     private static final NumberFormat MONEY_FORMAT = NumberFormat.getCurrencyInstance(Locale.forLanguageTag("ms-MY"));
 
     private CasualTransitFilterSupport() {}
 
+    @SuppressWarnings("unused")
     static FilterResult applyFilters(
         List<CasualTransitView.VisitRow> allRows,
         String searchText,
@@ -51,6 +53,7 @@ final class CasualTransitFilterSupport {
         );
     }
 
+    @SuppressWarnings("unused")
     static String currentViewFilterSummary(
         String searchText,
         String statusValue,
@@ -79,6 +82,7 @@ final class CasualTransitFilterSupport {
         return parts.isEmpty() ? "All visible visits" : String.join(" | ", parts);
     }
 
+    @SuppressWarnings("unused")
     static String currentAuditFilterSummary(String actionValue, String dateScopeValue) {
         java.util.List<String> parts = new java.util.ArrayList<>();
         String action = safe(actionValue);
@@ -120,6 +124,7 @@ final class CasualTransitFilterSupport {
         return MONEY_FORMAT.format(sen / 100.0d);
     }
 
+    @SuppressWarnings("unused")
     static final class FilterResult {
         final List<CasualTransitView.VisitRow> filteredRows;
         final String totalsText;

@@ -7,6 +7,7 @@ final class LoginAuthSupport {
     private LoginAuthSupport() {
     }
 
+    @SuppressWarnings("unused")
     static void authenticateAndBootstrapSession(String input, String password)
         throws FirebaseAuthClient.FirebaseAuthException, IOException {
         String normalizedInput = input == null ? "" : input.trim();
@@ -101,6 +102,7 @@ final class LoginAuthSupport {
         }
     }
 
+    @SuppressWarnings("unused")
     static String prettyAuthError(String code) {
         if (code == null || code.isBlank()) {
             return "Login failed.";

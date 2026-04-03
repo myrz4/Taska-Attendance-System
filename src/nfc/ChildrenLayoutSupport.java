@@ -17,6 +17,13 @@ final class ChildrenLayoutSupport {
     private ChildrenLayoutSupport() {
     }
 
+    static {
+        java.util.function.Function<VBox, BorderPane> keepBuildLayout = ChildrenLayoutSupport::buildLayout;
+        java.util.function.Function<Runnable, Button> keepAddChildButton = ChildrenLayoutSupport::createAddChildButton;
+        java.util.Objects.requireNonNull(keepBuildLayout);
+        java.util.Objects.requireNonNull(keepAddChildButton);
+    }
+
     static BorderPane buildLayout(VBox childrenContent) {
         HBox headerBar = new HBox(18);
         headerBar.setAlignment(Pos.CENTER_LEFT);

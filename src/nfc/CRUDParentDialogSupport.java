@@ -31,10 +31,12 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 
+@SuppressWarnings("unused")
 final class CRUDParentDialogSupport {
     private CRUDParentDialogSupport() {
     }
 
+    @SuppressWarnings("unused")
     static void showParentDialog(ParentsPane.ParentRecord existing, boolean isNew, Runnable onSave) {
         Dialog<ParentsPane.ParentRecord> dialog = new Dialog<>();
         dialog.initModality(Modality.APPLICATION_MODAL);

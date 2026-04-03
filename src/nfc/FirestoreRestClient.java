@@ -298,6 +298,7 @@ public final class FirestoreRestClient {
         return http.send(b.build(), HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
     }
 
+    @SuppressWarnings("unused")
     public static final class ReferenceValue {
         private final String value;
 

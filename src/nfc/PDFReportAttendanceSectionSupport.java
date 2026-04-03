@@ -14,9 +14,11 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
+@SuppressWarnings("all")
 final class PDFReportAttendanceSectionSupport {
     private PDFReportAttendanceSectionSupport() {}
 
+    @SuppressWarnings("unused")
     static SummaryCounts countAttendance(List<AttendanceRow> days) {
         int presentCount = 0;
         int absentCount = 0;
@@ -30,6 +32,7 @@ final class PDFReportAttendanceSectionSupport {
         return new SummaryCounts(presentCount, absentCount);
     }
 
+    @SuppressWarnings("unused")
     static void addAttendanceTable(Document document, List<AttendanceRow> days, PDFReportLayoutSupport.ReportPalette palette) throws Exception {
         Paragraph sectionTitle = new Paragraph("Attendance Timeline", FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14, palette.ink));
         sectionTitle.setSpacingAfter(8f);
@@ -104,8 +107,11 @@ final class PDFReportAttendanceSectionSupport {
         return value == null || value.isBlank() ? "-" : value;
     }
 
+    @SuppressWarnings("unused")
     static final class SummaryCounts {
+        @SuppressWarnings("unused")
         final int presentCount;
+        @SuppressWarnings("unused")
         final int absentCount;
 
         SummaryCounts(int presentCount, int absentCount) {

@@ -5,18 +5,17 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.LinkedHashMap;
-import java.util.Locale;
 import java.util.Map;
 
 import com.google.gson.Gson;
 
-final class CasualTransitMutationSupport {
+public final class CasualTransitMutationSupport {
     private static final Gson GSON = new Gson();
     private static final DateTimeFormatter INPUT_DATE_TIME_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
     private CasualTransitMutationSupport() {}
 
-    static void createVisit(Map<String, String> values) {
+    public static void createVisit(Map<String, String> values) {
         try {
             String payload = GSON.toJson(Map.of(
                 "childName", safe(values.get("childName")),
@@ -37,7 +36,7 @@ final class CasualTransitMutationSupport {
         }
     }
 
-    static void checkoutVisit(CasualTransitView.VisitRow row, Map<String, String> values) {
+    public static void checkoutVisit(CasualTransitView.VisitRow row, Map<String, String> values) {
         try {
             long amountSen = parseRmToSen(values.get("amount"));
             String payload = GSON.toJson(Map.of(
@@ -58,7 +57,7 @@ final class CasualTransitMutationSupport {
         }
     }
 
-    static Map<String, String> normalizeEditValues(Map<String, String> values) {
+    public static Map<String, String> normalizeEditValues(Map<String, String> values) {
         String reason = safe(values.get("reason"));
         if (reason.isBlank()) {
             throw new IllegalArgumentException("reason-required");
@@ -77,7 +76,7 @@ final class CasualTransitMutationSupport {
         return payload;
     }
 
-    static void overrideVisit(String action, CasualTransitView.VisitRow row, Map<String, String> values) {
+    public static void overrideVisit(String action, CasualTransitView.VisitRow row, Map<String, String> values) {
         try {
             Map<String, Object> payload = new LinkedHashMap<>();
             payload.put("action", action);

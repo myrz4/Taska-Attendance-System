@@ -320,13 +320,13 @@ public class BillingPolicyView extends javafx.scene.layout.VBox {
             defaultTransitCodeField.getText(),
             this::resolveDefaultTransitCodeForWorkingTable
         );
-        if (result.updated) {
-            defaultTransitCodeField.setText(result.nextDefaultTransit);
+        if (result.updated()) {
+            defaultTransitCodeField.setText(result.nextDefaultTransit());
             updateRowsFromWorkingTable();
             return;
         }
-        if (!result.errorMessage.isEmpty()) {
-            showSimple("Invalid number", result.errorMessage);
+        if (!result.errorMessage().isEmpty()) {
+            showSimple("Invalid number", result.errorMessage());
         }
     }
 

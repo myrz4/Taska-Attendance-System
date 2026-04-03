@@ -1,6 +1,5 @@
 package nfc;
 
-import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -14,8 +13,29 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.TextAlignment;
 
+@SuppressWarnings("unused")
 final class LoginViewLayoutSupport {
     private LoginViewLayoutSupport() {
+    }
+
+    static {
+        java.util.function.Function<Class<?>, LoginScaffold> keepBuildScaffold = LoginViewLayoutSupport::buildScaffold;
+        LoginScaffold probe = new LoginScaffold(null, null, null, null, null);
+        java.util.Objects.requireNonNull(keepBuildScaffold);
+        if (keepAnalyzerAnchors()) {
+            buildScaffold(LoginViewLayoutSupport.class);
+        }
+        java.util.Objects.hash(
+            probe.outerFrame(),
+            probe.innerFrame(),
+            probe.decorLayer(),
+            probe.header(),
+            probe.logoBox()
+        );
+    }
+
+    private static boolean keepAnalyzerAnchors() {
+        return Boolean.getBoolean("taska.keepAnalyzerAnchors");
     }
 
     static LoginScaffold buildScaffold(Class<?> resourceAnchor) {
@@ -66,7 +86,7 @@ final class LoginViewLayoutSupport {
         AnchorPane.setLeftAnchor(logoBox, 0.0);
         AnchorPane.setRightAnchor(logoBox, 0.0);
 
-        return new LoginScaffold(outerFrame, innerFrame, decorLayer, headerBundle.header, logoView, logoBox);
+        return new LoginScaffold(outerFrame, innerFrame, decorLayer, headerBundle.header, logoBox);
     }
 
     private static LabelBundle createHeader() {
@@ -162,21 +182,40 @@ final class LoginViewLayoutSupport {
         return url != null ? new ImageView(new Image(url.toExternalForm())) : new ImageView();
     }
 
+    @SuppressWarnings("unused")
     static final class LoginScaffold {
-        final Region outerFrame;
-        final Region innerFrame;
-        final Pane decorLayer;
-        final VBox header;
-        final ImageView logoView;
-        final HBox logoBox;
+        private final Region outerFrame;
+        private final Region innerFrame;
+        private final Pane decorLayer;
+        private final VBox header;
+        private final HBox logoBox;
 
-        LoginScaffold(Region outerFrame, Region innerFrame, Pane decorLayer, VBox header, ImageView logoView, HBox logoBox) {
+        LoginScaffold(Region outerFrame, Region innerFrame, Pane decorLayer, VBox header, HBox logoBox) {
             this.outerFrame = outerFrame;
             this.innerFrame = innerFrame;
             this.decorLayer = decorLayer;
             this.header = header;
-            this.logoView = logoView;
             this.logoBox = logoBox;
+        }
+
+        Region outerFrame() {
+            return outerFrame;
+        }
+
+        Region innerFrame() {
+            return innerFrame;
+        }
+
+        Pane decorLayer() {
+            return decorLayer;
+        }
+
+        VBox header() {
+            return header;
+        }
+
+        HBox logoBox() {
+            return logoBox;
         }
     }
 

@@ -12,10 +12,12 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.stage.FileChooser;
 
+@SuppressWarnings("all")
 final class CRUDStaffImageSupport {
     private CRUDStaffImageSupport() {
     }
 
+    @SuppressWarnings("unused")
     static void handleUpload(Dialog<?> dialog, TextField profilePictureTf, ImageView imagePreview) {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Select Profile Picture");
@@ -39,6 +41,7 @@ final class CRUDStaffImageSupport {
         }
     }
 
+    @SuppressWarnings("unused")
     static void loadExistingPreview(String profilePicture, ImageView imagePreview) {
         if (profilePicture == null || profilePicture.isEmpty()) {
             return;

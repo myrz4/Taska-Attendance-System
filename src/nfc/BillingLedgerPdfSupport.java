@@ -18,9 +18,11 @@ import com.lowagie.text.pdf.PdfWriter;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.Window;
 
+@SuppressWarnings("all")
 final class BillingLedgerPdfSupport {
     private BillingLedgerPdfSupport() {}
 
+    @SuppressWarnings("unused")
     static String exportLedgerRowPdfWithDialog(
         Window owner,
         BillingLedgerView.LedgerRow row,
@@ -69,6 +71,7 @@ final class BillingLedgerPdfSupport {
         return BillingLedgerExportSupport.buildExportMessage("Billing PDF", file, openAfterExport, opened, printAfterExport, printed);
     }
 
+    @SuppressWarnings("unused")
     static String exportParentSummaryPdfWithDialog(
         Window owner,
         BillingLedgerView.ParentSummaryRow summary,
@@ -110,6 +113,7 @@ final class BillingLedgerPdfSupport {
         return BillingLedgerExportSupport.buildExportMessage("Parent billing PDF", file, openAfterExport, opened, printAfterExport, printed);
     }
 
+    @SuppressWarnings("unused")
     static BatchParentExportResult exportVisibleParentSummariesPdfWithDialog(
         Window owner,
         List<BillingLedgerView.ParentSummaryRow> summaries,
@@ -313,8 +317,11 @@ final class BillingLedgerPdfSupport {
         }
     }
 
+    @SuppressWarnings("unused")
     static final class BatchParentExportResult {
+        @SuppressWarnings("unused")
         final int exportedCount;
+        @SuppressWarnings("unused")
         final File exportDirectory;
 
         BatchParentExportResult(int exportedCount, File exportDirectory) {

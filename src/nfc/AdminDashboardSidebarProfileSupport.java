@@ -10,10 +10,12 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.Circle;
 
+@SuppressWarnings("unused")
 final class AdminDashboardSidebarProfileSupport {
     private AdminDashboardSidebarProfileSupport() {
     }
 
+    @SuppressWarnings("unused")
     static VBox createProfileBox() {
         ImageView profileView = createProfileView();
         Label nameLabel = new Label(resolveDisplayName());

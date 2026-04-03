@@ -289,27 +289,27 @@ public class NFCReader implements Runnable {
         try {
             NFCAttendanceSupport.AttendanceUpdateResult result = NFCAttendanceSupport.submitCheckIn(tagId, UserSession.getName());
 
-            if (result.status == NFCAttendanceSupport.AttendanceUpdateResult.Status.UNKNOWN_CARD
-                || result.status == NFCAttendanceSupport.AttendanceUpdateResult.Status.INVALID_UID) {
+            if (result.status() == NFCAttendanceSupport.AttendanceUpdateResult.Status.UNKNOWN_CARD
+                || result.status() == NFCAttendanceSupport.AttendanceUpdateResult.Status.INVALID_UID) {
                 System.out.println("❌ Unknown card detected!");
                 return;
             }
 
-            if (result.status == NFCAttendanceSupport.AttendanceUpdateResult.Status.CHECKED_IN) {
-                System.out.println("✅ Attendance recorded (check-in) for: " + result.childName);
+            if (result.status() == NFCAttendanceSupport.AttendanceUpdateResult.Status.CHECKED_IN) {
+                System.out.println("✅ Attendance recorded (check-in) for: " + result.childName());
                 Platform.runLater(FirestoreService::safeRefresh);
                 return;
             }
 
-            switch (result.status) {
+            switch (result.status()) {
                 case ALREADY_OPEN:
-                    System.out.println("ℹ️ " + result.childName + " is already checked in. Use parent QR pickup in Teacher App, or use the manual checkout override if needed.");
+                    System.out.println("ℹ️ " + result.childName() + " is already checked in. Use parent QR pickup in Teacher App, or use the manual checkout override if needed.");
                     break;
                 case ALREADY_CLOSED:
-                    System.out.println("ℹ️ Already checked out today for " + result.childName);
+                    System.out.println("ℹ️ Already checked out today for " + result.childName());
                     break;
                 default:
-                    System.out.println("❌ Attendance update failed: " + result.reason);
+                    System.out.println("? Attendance update failed: " + result.reason());
                     break;
             }
 

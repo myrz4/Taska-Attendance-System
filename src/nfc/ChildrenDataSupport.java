@@ -15,11 +15,13 @@ import java.util.Set;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
+@SuppressWarnings("unused")
 final class ChildrenDataSupport {
     private static final ZoneId MALAYSIA_ZONE = ZoneId.of("Asia/Kuala_Lumpur");
 
     private ChildrenDataSupport() {}
 
+    @SuppressWarnings("unused")
     static ObservableList<ChildrenView.Child> loadChildren(FirestoreRestClient client) throws IOException, InterruptedException {
         List<FsDocument> childrenDocs = client.listDocuments("children");
 
@@ -50,7 +52,7 @@ final class ChildrenDataSupport {
 
             String childId = childDoc.getId();
             ChildrenParentLinkSupport.ParentDetails parentDetails = ChildrenParentLinkSupport.resolveParentDetails(childId, childDoc, childToParents);
-            childFamilyKey.put(childId, parentDetails.familyKey);
+            childFamilyKey.put(childId, parentDetails.familyKey());
 
             String nfcUid = safeStr(childDoc.get("nfc_uid")).trim();
             if (nfcUid.isEmpty()) {
@@ -61,9 +63,9 @@ final class ChildrenDataSupport {
                 childId,
                 childDoc.getString("name"),
                 parseBirthDate(childDoc.get("birthDate")),
-                parentDetails.parentName,
-                parentDetails.parentRelationship,
-                parentDetails.parentContact,
+                parentDetails.parentName(),
+                parentDetails.parentRelationship(),
+                parentDetails.parentContact(),
                 nfcUid
             ));
         }

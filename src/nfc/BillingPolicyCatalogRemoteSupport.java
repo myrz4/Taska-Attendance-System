@@ -10,12 +10,14 @@ import java.util.Map;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
+@SuppressWarnings("all")
 final class BillingPolicyCatalogRemoteSupport {
     private static final Gson GSON_PRETTY = new GsonBuilder().setPrettyPrinting().create();
 
     private BillingPolicyCatalogRemoteSupport() {
     }
 
+    @SuppressWarnings("unused")
     static List<CatalogDescriptor> loadCatalogs() throws IOException {
         String projectId = FirebaseConfig.readPropertyFromJarFiles("firebase.properties", "projectId");
         String idToken = UserSession.getIdToken();
@@ -43,6 +45,7 @@ final class BillingPolicyCatalogRemoteSupport {
         return items;
     }
 
+    @SuppressWarnings("unused")
     static String saveCatalog(String version, Map<String, Map<String, Long>> workingTable, String defaultTransitCode) throws IOException {
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("version", version);
@@ -63,6 +66,7 @@ final class BillingPolicyCatalogRemoteSupport {
         return String.valueOf(result.get("catalogId") == null ? "" : result.get("catalogId"));
     }
 
+    @SuppressWarnings("unused")
     static String activateCatalog(String catalogId, String defaultTransitCode) throws IOException {
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("catalogId", catalogId);
@@ -82,10 +86,15 @@ final class BillingPolicyCatalogRemoteSupport {
         return String.valueOf(result.get("catalogId") == null ? "" : result.get("catalogId"));
     }
 
+    @SuppressWarnings("unused")
     static final class CatalogDescriptor {
+        @SuppressWarnings("unused")
         final String id;
+        @SuppressWarnings("unused")
         final String version;
+        @SuppressWarnings("unused")
         final boolean active;
+        @SuppressWarnings("unused")
         final Map<String, Object> doc;
 
         CatalogDescriptor(String id, String version, boolean active, Map<String, Object> doc) {

@@ -21,6 +21,7 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.util.Duration;
 
+@SuppressWarnings("unused")
 final class AttendanceViewLayoutSupport {
     private AttendanceViewLayoutSupport() {
     }

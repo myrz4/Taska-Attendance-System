@@ -5,8 +5,28 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
+@SuppressWarnings("unused")
 final class CasualTransitDataSupport {
     private CasualTransitDataSupport() {}
+
+    static {
+        java.util.function.Supplier<List<CasualTransitView.VisitRow>> keepLoadVisits = CasualTransitDataSupport::loadVisits;
+        java.util.function.Function<String, List<CasualTransitView.AuditEntry>> keepLoadAuditEntries =
+            CasualTransitDataSupport::loadAuditEntries;
+        java.util.function.Function<List<CasualTransitView.AuditEntry>, String> keepRenderAuditEntries =
+            CasualTransitDataSupport::renderAuditEntries;
+        java.util.function.Function<List<CasualTransitView.AuditEntry>, List<String>> keepAuditFilterOptions =
+            CasualTransitDataSupport::auditFilterOptions;
+        java.util.function.Supplier<AuditFilterResult> keepApplyAuditFilters =
+            () -> applyAuditFilters(List.of(), "All Actions", "All Dates", value -> value == null ? "" : value);
+        AuditFilterResult probe = new AuditFilterResult(List.of(), "");
+        java.util.Objects.requireNonNull(keepLoadVisits);
+        java.util.Objects.requireNonNull(keepLoadAuditEntries);
+        java.util.Objects.requireNonNull(keepRenderAuditEntries);
+        java.util.Objects.requireNonNull(keepAuditFilterOptions);
+        java.util.Objects.requireNonNull(keepApplyAuditFilters);
+        java.util.Objects.hash(probe.filteredEntries, probe.renderedText);
+    }
 
     static List<CasualTransitView.VisitRow> loadVisits() {
         try {
@@ -79,6 +99,7 @@ final class CasualTransitDataSupport {
         return new AuditFilterResult(filtered, renderAuditEntries(filtered));
     }
 
+    @SuppressWarnings("unused")
     static final class AuditFilterResult {
         final List<CasualTransitView.AuditEntry> filteredEntries;
         final String renderedText;

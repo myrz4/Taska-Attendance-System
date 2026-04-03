@@ -9,9 +9,11 @@ import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
 
+@SuppressWarnings("unused")
 final class BillingLedgerPaymentSupport {
     private BillingLedgerPaymentSupport() {}
 
+    @SuppressWarnings("unused")
     static void recordCashPayment(BillingLedgerView.LedgerRow row) {
         try {
             FirestoreRestClient client = FirestoreRest.forCurrentUser();

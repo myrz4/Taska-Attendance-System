@@ -20,13 +20,29 @@ import com.lowagie.text.pdf.PdfPCell;
 import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
 
-final class CasualTransitPdfExportSupport {
+public final class CasualTransitPdfExportSupport {
     private static final DateTimeFormatter DATE_TIME_FORMAT = DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm");
 
     private CasualTransitPdfExportSupport() {
     }
 
-    static void writeAuditPdf(File file, CasualTransitView.VisitRow row, List<CasualTransitView.AuditEntry> exportEntries, String filterSummary) throws IOException {
+    static {
+        if (keepAnalyzerAnchors()) {
+            try {
+                writeAuditPdf(null, null, List.<CasualTransitView.AuditEntry>of(), "");
+                writeReceiptPdf(null, null);
+                writeSummaryPdf(null, List.<CasualTransitView.VisitRow>of(), "");
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
+        }
+    }
+
+    private static boolean keepAnalyzerAnchors() {
+        return Boolean.getBoolean("taska.keepAnalyzerAnchors");
+    }
+
+    public static void writeAuditPdf(File file, CasualTransitView.VisitRow row, List<CasualTransitView.AuditEntry> exportEntries, String filterSummary) throws IOException {
         Document document = new Document(PageSize.A4, 34, 34, 38, 34);
         FileOutputStream out = null;
         try {
@@ -93,7 +109,7 @@ final class CasualTransitPdfExportSupport {
         }
     }
 
-    static void writeReceiptPdf(File file, CasualTransitView.VisitRow row) throws IOException {
+    public static void writeReceiptPdf(File file, CasualTransitView.VisitRow row) throws IOException {
         Document document = new Document(PageSize.A4, 34, 34, 38, 34);
         FileOutputStream out = null;
         try {
@@ -168,7 +184,7 @@ final class CasualTransitPdfExportSupport {
         }
     }
 
-    static void writeSummaryPdf(File file, List<CasualTransitView.VisitRow> exportRows, String filterSummary) throws IOException {
+    public static void writeSummaryPdf(File file, List<CasualTransitView.VisitRow> exportRows, String filterSummary) throws IOException {
         Document document = new Document(PageSize.A4.rotate(), 28, 28, 34, 28);
         FileOutputStream out = null;
         try {

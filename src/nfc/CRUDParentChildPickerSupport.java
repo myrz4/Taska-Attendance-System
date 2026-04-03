@@ -25,6 +25,7 @@ import javafx.scene.control.cell.CheckBoxListCell;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
+@SuppressWarnings("unused")
 final class CRUDParentChildPickerSupport {
     private CRUDParentChildPickerSupport() {
     }

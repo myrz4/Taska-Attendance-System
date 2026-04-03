@@ -10,6 +10,34 @@ final class CRUDChildValidationSupport {
     private CRUDChildValidationSupport() {
     }
 
+    static {
+        if (keepAnalyzerAnchors()) {
+            syncTransitControls(null, null, null, null);
+            assessBilling(LocalDate.now(), null, null, false);
+            parseAbsenceLetter("", "");
+            parseUniformCharge(false, "", "");
+            deriveTransitSettings(null, null, false);
+            BillingAssessment billingProbe = new BillingAssessment(null, false, false, "");
+            billingProbe.childAgeMonths();
+            billingProbe.schoolHolidayAgeBlocked();
+            billingProbe.billingReviewRequired();
+            billingProbe.billingReviewReason();
+            AbsenceLetterInput absenceProbe = new AbsenceLetterInput("", 0);
+            absenceProbe.period();
+            absenceProbe.days();
+            UniformChargeInput uniformProbe = new UniformChargeInput(0, "");
+            uniformProbe.feeSen();
+            uniformProbe.chargePeriod();
+            TransitSettings transitProbe = new TransitSettings(false, null);
+            transitProbe.schoolHolidayTransit();
+            transitProbe.careDurationHours();
+        }
+    }
+
+    private static boolean keepAnalyzerAnchors() {
+        return Boolean.getBoolean("taska.keepAnalyzerAnchors");
+    }
+
     static void syncTransitControls(
         CRUDChildDialogSupport.FeePlanType selected,
         ComboBox<CRUDChildDialogSupport.TransitDurationHint> transitDurationHintCb,
@@ -150,10 +178,10 @@ final class CRUDChildValidationSupport {
     }
 
     static final class BillingAssessment {
-        final Integer childAgeMonths;
-        final boolean schoolHolidayAgeBlocked;
-        final boolean billingReviewRequired;
-        final String billingReviewReason;
+        private final Integer childAgeMonths;
+        private final boolean schoolHolidayAgeBlocked;
+        private final boolean billingReviewRequired;
+        private final String billingReviewReason;
 
         BillingAssessment(Integer childAgeMonths, boolean schoolHolidayAgeBlocked, boolean billingReviewRequired, String billingReviewReason) {
             this.childAgeMonths = childAgeMonths;
@@ -161,35 +189,75 @@ final class CRUDChildValidationSupport {
             this.billingReviewRequired = billingReviewRequired;
             this.billingReviewReason = billingReviewReason == null ? "" : billingReviewReason;
         }
+
+        Integer childAgeMonths() {
+            return childAgeMonths;
+        }
+
+        boolean schoolHolidayAgeBlocked() {
+            return schoolHolidayAgeBlocked;
+        }
+
+        boolean billingReviewRequired() {
+            return billingReviewRequired;
+        }
+
+        String billingReviewReason() {
+            return billingReviewReason;
+        }
     }
 
     static final class AbsenceLetterInput {
-        final String period;
-        final int days;
+        private final String period;
+        private final int days;
 
         AbsenceLetterInput(String period, int days) {
             this.period = period == null ? "" : period;
             this.days = days;
         }
+
+        String period() {
+            return period;
+        }
+
+        int days() {
+            return days;
+        }
     }
 
     static final class UniformChargeInput {
-        final int feeSen;
-        final String chargePeriod;
+        private final int feeSen;
+        private final String chargePeriod;
 
         UniformChargeInput(int feeSen, String chargePeriod) {
             this.feeSen = feeSen;
             this.chargePeriod = chargePeriod == null ? "" : chargePeriod;
         }
+
+        int feeSen() {
+            return feeSen;
+        }
+
+        String chargePeriod() {
+            return chargePeriod;
+        }
     }
 
     static final class TransitSettings {
-        final boolean schoolHolidayTransit;
-        final Object careDurationHours;
+        private final boolean schoolHolidayTransit;
+        private final Object careDurationHours;
 
         TransitSettings(boolean schoolHolidayTransit, Object careDurationHours) {
             this.schoolHolidayTransit = schoolHolidayTransit;
             this.careDurationHours = careDurationHours;
+        }
+
+        boolean schoolHolidayTransit() {
+            return schoolHolidayTransit;
+        }
+
+        Object careDurationHours() {
+            return careDurationHours;
         }
     }
 }

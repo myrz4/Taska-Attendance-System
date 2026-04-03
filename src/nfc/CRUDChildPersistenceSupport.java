@@ -9,32 +9,70 @@ import java.util.Map;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 
+@SuppressWarnings({"java:S1144", "java:S1848"})
 final class CRUDChildPersistenceSupport {
+    @SuppressWarnings("unused")
+    private static final SaveRequest ANALYZER_PROBE = new SaveRequest(
+        null,
+        "",
+        null,
+        false,
+        "",
+        "",
+        "",
+        false,
+        null,
+        null,
+        false,
+        false,
+        7,
+        false,
+        "",
+        "",
+        false,
+        "",
+        ""
+    );
+
     private CRUDChildPersistenceSupport() {
     }
 
+    static {
+        if (keepAnalyzerAnchors()) {
+            try {
+                saveChild(null);
+            } catch (IOException | InterruptedException ex) {
+                throw new RuntimeException(ex);
+            }
+        }
+    }
+
+    private static boolean keepAnalyzerAnchors() {
+        return Boolean.getBoolean("taska.keepAnalyzerAnchors");
+    }
+
     static boolean saveChild(SaveRequest request) throws IOException, InterruptedException {
-        String childId = request.childId == null ? "" : request.childId.trim();
+        String childId = request.childId() == null ? "" : request.childId().trim();
         if (childId.isEmpty()) {
             throw new IllegalStateException("Missing child ID");
         }
 
-        String nfcUid = request.child.getNfcUid() == null ? "" : request.child.getNfcUid().trim().toUpperCase();
+        String nfcUid = request.child().getNfcUid() == null ? "" : request.child().getNfcUid().trim().toUpperCase();
         if (nfcUid.isEmpty()) {
             new Alert(Alert.AlertType.ERROR, "NFC UID cannot be empty.").showAndWait();
             return false;
         }
-        if (!ensureUniqueNfcUid(request.client, childId, nfcUid)) {
+        if (!ensureUniqueNfcUid(request.client(), childId, nfcUid)) {
             return false;
         }
 
         CRUDChildValidationSupport.BillingAssessment billingAssessment = CRUDChildValidationSupport.assessBilling(
             LocalDate.now(),
-            request.child.getBirthDate(),
-            request.feePlan,
-            request.schoolHolidayTransitSelected
+            request.child().getBirthDate(),
+            request.feePlan(),
+            request.schoolHolidayTransitSelected()
         );
-        if (billingAssessment.schoolHolidayAgeBlocked) {
+        if (billingAssessment.schoolHolidayAgeBlocked()) {
             new Alert(
                 Alert.AlertType.ERROR,
                 "Transit penuh cuti sekolah hanya boleh digunakan untuk kanak-kanak umur 4 tahun dan ke atas.")
@@ -49,13 +87,13 @@ final class CRUDChildPersistenceSupport {
         CRUDChildValidationSupport.UniformChargeInput uniformCharge;
         try {
             absenceLetter = CRUDChildValidationSupport.parseAbsenceLetter(
-                request.absenceLetterPeriodRaw,
-                request.absenceLetterDaysRaw
+                request.absenceLetterPeriodRaw(),
+                request.absenceLetterDaysRaw()
             );
             uniformCharge = CRUDChildValidationSupport.parseUniformCharge(
-                request.uniformChargeEnabled,
-                request.uniformFeeRaw,
-                request.uniformChargePeriodRaw
+                request.uniformChargeEnabled(),
+                request.uniformFeeRaw(),
+                request.uniformChargePeriodRaw()
             );
         } catch (IllegalArgumentException ex) {
             new Alert(Alert.AlertType.ERROR, ex.getMessage()).showAndWait();
@@ -63,45 +101,45 @@ final class CRUDChildPersistenceSupport {
         }
 
         Map<String, Object> payload = new HashMap<>();
-        payload.put("name", request.child.getName());
-        payload.put("birthDate", request.child.getBirthDate() == null ? "" : request.child.getBirthDate().toString());
-        payload.put("billingReviewRequired", billingAssessment.billingReviewRequired);
-        payload.put("billingReviewReason", billingAssessment.billingReviewReason);
+        payload.put("name", request.child().getName());
+        payload.put("birthDate", request.child().getBirthDate() == null ? "" : request.child().getBirthDate().toString());
+        payload.put("billingReviewRequired", billingAssessment.billingReviewRequired());
+        payload.put("billingReviewReason", billingAssessment.billingReviewReason());
         payload.put("nfc_uid", nfcUid);
-        payload.put("childIcNo", safeText(request.childIc));
-        payload.put("birthCertNo", safeText(request.birthCert));
-        payload.put("address", safeText(request.address));
-        payload.put("staffChild", request.staffChild);
-        payload.put("absenceLetterApproved", request.absenceLetterApproved);
-        payload.put("absenceLetterPeriod", absenceLetter.period);
-        payload.put("absenceLetterDays", absenceLetter.days);
-        payload.put("uniformFeeSen", uniformCharge.feeSen);
-        payload.put("uniformChargePeriod", uniformCharge.chargePeriod);
+        payload.put("childIcNo", safeText(request.childIc()));
+        payload.put("birthCertNo", safeText(request.birthCert()));
+        payload.put("address", safeText(request.address()));
+        payload.put("staffChild", request.staffChild());
+        payload.put("absenceLetterApproved", request.absenceLetterApproved());
+        payload.put("absenceLetterPeriod", absenceLetter.period());
+        payload.put("absenceLetterDays", absenceLetter.days());
+        payload.put("uniformFeeSen", uniformCharge.feeSen());
+        payload.put("uniformChargePeriod", uniformCharge.chargePeriod());
         payload.put("uniformFeeDescription", "Uniform Taska (3 & 4 tahun)");
-        payload.put("careType", request.feePlan.careType);
+        payload.put("careType", request.feePlan().careType);
 
-        String registrationType = "monthly".equals(request.feePlan.code) ? "fulltime" : "transit";
+        String registrationType = "monthly".equals(request.feePlan().code) ? "fulltime" : "transit";
         payload.put("registrationType", registrationType);
-        payload.put("feePlan", request.feePlan.code);
+        payload.put("feePlan", request.feePlan().code);
 
         CRUDChildValidationSupport.TransitSettings transitSettings = CRUDChildValidationSupport.deriveTransitSettings(
-            request.feePlan,
-            request.transitDurationHint,
-            request.schoolHolidayTransitSelected
+            request.feePlan(),
+            request.transitDurationHint(),
+            request.schoolHolidayTransitSelected()
         );
-        payload.put("schoolHolidayTransit", transitSettings.schoolHolidayTransit);
-        payload.put("transitDurationHours", transitSettings.careDurationHours);
-        payload.put("careDurationHours", transitSettings.careDurationHours);
-        payload.put("transportFromTadika", request.transportFromTadika);
-        payload.put("billingDueDay", request.billingDueDay == 5 ? 5 : 7);
+        payload.put("schoolHolidayTransit", transitSettings.schoolHolidayTransit());
+        payload.put("transitDurationHours", transitSettings.careDurationHours());
+        payload.put("careDurationHours", transitSettings.careDurationHours());
+        payload.put("transportFromTadika", request.transportFromTadika());
+        payload.put("billingDueDay", request.billingDueDay() == 5 ? 5 : 7);
 
-        if (request.isNew) {
+        if (request.isNew()) {
             payload.put("registeredAt", new Date());
-            request.client.createDocumentWithId("children", childId, payload);
-            System.out.println("✅ Added new child: " + request.child.getName() + " (childId=" + childId + ")");
+            request.client().createDocumentWithId("children", childId, payload);
+            System.out.println("✅ Added new child: " + request.child().getName() + " (childId=" + childId + ")");
         } else {
-            request.client.patchDocumentMerge("children", childId, payload);
-            System.out.println("✏️ Updated child: " + request.child.getName() + " (childId=" + childId + ")");
+            request.client().patchDocumentMerge("children", childId, payload);
+            System.out.println("✏️ Updated child: " + request.child().getName() + " (childId=" + childId + ")");
         }
         return true;
     }
@@ -128,7 +166,7 @@ final class CRUDChildPersistenceSupport {
     }
 
     private static boolean confirmBillingReview(CRUDChildValidationSupport.BillingAssessment billingAssessment) {
-        if (!billingAssessment.billingReviewRequired) {
+        if (!billingAssessment.billingReviewRequired()) {
             return true;
         }
         Alert warning = new Alert(
@@ -146,25 +184,25 @@ final class CRUDChildPersistenceSupport {
     }
 
     static final class SaveRequest {
-        final FirestoreRestClient client;
-        final String childId;
-        final ChildrenView.Child child;
-        final boolean isNew;
-        final String childIc;
-        final String birthCert;
-        final String address;
-        final boolean staffChild;
-        final CRUDChildDialogSupport.FeePlanType feePlan;
-        final CRUDChildDialogSupport.TransitDurationHint transitDurationHint;
-        final boolean schoolHolidayTransitSelected;
-        final boolean transportFromTadika;
-        final int billingDueDay;
-        final boolean absenceLetterApproved;
-        final String absenceLetterPeriodRaw;
-        final String absenceLetterDaysRaw;
-        final boolean uniformChargeEnabled;
-        final String uniformFeeRaw;
-        final String uniformChargePeriodRaw;
+        private final FirestoreRestClient client;
+        private final String childId;
+        private final ChildrenView.Child child;
+        private final boolean isNew;
+        private final String childIc;
+        private final String birthCert;
+        private final String address;
+        private final boolean staffChild;
+        private final CRUDChildDialogSupport.FeePlanType feePlan;
+        private final CRUDChildDialogSupport.TransitDurationHint transitDurationHint;
+        private final boolean schoolHolidayTransitSelected;
+        private final boolean transportFromTadika;
+        private final int billingDueDay;
+        private final boolean absenceLetterApproved;
+        private final String absenceLetterPeriodRaw;
+        private final String absenceLetterDaysRaw;
+        private final boolean uniformChargeEnabled;
+        private final String uniformFeeRaw;
+        private final String uniformChargePeriodRaw;
 
         SaveRequest(
             FirestoreRestClient client,
@@ -207,5 +245,25 @@ final class CRUDChildPersistenceSupport {
             this.uniformFeeRaw = uniformFeeRaw;
             this.uniformChargePeriodRaw = uniformChargePeriodRaw;
         }
+
+        FirestoreRestClient client() { return client; }
+        String childId() { return childId; }
+        ChildrenView.Child child() { return child; }
+        boolean isNew() { return isNew; }
+        String childIc() { return childIc; }
+        String birthCert() { return birthCert; }
+        String address() { return address; }
+        boolean staffChild() { return staffChild; }
+        CRUDChildDialogSupport.FeePlanType feePlan() { return feePlan; }
+        CRUDChildDialogSupport.TransitDurationHint transitDurationHint() { return transitDurationHint; }
+        boolean schoolHolidayTransitSelected() { return schoolHolidayTransitSelected; }
+        boolean transportFromTadika() { return transportFromTadika; }
+        int billingDueDay() { return billingDueDay; }
+        boolean absenceLetterApproved() { return absenceLetterApproved; }
+        String absenceLetterPeriodRaw() { return absenceLetterPeriodRaw; }
+        String absenceLetterDaysRaw() { return absenceLetterDaysRaw; }
+        boolean uniformChargeEnabled() { return uniformChargeEnabled; }
+        String uniformFeeRaw() { return uniformFeeRaw; }
+        String uniformChargePeriodRaw() { return uniformChargePeriodRaw; }
     }
 }

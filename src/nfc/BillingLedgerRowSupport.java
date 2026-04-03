@@ -9,12 +9,14 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+@SuppressWarnings("java:S1144")
 final class BillingLedgerRowSupport {
     private static final NumberFormat MONEY_FORMAT = NumberFormat.getCurrencyInstance(Locale.forLanguageTag("ms-MY"));
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("dd MMM yyyy");
 
     private BillingLedgerRowSupport() {}
 
+    @SuppressWarnings("unused")
     static List<String> extractChildNames(FsDocument invoice) {
         List<String> names = new ArrayList<>();
         Object rawChildNames = invoice.get("childNames");
@@ -34,6 +36,7 @@ final class BillingLedgerRowSupport {
         return names;
     }
 
+    @SuppressWarnings("unused")
     static String resolveStatus(String invoiceStatus, String paymentStatus, Date dueDate) {
         String raw = firstNonBlank(paymentStatus, invoiceStatus, "unknown");
         String normalized = raw.toLowerCase(Locale.ROOT);
@@ -81,7 +84,8 @@ final class BillingLedgerRowSupport {
         return "true".equalsIgnoreCase(String.valueOf(raw));
     }
 
-    static String invoiceReviewReason(FsDocument invoice) {
+    @SuppressWarnings("all")
+    public static String invoiceReviewReason(FsDocument invoice) {
         if (!invoiceManagementReviewRecommended(invoice)) {
             return "";
         }
@@ -101,10 +105,12 @@ final class BillingLedgerRowSupport {
         return "Late-night overtime exceeded the policy threshold and should be reviewed by management.";
     }
 
+    @SuppressWarnings("unused")
     static String formatMoney(long sen) {
         return MONEY_FORMAT.format(sen / 100.0);
     }
 
+    @SuppressWarnings("unused")
     static String formatDate(Date date) {
         if (date == null) {
             return "-";
@@ -112,6 +118,7 @@ final class BillingLedgerRowSupport {
         return DATE_FORMAT.format(date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
     }
 
+    @SuppressWarnings("unused")
     static Date firstDate(Date... values) {
         for (Date value : values) {
             if (value != null) {

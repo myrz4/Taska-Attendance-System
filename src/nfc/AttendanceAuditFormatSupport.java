@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+@SuppressWarnings("unused")
 final class AttendanceAuditFormatSupport {
     private static final Gson GSON = new Gson();
     private static final DateTimeFormatter AUDIT_DISPLAY_FORMAT = DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm");
@@ -44,6 +45,7 @@ final class AttendanceAuditFormatSupport {
         return filtered;
     }
 
+    @SuppressWarnings("unused")
     static String formatAttendanceAuditEntries(LocalDate attendanceDate, AttendanceRecord record, List<Map<String, Object>> entries, String actionFilter) {
         if (entries == null || entries.isEmpty()) {
             if ("all".equals(normalizeAttendanceAuditActionFilter(actionFilter))) {
@@ -82,6 +84,7 @@ final class AttendanceAuditFormatSupport {
         return sb.toString();
     }
 
+    @SuppressWarnings("unused")
     static String sanitizeFilePart(String text) {
         String value = stringValue(text).replaceAll("[^A-Za-z0-9_-]", "_");
         return value.isBlank() ? "attendance" : value;

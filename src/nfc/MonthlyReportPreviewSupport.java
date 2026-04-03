@@ -1,7 +1,6 @@
 package nfc;
 
 import java.io.File;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 import javafx.application.Platform;
@@ -26,6 +25,7 @@ import javafx.scene.text.FontWeight;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
+@SuppressWarnings("unused")
 final class MonthlyReportPreviewSupport {
     private MonthlyReportPreviewSupport() {
     }

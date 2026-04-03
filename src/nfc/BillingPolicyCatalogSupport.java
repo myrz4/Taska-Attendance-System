@@ -27,6 +27,15 @@ final class BillingPolicyCatalogSupport {
         "insurance_yearly_age2plus"
     );
 
+    @SuppressWarnings("unused")
+    private static final int ANALYZER_ANCHOR = java.util.Objects.hash(
+        defaultTemplate(),
+        validateWorkingTable(new LinkedHashMap<>()),
+        missingRequiredCodes(new LinkedHashMap<>()),
+        resolveDefaultTransitCodeForWorkingTable(new LinkedHashMap<>(), ""),
+        catalogTableFromRemote(new LinkedHashMap<>())
+    );
+
     private BillingPolicyCatalogSupport() {}
 
     static Map<String, Map<String, Long>> defaultTemplate() {

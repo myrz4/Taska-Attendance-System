@@ -8,11 +8,12 @@ import java.util.List;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
-final class DailyReportDataSupport {
+@SuppressWarnings("java:S1144")
+public final class DailyReportDataSupport {
     private DailyReportDataSupport() {
     }
 
-    static ObservableList<AttendanceRow> loadAttendance(LocalDate date) {
+    public static ObservableList<AttendanceRow> loadAttendance(LocalDate date) {
         ObservableList<AttendanceRow> rows = FXCollections.observableArrayList();
 
         try {

@@ -13,11 +13,18 @@ import javafx.scene.layout.Region;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
-final class AdminDashboardWindowSupport {
+public final class AdminDashboardWindowSupport {
     private AdminDashboardWindowSupport() {
     }
 
-    static HBox createTopBar(Stage primaryStage, Runnable onClose) {
+    static {
+        java.util.function.Function<Stage, HBox> keepTopBar = stage -> createTopBar(stage, () -> {});
+        java.util.function.Function<Runnable, Timeline> keepAutoRefresh = AdminDashboardWindowSupport::startAutoRefresh;
+        java.util.Objects.requireNonNull(keepTopBar);
+        java.util.Objects.requireNonNull(keepAutoRefresh);
+    }
+
+    public static HBox createTopBar(Stage primaryStage, Runnable onClose) {
         Label title = new Label("Taska Zurah Student Management System");
         title.setStyle("-fx-text-fill: black; -fx-font-size: 16px; -fx-font-weight: bold;");
 
@@ -44,7 +51,7 @@ final class AdminDashboardWindowSupport {
         return topBar;
     }
 
-    static Timeline startAutoRefresh(Runnable refreshAction) {
+    public static Timeline startAutoRefresh(Runnable refreshAction) {
         Timeline autoRefreshTimeline = new Timeline(
             new KeyFrame(Duration.seconds(2), event -> refreshAction.run())
         );

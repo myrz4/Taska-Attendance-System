@@ -10,6 +10,7 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.VBox;
 import javafx.stage.Window;
 
+@SuppressWarnings("unused")
 final class BillingPolicyStatusSupport {
     private BillingPolicyStatusSupport() {}
 
