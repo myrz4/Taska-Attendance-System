@@ -49,7 +49,10 @@ final class AttendanceRecordDataSupport {
         for (FsDocument doc : attendanceDocs) {
             String childDocId = resolveAttendanceChildDocId(doc, childIdToNfcUid, childIdToChildDocId, nfcUidToChildDocId, allChildDocIds);
             if (childDocId != null && !childDocId.isBlank()) {
-                attendanceMap.put(childDocId, doc);
+                FsDocument existing = attendanceMap.get(childDocId);
+                if (shouldPreferAttendanceDocument(existing, doc)) {
+                    attendanceMap.put(childDocId, doc);
+                }
             }
         }
 
@@ -150,6 +153,78 @@ final class AttendanceRecordDataSupport {
             attendanceDoc.getString("checkedOutByName"),
             attendanceDoc.getString("checkedInByName")
         ));
+    }
+
+    private static boolean shouldPreferAttendanceDocument(FsDocument current, FsDocument candidate) {
+        if (candidate == null) {
+            return false;
+        }
+        if (current == null) {
+            return true;
+        }
+
+        long currentEpoch = attendanceSortEpoch(current);
+        long candidateEpoch = attendanceSortEpoch(candidate);
+        if (candidateEpoch != currentEpoch) {
+            return candidateEpoch > currentEpoch;
+        }
+
+        boolean currentCorrected = isAdminCorrected(current);
+        boolean candidateCorrected = isAdminCorrected(candidate);
+        if (candidateCorrected != currentCorrected) {
+            return candidateCorrected;
+        }
+
+        boolean currentHasCheckOut = firstDate(current.getDate("checkOutAt"), current.getDate("check_out_time"), current.getDate("checkOutTime"), current.getDate("checkoutTime")) != null;
+        boolean candidateHasCheckOut = firstDate(candidate.getDate("checkOutAt"), candidate.getDate("check_out_time"), candidate.getDate("checkOutTime"), candidate.getDate("checkoutTime")) != null;
+        if (candidateHasCheckOut != currentHasCheckOut) {
+            return candidateHasCheckOut;
+        }
+
+        boolean currentHasCheckIn = firstDate(current.getDate("checkInAt"), current.getDate("check_in_time"), current.getDate("checkInTime")) != null;
+        boolean candidateHasCheckIn = firstDate(candidate.getDate("checkInAt"), candidate.getDate("check_in_time"), candidate.getDate("checkInTime")) != null;
+        if (candidateHasCheckIn != currentHasCheckIn) {
+            return candidateHasCheckIn;
+        }
+
+        String currentId = current.getId() == null ? "" : current.getId();
+        String candidateId = candidate.getId() == null ? "" : candidate.getId();
+        return candidateId.compareTo(currentId) > 0;
+    }
+
+    private static long attendanceSortEpoch(FsDocument doc) {
+        if (doc == null) {
+            return 0L;
+        }
+        Date best = firstDate(
+            doc.getDate("updatedAt"),
+            doc.getDate("checkOutAt"),
+            doc.getDate("check_out_time"),
+            doc.getDate("checkOutTime"),
+            doc.getDate("checkoutTime"),
+            doc.getDate("checkInAt"),
+            doc.getDate("check_in_time"),
+            doc.getDate("checkInTime"),
+            doc.getDate("createdAt"),
+            doc.getDate("date")
+        );
+        if (best != null) {
+            return best.getTime();
+        }
+
+        String id = doc.getId();
+        if (id != null && id.length() >= 10) {
+            try {
+                return java.sql.Date.valueOf(id.substring(0, 10)).getTime();
+            } catch (IllegalArgumentException ignored) {
+                return 0L;
+            }
+        }
+        return 0L;
+    }
+
+    private static boolean isAdminCorrected(FsDocument doc) {
+        return !firstNonBlank(doc.getString("manualEditReason"), doc.getString("manual_edit_reason")).isBlank();
     }
 
     private static Date firstDate(Date... candidates) {

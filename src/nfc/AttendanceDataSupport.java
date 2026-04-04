@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 @SuppressWarnings("unused")
@@ -42,9 +43,30 @@ final class AttendanceDataSupport {
 
         FirestoreRestClient client = FirestoreRest.forCurrentUser();
         Date startOfDay = Date.from(date.atStartOfDay(ZoneId.systemDefault()).toInstant());
-        List<FsDocument> docs = client.queryWhereEqual("attendance", "date", startOfDay);
+        LinkedHashMap<String, FsDocument> documentsById = new LinkedHashMap<>();
+        mergeAttendanceDocs(documentsById, client.queryWhereEqual("attendance", "dateKey", date.toString()));
+        mergeAttendanceDocs(documentsById, client.queryWhereEqual("attendance", "date", startOfDay));
+        mergeAttendanceDocs(documentsById, client.queryWhereEqual("attendance", "date", date.toString()));
+
+        List<FsDocument> docs = new ArrayList<>(documentsById.values());
         AttendanceDataCache updatedCache = (cache == null ? AttendanceDataCache.empty() : cache).withAttendance(date, docs);
         return new AttendanceQueryResult(updatedCache, updatedCache.attendanceForDate());
+    }
+
+    private static void mergeAttendanceDocs(java.util.Map<String, FsDocument> target, List<FsDocument> documents) {
+        if (target == null || documents == null) {
+            return;
+        }
+        for (FsDocument document : documents) {
+            if (document == null) {
+                continue;
+            }
+            String id = document.getId();
+            if (id == null || id.isBlank()) {
+                id = "attendance-" + target.size();
+            }
+            target.putIfAbsent(id, document);
+        }
     }
 
     static final class AttendanceDataCache {

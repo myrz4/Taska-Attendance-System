@@ -1,6 +1,7 @@
 package nfc;
 
 import java.time.LocalDate;
+import java.time.Period;
 
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
@@ -174,7 +175,11 @@ final class CRUDChildValidationSupport {
         if (at == null || birthDate == null) {
             return null;
         }
-        return (at.getYear() - birthDate.getYear()) * 12 + (at.getMonthValue() - birthDate.getMonthValue());
+        if (birthDate.isAfter(at)) {
+            return 0;
+        }
+        Period age = Period.between(birthDate, at);
+        return age.getYears() * 12 + age.getMonths();
     }
 
     static final class BillingAssessment {

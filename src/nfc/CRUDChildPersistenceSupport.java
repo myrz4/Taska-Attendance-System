@@ -79,6 +79,13 @@ final class CRUDChildPersistenceSupport {
                 .showAndWait();
             return false;
         }
+        if (request.isNew() && "under_3_months".equals(billingAssessment.billingReviewReason())) {
+            new Alert(
+                Alert.AlertType.ERROR,
+                "Taska hanya menerima kanak-kanak berumur 3 bulan dan ke atas. Child under 3 months cannot be added.")
+                .showAndWait();
+            return false;
+        }
         if (!confirmBillingReview(billingAssessment)) {
             return false;
         }
@@ -171,7 +178,7 @@ final class CRUDChildPersistenceSupport {
         }
         Alert warning = new Alert(
             Alert.AlertType.WARNING,
-            "This child is outside the PDF fee range of 3 months to below 4 years. The invoice will use the nearest standard band and be flagged for manual review. Continue saving?",
+            "This child is outside the standard billing age band. The invoice will use the nearest standard band and be flagged for manual review. Continue saving?",
             ButtonType.OK,
             ButtonType.CANCEL
         );

@@ -3,7 +3,6 @@ package nfc;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import javafx.animation.KeyFrame;
@@ -206,29 +205,8 @@ final class AdminDashboardUtilitySupport {
     @SuppressWarnings("unused")
     static int[] getTodayStats() throws Exception {
         FirestoreRestClient client = FirestoreRest.forCurrentUser();
-        int totalChildren = client.listDocuments("children").size();
-        List<FsDocument> todayDocs = client.queryWhereEqual("attendance", "date", java.time.LocalDate.now().toString());
-
-        Map<String, Boolean> childPresenceMap = new HashMap<>();
-        for (FsDocument document : todayDocs) {
-            String childName = document.getString("name");
-            boolean hasCheckIn = document.getDate("check_in_time") != null;
-            boolean hasManualIn =
-                Boolean.TRUE.equals(document.getBoolean("manual_in"))
-                    || Boolean.TRUE.equals(document.getBoolean("manualIn"))
-                    || Boolean.TRUE.equals(document.getBoolean("Manual In"))
-                    || Boolean.TRUE.equals(document.getBoolean("ManualIn"))
-                    || Boolean.TRUE.equals(document.getBoolean("isPresent"));
-
-            if (childName != null) {
-                boolean alreadyPresent = childPresenceMap.getOrDefault(childName, false);
-                childPresenceMap.put(childName, alreadyPresent || hasCheckIn || hasManualIn);
-            }
-        }
-
-        int presentCount = (int) childPresenceMap.values().stream().filter(v -> v).count();
-        int absentCount = Math.max(0, totalChildren - presentCount);
-        return new int[]{presentCount, absentCount};
+        AdminDashboardRefreshDataSupport.DashboardRefreshSnapshot snapshot = AdminDashboardRefreshDataSupport.collectSnapshot(client);
+        return new int[]{snapshot.presentCount, snapshot.absentCount};
     }
 
     private static void showAlert(String msg, Alert.AlertType type) {

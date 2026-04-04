@@ -14,6 +14,7 @@
     "use:dummy-payments": "node tools/set-billing-gateway-config.js --provider dummy --mode dummy --enable",
     "set:billing-gateway": "node tools/set-billing-gateway-config.js",
     "verify:billing-rollout": "node tools/verify-billing-rollout.js",
+    "repair:attendance-child-links": "node tools/repair-attendance-child-links.js",
     "set-role": "node tools/set-role.js",
     "reset-pin": "node tools/reset-pin.js"
   },

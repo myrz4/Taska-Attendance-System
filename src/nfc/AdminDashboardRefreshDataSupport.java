@@ -122,12 +122,26 @@ final class AdminDashboardRefreshDataSupport {
         LocalDate today = LocalDate.now();
         List<FsDocument> attendanceDocs = loadTodayAttendanceDocs(client, today);
 
-        Set<String> scannedChildren = new HashSet<>();
+        Map<String, FsDocument> effectiveDocsByChild = new LinkedHashMap<>();
         List<Map.Entry<String, Date>> checkIns = new ArrayList<>();
         List<Map.Entry<String, Date>> checkOuts = new ArrayList<>();
 
         for (FsDocument attendance : attendanceDocs) {
-            Date checkInTime = firstDate(attendance.getDate("checkInAt"), attendance.getDate("check_in_time"));
+            String childKey = resolveAttendanceChildKey(attendance, childIdToChildDocId, childIdToNfcUid, nfcUidToChildDocId);
+            if (childKey == null || childKey.isBlank()) {
+                continue;
+            }
+
+            FsDocument current = effectiveDocsByChild.get(childKey);
+            if (shouldPreferAttendanceDocument(current, attendance)) {
+                effectiveDocsByChild.put(childKey, attendance);
+            }
+        }
+
+        Set<String> scannedChildren = new HashSet<>();
+        for (Map.Entry<String, FsDocument> entry : effectiveDocsByChild.entrySet()) {
+            FsDocument attendance = entry.getValue();
+            Date checkInTime = firstDate(attendance.getDate("checkInAt"), attendance.getDate("check_in_time"), attendance.getDate("checkInTime"));
             Date checkOutTime = firstDate(
                 attendance.getDate("checkOutAt"),
                 attendance.getDate("check_out_time"),
@@ -146,12 +160,10 @@ final class AdminDashboardRefreshDataSupport {
                 }
             }
 
-            String childKey = resolveAttendanceChildKey(attendance, childIdToChildDocId, childIdToNfcUid, nfcUidToChildDocId);
-
+            String childKey = entry.getKey();
             String name = resolveAttendanceChildName(attendance, childKey, childDocIdToName, nfcUidToName, nfcUidToChildDocId);
-
             boolean scanned = checkInTime != null || Boolean.TRUE.equals(presentFlag);
-            if (scanned && childKey != null && !childKey.isBlank()) {
+            if (scanned) {
                 scannedChildren.add(childKey);
             }
 
@@ -222,6 +234,78 @@ final class AdminDashboardRefreshDataSupport {
             }
             target.putIfAbsent(id, document);
         }
+    }
+
+    private static boolean shouldPreferAttendanceDocument(FsDocument current, FsDocument candidate) {
+        if (candidate == null) {
+            return false;
+        }
+        if (current == null) {
+            return true;
+        }
+
+        long currentEpoch = attendanceSortEpoch(current);
+        long candidateEpoch = attendanceSortEpoch(candidate);
+        if (candidateEpoch != currentEpoch) {
+            return candidateEpoch > currentEpoch;
+        }
+
+        boolean currentCorrected = isAdminCorrected(current);
+        boolean candidateCorrected = isAdminCorrected(candidate);
+        if (candidateCorrected != currentCorrected) {
+            return candidateCorrected;
+        }
+
+        boolean currentHasCheckOut = firstDate(current.getDate("checkOutAt"), current.getDate("check_out_time"), current.getDate("checkOutTime"), current.getDate("checkoutTime")) != null;
+        boolean candidateHasCheckOut = firstDate(candidate.getDate("checkOutAt"), candidate.getDate("check_out_time"), candidate.getDate("checkOutTime"), candidate.getDate("checkoutTime")) != null;
+        if (candidateHasCheckOut != currentHasCheckOut) {
+            return candidateHasCheckOut;
+        }
+
+        boolean currentHasCheckIn = firstDate(current.getDate("checkInAt"), current.getDate("check_in_time"), current.getDate("checkInTime")) != null;
+        boolean candidateHasCheckIn = firstDate(candidate.getDate("checkInAt"), candidate.getDate("check_in_time"), candidate.getDate("checkInTime")) != null;
+        if (candidateHasCheckIn != currentHasCheckIn) {
+            return candidateHasCheckIn;
+        }
+
+        String currentId = current.getId() == null ? "" : current.getId();
+        String candidateId = candidate.getId() == null ? "" : candidate.getId();
+        return candidateId.compareTo(currentId) > 0;
+    }
+
+    private static long attendanceSortEpoch(FsDocument doc) {
+        if (doc == null) {
+            return 0L;
+        }
+        Date best = firstDate(
+            doc.getDate("updatedAt"),
+            doc.getDate("checkOutAt"),
+            doc.getDate("check_out_time"),
+            doc.getDate("checkOutTime"),
+            doc.getDate("checkoutTime"),
+            doc.getDate("checkInAt"),
+            doc.getDate("check_in_time"),
+            doc.getDate("checkInTime"),
+            doc.getDate("createdAt"),
+            doc.getDate("date")
+        );
+        if (best != null) {
+            return best.getTime();
+        }
+
+        String id = doc.getId();
+        if (id != null && id.length() >= 10) {
+            try {
+                return java.sql.Date.valueOf(id.substring(0, 10)).getTime();
+            } catch (IllegalArgumentException ignored) {
+                return 0L;
+            }
+        }
+        return 0L;
+    }
+
+    private static boolean isAdminCorrected(FsDocument doc) {
+        return !firstNonBlank(doc.getString("manualEditReason"), doc.getString("manual_edit_reason")).isBlank();
     }
 
     private static String resolveAttendanceChildKey(
