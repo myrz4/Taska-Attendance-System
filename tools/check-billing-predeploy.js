@@ -10,11 +10,10 @@ const BILLING_REQUIRED_CODES = [
   "registration_transit_oneoff",
   "overtime_after_530",
   "overtime_8pm_12am",
-  "overtime_12am_7am",
   "transport_tadika_month",
   "annual_fee_yearly",
-  "comms_book_4months",
-  "insurance_yearly_age2plus",
+  "comms_book_oneoff",
+  "insurance_oneoff_age2plus",
 ];
 
 function parseArgs(argv) {

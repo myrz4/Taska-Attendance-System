@@ -9,7 +9,6 @@
 #include <Firebase_ESP_Client.h>
 #include <LiquidCrystal_I2C.h>
 #include <Adafruit_PN532.h>
-#include "AttendanceDocCandidate.h"
 #include "addons/TokenHelper.h"
 #include "addons/RTDBHelper.h"
 
@@ -31,15 +30,12 @@
 #define BUZZER_CH 0
 #define BUZZER_FREQ 2000
 #define BUZZER_RES 8
-#define SAME_TAG_COOLDOWN_MS 5000
 
 LiquidCrystal_I2C lcd(0x27, 16, 2);
 Adafruit_PN532 nfc(SDA_PIN, SCL_PIN);
 FirebaseData fbdo;
 FirebaseAuth auth;
 FirebaseConfig config;
-String lastScannedUid = "";
-unsigned long lastScannedAtMs = 0;
 
 // ---------------- Helper Functions ---------------
 void beep(int ms = 120, int duty = 180) {
@@ -65,241 +61,6 @@ String cleanString(String s) {
   s.replace("\n", "");
   s.trim();
   return s;
-}
-
-String readFirestoreStringField(FirebaseJson &json, const String &path) {
-  FirebaseJsonData result;
-  json.get(result, path);
-  if (!result.success) {
-    return "";
-  }
-  return cleanString(result.stringValue);
-}
-
-String readFirestoreTimestampField(FirebaseJson &json, const String &fieldPath) {
-  FirebaseJsonData fieldResult;
-  json.get(fieldResult, fieldPath);
-  if (!fieldResult.success) {
-    return "";
-  }
-
-  String fieldText = fieldResult.to<String>();
-  if (fieldText == "") {
-    return "";
-  }
-
-  FirebaseJson fieldJson;
-  fieldJson.setJsonData(fieldText.c_str());
-
-  FirebaseJsonData timestampResult;
-  fieldJson.get(timestampResult, "timestampValue");
-  if (!timestampResult.success) {
-    return "";
-  }
-  return cleanString(timestampResult.stringValue);
-}
-
-bool firestoreFieldHasTimestamp(FirebaseJson &json, const String &fieldPath) {
-  return readFirestoreTimestampField(json, fieldPath) != "";
-}
-
-String normalizedAttendanceStatus(FirebaseJson &json, bool &hasCheckIn, bool &hasCheckOut) {
-  hasCheckIn = firestoreFieldHasTimestamp(json, "fields/checkInAt")
-    || firestoreFieldHasTimestamp(json, "fields/check_in_time");
-  hasCheckOut = firestoreFieldHasTimestamp(json, "fields/checkOutAt")
-    || firestoreFieldHasTimestamp(json, "fields/check_out_time");
-
-  String status = readFirestoreStringField(json, "fields/status/stringValue");
-  status.toUpperCase();
-
-  if (status == "ABSENT") {
-    status = "NOT_CHECKED_IN";
-  }
-
-  if (status == "NOT_CHECKED_IN") {
-    hasCheckIn = false;
-    hasCheckOut = false;
-    return status;
-  }
-
-  if (status == "CHECKED_OUT") {
-    hasCheckIn = true;
-    hasCheckOut = true;
-    return status;
-  }
-
-  if (status == "CHECKED_IN") {
-    hasCheckIn = true;
-    hasCheckOut = false;
-    return status;
-  }
-
-  if (hasCheckOut) {
-    hasCheckIn = true;
-    return "CHECKED_OUT";
-  }
-
-  if (hasCheckIn) {
-    return "CHECKED_IN";
-  }
-
-  return "NOT_CHECKED_IN";
-}
-
-void setFirestoreNull(FirebaseJson &json, const String &fieldPath) {
-  String nullPath = fieldPath;
-  nullPath += "/nullValue";
-  json.set(nullPath.c_str(), "NULL_VALUE");
-}
-
-String buildFirestoreDocPath(const String &collectionId, const String &docId) {
-  String path = collectionId;
-  path += "/";
-  path += docId;
-  return path;
-}
-
-String buildAttendanceDocId(const String &dateKey, const String &identityKey) {
-  String docId = dateKey;
-  docId += "_";
-  docId += identityKey;
-  return docId;
-}
-
-bool attendanceDocumentIsAdminCorrected(FirebaseJson &json) {
-  String manualReason = readFirestoreStringField(json, "fields/manualEditReason/stringValue");
-  if (manualReason == "") {
-    manualReason = readFirestoreStringField(json, "fields/manual_edit_reason/stringValue");
-  }
-  if (manualReason != "") {
-    return true;
-  }
-
-  String lastAction = readFirestoreStringField(json, "fields/auditMetadata/mapValue/fields/lastAction/stringValue");
-  lastAction.toUpperCase();
-  return lastAction == "MARK_ABSENT"
-    || lastAction == "EDIT_RECORD"
-    || lastAction == "MANUAL_CHECK_IN"
-    || lastAction == "MANUAL_CHECK_OUT"
-    || lastAction == "REOPEN_RECORD";
-}
-
-String attendanceDocumentSortKey(FirebaseJson &json, const String &docId) {
-  String value = readFirestoreTimestampField(json, "fields/updatedAt");
-  if (value != "") return value;
-
-  value = readFirestoreTimestampField(json, "fields/checkOutAt");
-  if (value != "") return value;
-
-  value = readFirestoreTimestampField(json, "fields/check_out_time");
-  if (value != "") return value;
-
-  value = readFirestoreTimestampField(json, "fields/checkOutTime");
-  if (value != "") return value;
-
-  value = readFirestoreTimestampField(json, "fields/checkoutTime");
-  if (value != "") return value;
-
-  value = readFirestoreTimestampField(json, "fields/checkInAt");
-  if (value != "") return value;
-
-  value = readFirestoreTimestampField(json, "fields/check_in_time");
-  if (value != "") return value;
-
-  value = readFirestoreTimestampField(json, "fields/checkInTime");
-  if (value != "") return value;
-
-  value = readFirestoreTimestampField(json, "fields/createdAt");
-  if (value != "") return value;
-
-  value = readFirestoreTimestampField(json, "fields/date");
-  if (value != "") return value;
-
-  value = readFirestoreStringField(json, "fields/dateKey/stringValue");
-  if (value != "") return value;
-
-  if (docId.length() >= 10) {
-    return cleanString(docId.substring(0, 10));
-  }
-  return "";
-}
-
-bool loadAttendanceDocCandidate(const String &docId, AttendanceDocCandidate &candidate) {
-  candidate.exists = false;
-  candidate.docId = docId;
-  candidate.docPath = buildFirestoreDocPath("attendance", docId);
-  candidate.payload = "";
-  candidate.hasCheckIn = false;
-  candidate.hasCheckOut = false;
-  candidate.isAdminCorrected = false;
-  candidate.status = "NOT_CHECKED_IN";
-  candidate.sortKey = "";
-
-  if (!Firebase.Firestore.getDocument(&fbdo, FIREBASE_PROJECT_ID, FIRESTORE_DB_ID, candidate.docPath.c_str())) {
-    return false;
-  }
-
-  candidate.payload = fbdo.payload().c_str();
-  if (candidate.payload.indexOf("fields") < 0) {
-    return false;
-  }
-
-  FirebaseJson docJson;
-  docJson.setJsonData(candidate.payload.c_str());
-  candidate.status = normalizedAttendanceStatus(docJson, candidate.hasCheckIn, candidate.hasCheckOut);
-  candidate.isAdminCorrected = attendanceDocumentIsAdminCorrected(docJson);
-  candidate.sortKey = attendanceDocumentSortKey(docJson, candidate.docId);
-  candidate.exists = true;
-  return true;
-}
-
-bool shouldPreferAttendanceCandidate(const AttendanceDocCandidate &candidate, const AttendanceDocCandidate &current) {
-  if (!candidate.exists) {
-    return false;
-  }
-  if (!current.exists) {
-    return true;
-  }
-
-  if (candidate.sortKey != current.sortKey) {
-    return candidate.sortKey > current.sortKey;
-  }
-
-  if (candidate.isAdminCorrected != current.isAdminCorrected) {
-    return candidate.isAdminCorrected;
-  }
-
-  if (candidate.hasCheckOut != current.hasCheckOut) {
-    return candidate.hasCheckOut;
-  }
-
-  if (candidate.hasCheckIn != current.hasCheckIn) {
-    return candidate.hasCheckIn;
-  }
-
-  return candidate.docId > current.docId;
-}
-
-AttendanceDocCandidate resolveAttendanceDocForScan(const String &dateKey, const String &childNfcUid, const String &canonicalChildId) {
-  AttendanceDocCandidate best;
-  best.exists = false;
-
-  AttendanceDocCandidate candidate;
-  String legacyDocId = buildAttendanceDocId(dateKey, childNfcUid);
-  if (loadAttendanceDocCandidate(legacyDocId, candidate) && shouldPreferAttendanceCandidate(candidate, best)) {
-    best = candidate;
-  }
-
-  if (canonicalChildId != "" && canonicalChildId != childNfcUid) {
-    String canonicalDocId = buildAttendanceDocId(dateKey, canonicalChildId);
-    if (canonicalDocId != legacyDocId) {
-      if (loadAttendanceDocCandidate(canonicalDocId, candidate) && shouldPreferAttendanceCandidate(candidate, best)) {
-        best = candidate;
-      }
-    }
-  }
-
-  return best;
 }
 
 String getUIDString(uint8_t *uid, uint8_t uidLength) {
@@ -349,170 +110,6 @@ String getDateNow() {
   return String(buf);
 }
 
-String encodeLegacyUidDocId(const String &uid) {
-  String encoded;
-  encoded.reserve(uid.length() * 2 + 4);
-  for (size_t i = 0; i < uid.length(); i++) {
-    uint8_t value = static_cast<uint8_t>(uid.charAt(i));
-    if (value < 0x10) encoded += "0";
-    encoded += String(value, HEX);
-  }
-  encoded += "0D0A";
-  encoded.toUpperCase();
-  return encoded;
-}
-
-String extractDocumentIdFromName(const String &documentName) {
-  int slashIndex = documentName.lastIndexOf('/');
-  if (slashIndex < 0 || slashIndex + 1 >= documentName.length()) {
-    return "";
-  }
-  return cleanString(documentName.substring(slashIndex + 1));
-}
-
-bool loadChildDocumentByPath(const String &childDocPath, const String &expectedUid, FirebaseJson &json, String &resolvedDocId) {
-  if (!Firebase.Firestore.getDocument(&fbdo, FIREBASE_PROJECT_ID, FIRESTORE_DB_ID, childDocPath.c_str())) {
-    return false;
-  }
-
-  json.setJsonData(fbdo.payload().c_str());
-  FirebaseJsonData storedUidResult;
-  json.get(storedUidResult, "fields/nfc_uid/stringValue");
-  String storedUid = storedUidResult.success ? cleanString(storedUidResult.stringValue) : "";
-  storedUid.toUpperCase();
-  if (storedUid != expectedUid) {
-    return false;
-  }
-
-  FirebaseJsonData migratedResult;
-  json.get(migratedResult, "fields/migratedToChildId/stringValue");
-  String migratedToChildId = migratedResult.success ? cleanString(migratedResult.stringValue) : "";
-  if (migratedToChildId != "") {
-    String currentDocId = extractDocumentIdFromName(childDocPath);
-    if (migratedToChildId != currentDocId) {
-      return loadChildDocumentByPath(String("children/") + migratedToChildId, expectedUid, json, resolvedDocId);
-    }
-  }
-
-  resolvedDocId = extractDocumentIdFromName(childDocPath);
-  if (resolvedDocId == "") {
-    resolvedDocId = childDocPath;
-  }
-  return true;
-}
-
-bool queryChildDocumentByUid(const String &nfcUID, FirebaseJson &json, String &resolvedDocId) {
-  FirebaseJson query;
-  query.set("from/collectionId", "children");
-  query.set("from/allDescendants", false);
-  query.set("where/fieldFilter/field/fieldPath", "nfc_uid");
-  query.set("where/fieldFilter/op", "EQUAL");
-  query.set("where/fieldFilter/value/stringValue", nfcUID);
-  query.set("limit", 5);
-
-  if (!Firebase.Firestore.runQuery(&fbdo, FIREBASE_PROJECT_ID, FIRESTORE_DB_ID, "/", &query)) {
-    Serial.println(String("⚠️ Firestore query failed for UID: ") + nfcUID);
-    Serial.println(String("   Reason: ") + fbdo.errorReason());
-    return false;
-  }
-
-  FirebaseJsonArray rows;
-  if (!rows.setJsonArrayData(fbdo.payload().c_str())) {
-    return false;
-  }
-
-  String migratedToChildId = "";
-
-  for (size_t i = 0; i < rows.size(); i++) {
-    FirebaseJsonData rowData;
-    rows.get(rowData, i);
-
-    String rowText = rowData.to<String>();
-    if (rowText == "") {
-      continue;
-    }
-
-    FirebaseJson rowJson;
-    rowJson.setJsonData(rowText.c_str());
-
-    FirebaseJsonData docResult;
-    rowJson.get(docResult, "document");
-    if (!docResult.success) {
-      continue;
-    }
-
-    String docText = docResult.to<String>();
-    if (docText == "") {
-      continue;
-    }
-
-    FirebaseJson docJson;
-    docJson.setJsonData(docText.c_str());
-
-    FirebaseJsonData storedUidResult;
-    docJson.get(storedUidResult, "fields/nfc_uid/stringValue");
-    String storedUid = storedUidResult.success ? cleanString(storedUidResult.stringValue) : "";
-    storedUid.toUpperCase();
-    if (storedUid != nfcUID) {
-      continue;
-    }
-
-    FirebaseJsonData migratedResult;
-    docJson.get(migratedResult, "fields/migratedToChildId/stringValue");
-    String migratedTo = migratedResult.success ? cleanString(migratedResult.stringValue) : "";
-    if (migratedTo != "") {
-      if (migratedToChildId == "") {
-        migratedToChildId = migratedTo;
-      }
-      continue;
-    }
-
-    FirebaseJsonData docNameResult;
-    docJson.get(docNameResult, "name");
-    String documentName = docNameResult.success ? cleanString(docNameResult.stringValue) : "";
-    String documentId = extractDocumentIdFromName(documentName);
-    if (documentId == "") {
-      continue;
-    }
-
-    resolvedDocId = documentId;
-    json.setJsonData(docText.c_str());
-    return true;
-  }
-
-  if (migratedToChildId != "") {
-    return loadChildDocumentByPath(String("children/") + migratedToChildId, nfcUID, json, resolvedDocId);
-  }
-
-  return false;
-}
-
-bool fetchChildDocumentByUid(const String &nfcUID, FirebaseJson &json, String &resolvedDocId) {
-  String primaryDocId = nfcUID;
-  String legacyDocId = encodeLegacyUidDocId(nfcUID);
-  String candidates[2] = {primaryDocId, legacyDocId};
-
-  for (int i = 0; i < 2; i++) {
-    String docId = candidates[i];
-    String childDocPath = String("children/") + docId;
-    if (loadChildDocumentByPath(childDocPath, nfcUID, json, resolvedDocId)) {
-      return true;
-    }
-  }
-
-  return queryChildDocumentByUid(nfcUID, json, resolvedDocId);
-}
-
-bool shouldIgnoreDuplicateScan(const String &nfcUID) {
-  unsigned long now = millis();
-  if (nfcUID == lastScannedUid && now - lastScannedAtMs < SAME_TAG_COOLDOWN_MS) {
-    return true;
-  }
-  lastScannedUid = nfcUID;
-  lastScannedAtMs = now;
-  return false;
-}
-
 // 🧩 Manual override for debugging or admin correction (optional)
 String selectedDate = ""; // leave empty for auto (today)
 
@@ -528,7 +125,6 @@ String getActiveDate() {
 void setup() {
   Serial.begin(115200);
   delay(1000);
-  WiFi.setSleep(false);
 
   // Initialize buzzer (PWM)
   ledcAttach(BUZZER_PIN, BUZZER_FREQ, BUZZER_RES);
@@ -602,30 +198,25 @@ void loop() {
   }
 
   String nfcUID = getUIDString(uid, uidLength);
-  if (shouldIgnoreDuplicateScan(nfcUID)) {
-    Serial.println(String("ℹ️ Duplicate scan ignored for UID: ") + nfcUID);
-    delay(400);
-    return;
-  }
-
   Serial.println("\n================================");
-  Serial.println(String("📇 Card UID: ") + nfcUID);
+  Serial.println("📇 Card UID: " + nfcUID);
   showLCD("Card Detected!", nfcUID);
   beep(200);
 
-  FirebaseJson json;
-  String resolvedChildDocId = "";
-  if (!fetchChildDocumentByUid(nfcUID, json, resolvedChildDocId)) {
+  String childDocPath = "children/" + nfcUID;
+  if (!Firebase.Firestore.getDocument(&fbdo, FIREBASE_PROJECT_ID, FIRESTORE_DB_ID, childDocPath.c_str())) {
     showLCD("No record", "Check card/rules");
-    Serial.println(String("❌ Child lookup failed for UID: ") + nfcUID);
-    Serial.println("   Reason: no matching child document found for direct or legacy UID path");
+    Serial.println("❌ Child lookup failed for UID: " + nfcUID);
+    Serial.println("   Reason: " + fbdo.errorReason());
     delay(2000);
     lcdSplash();
     return;
   }
 
+  FirebaseJson json;
+  json.setJsonData(fbdo.payload().c_str());
   FirebaseJsonData result;
-  String childNfcUid, childName, parentName, teacherName;
+  String childId, childName, parentName, teacherName;
 
   json.get(result, "fields/name/stringValue");
   if (result.success) childName = cleanString(result.stringValue);
@@ -634,91 +225,51 @@ void loop() {
   json.get(result, "fields/teacher_username/stringValue");
   if (result.success) teacherName = cleanString(result.stringValue);
   json.get(result, "fields/nfc_uid/stringValue");
-  if (result.success) childNfcUid = cleanString(result.stringValue);
+  if (result.success) childId = cleanString(result.stringValue);
 
   if (childName == "") childName = "Unknown";
   if (parentName == "") parentName = "Unknown";
   if (teacherName == "") teacherName = "Unknown";
-  if (childNfcUid == "") childNfcUid = nfcUID;
+  if (childId == "") childId = nfcUID;
 
-  String canonicalChildId = resolvedChildDocId;
-  String canonicalChildRef = String("projects/") + FIREBASE_PROJECT_ID + "/databases/(default)/documents/children/" + canonicalChildId;
-
-  Serial.println(String("✅ Found: ") + childName + " | Parent: " + parentName + " | Teacher: " + teacherName);
+  Serial.println("✅ Found: " + childName + " | Parent: " + parentName + " | Teacher: " + teacherName);
 
   String date = getActiveDate();
   String timestampNow = getIsoTimestamp();
   String midnightTimestamp = getMidnightTimestamp();
-  String defaultDocId = buildAttendanceDocId(date, childNfcUid);
-  AttendanceDocCandidate selectedAttendance = resolveAttendanceDocForScan(date, childNfcUid, canonicalChildId);
-  String docID = selectedAttendance.exists ? selectedAttendance.docId : defaultDocId;
-  String docPath = selectedAttendance.exists ? selectedAttendance.docPath : buildFirestoreDocPath("attendance", docID);
+  String docID = date + "_" + childId;
+  String docPath = "attendance/" + docID;
   docID.trim();  // ✅ Ensures no hidden spaces, newline, or trailing characters
 
-  bool recordExists = selectedAttendance.exists;
+  bool recordExists = false;
+  if (Firebase.Firestore.getDocument(&fbdo, FIREBASE_PROJECT_ID, FIRESTORE_DB_ID, docPath.c_str())) {
+    String payload = fbdo.payload().c_str();
+    if (payload.indexOf("fields") > 0) recordExists = true;
+  }
 
   if (recordExists) {
-  bool hasCheckIn = selectedAttendance.hasCheckIn;
-  bool hasCheckOut = selectedAttendance.hasCheckOut;
-  String normalizedStatus = selectedAttendance.status;
+  // Parse current attendance document
+  String payload = fbdo.payload().c_str();
+  FirebaseJson existing;
+  existing.setJsonData(payload);
 
-  if (selectedAttendance.docId != defaultDocId) {
-    String resolvedMessage = "ℹ️ Resolved attendance doc: ";
-    resolvedMessage += selectedAttendance.docId;
-    Serial.println(resolvedMessage);
-  }
+  FirebaseJsonData checkInVal, checkOutVal;
+  existing.get(checkInVal, "fields/check_in_time/timestampValue");
+  existing.get(checkOutVal, "fields/check_out_time/timestampValue");
 
-  FirebaseJson canonicalPatch;
-  canonicalPatch.set("fields/attendanceId/stringValue", docID);
-  canonicalPatch.set("fields/childId/stringValue", canonicalChildId);
-  canonicalPatch.set("fields/nfc_uid/stringValue", childNfcUid);
-  canonicalPatch.set("fields/childRef/referenceValue", canonicalChildRef);
-  canonicalPatch.set("fields/name/stringValue", childName);
-  canonicalPatch.set("fields/parentName/stringValue", parentName);
-  canonicalPatch.set("fields/teacher/stringValue", teacherName);
-  canonicalPatch.set("fields/dateKey/stringValue", date);
-  canonicalPatch.set("fields/isPresent/booleanValue", hasCheckIn || hasCheckOut);
-  canonicalPatch.set("fields/is_present/booleanValue", hasCheckIn || hasCheckOut);
-  canonicalPatch.set("fields/status/stringValue", normalizedStatus);
-
-  if (!Firebase.Firestore.patchDocument(&fbdo, FIREBASE_PROJECT_ID, FIRESTORE_DB_ID,
-                                       docPath.c_str(), canonicalPatch.raw(),
-                                       "attendanceId,childId,nfc_uid,childRef,name,parentName,teacher,dateKey,isPresent,is_present,status")) {
-    Serial.println(String("⚠️ Failed to canonicalize attendance identity for ") + docID);
-    Serial.println(String("   Reason: ") + fbdo.errorReason());
-  }
+  bool hasCheckIn = checkInVal.success && checkInVal.stringValue != "";
+  bool hasCheckOut = checkOutVal.success && checkOutVal.stringValue != "";
 
   if (!hasCheckIn) {
     Serial.println("🟢 No check-in found — performing CHECK-IN");
     FirebaseJson update;
-    update.set("fields/attendanceId/stringValue", docID);
-    update.set("fields/childId/stringValue", canonicalChildId);
-    update.set("fields/nfc_uid/stringValue", childNfcUid);
-    update.set("fields/childRef/referenceValue", canonicalChildRef);
-    update.set("fields/name/stringValue", childName);
-    update.set("fields/parentName/stringValue", parentName);
-    update.set("fields/teacher/stringValue", teacherName);
-    update.set("fields/date/timestampValue", midnightTimestamp);
-    update.set("fields/dateKey/stringValue", date);
-    update.set("fields/checkInAt/timestampValue", timestampNow);
-    update.set("fields/checkInMethod/stringValue", "NFC");
-    setFirestoreNull(update, "fields/checkOutAt");
-    setFirestoreNull(update, "fields/checkOutMethod");
     update.set("fields/check_in_time/timestampValue", timestampNow);
     update.set("fields/checkin_method/stringValue", "NFC");
-    setFirestoreNull(update, "fields/check_out_time");
-    setFirestoreNull(update, "fields/checkout_method");
     update.set("fields/isPresent/booleanValue", true);
-    update.set("fields/is_present/booleanValue", true);
-    update.set("fields/status/stringValue", "CHECKED_IN");
-    update.set("fields/manualCheckout/booleanValue", false);
-    update.set("fields/manual_in/booleanValue", false);
-    update.set("fields/manual_out/booleanValue", false);
-    update.set("fields/checkout_approval/booleanValue", false);
 
     if (Firebase.Firestore.patchDocument(&fbdo, FIREBASE_PROJECT_ID, FIRESTORE_DB_ID,
                                          docPath.c_str(), update.raw(),
-                                         "attendanceId,childId,nfc_uid,childRef,name,parentName,teacher,date,dateKey,checkInAt,checkInMethod,checkOutAt,checkOutMethod,check_in_time,checkin_method,check_out_time,checkout_method,isPresent,is_present,status,manualCheckout,manual_in,manual_out,checkout_approval")) {
+                                         "check_in_time,checkin_method,isPresent")) {
       showLCD("Checked In", childName);
       beep(250);
     } else {
@@ -726,9 +277,20 @@ void loop() {
     }
   } 
   else if (hasCheckIn && !hasCheckOut) {
-    Serial.println("ℹ️ Already checked in. Use parent QR pickup in Teacher App, or use manual checkout override if needed.");
-    showLCD("Already In", "QR or Manual");
-    beep(100);
+    Serial.println("🔵 Check-in found — performing CHECK-OUT");
+    FirebaseJson update;
+    update.set("fields/check_out_time/timestampValue", timestampNow);
+    update.set("fields/checkout_method/stringValue", "NFC");
+    update.set("fields/manualCheckout/booleanValue", false);
+
+    if (Firebase.Firestore.patchDocument(&fbdo, FIREBASE_PROJECT_ID, FIRESTORE_DB_ID,
+                                         docPath.c_str(), update.raw(),
+                                         "check_out_time,checkout_method,manualCheckout")) {
+      showLCD("Checked Out", childName);
+      beep(200);
+    } else {
+      showLCD("⚠️ Failed", "Check-Out Error");
+    }
   } 
   else if (hasCheckIn && hasCheckOut) {
     Serial.println("⚠️ Already checked out — new day or reset required");
@@ -739,22 +301,15 @@ void loop() {
 else {
   Serial.println("🆕 No record — performing CHECK-IN");
   FirebaseJson content;
-  content.set("fields/attendanceId/stringValue", docID);
-  content.set("fields/childId/stringValue", canonicalChildId);
-  content.set("fields/nfc_uid/stringValue", childNfcUid);
-  content.set("fields/childRef/referenceValue", canonicalChildRef);
+  content.set("fields/childId/stringValue", childId);
+  content.set("fields/childRef/referenceValue", "projects/" FIREBASE_PROJECT_ID "/databases/(default)/documents/children/" + nfcUID);
   content.set("fields/name/stringValue", childName);
   content.set("fields/parentName/stringValue", parentName);
   content.set("fields/teacher/stringValue", teacherName);
   content.set("fields/date/timestampValue", midnightTimestamp);
-  content.set("fields/dateKey/stringValue", date);
-  content.set("fields/status/stringValue", "CHECKED_IN");
-  content.set("fields/checkInAt/timestampValue", timestampNow);
-  content.set("fields/checkInMethod/stringValue", "NFC");
   content.set("fields/check_in_time/timestampValue", timestampNow);
   content.set("fields/checkin_method/stringValue", "NFC");
   content.set("fields/isPresent/booleanValue", true);
-  content.set("fields/is_present/booleanValue", true);
   content.set("fields/manualCheckout/booleanValue", false);
   content.set("fields/manual_in/booleanValue", false);
   content.set("fields/manual_out/booleanValue", false);

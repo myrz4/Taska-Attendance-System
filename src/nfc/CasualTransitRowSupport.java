@@ -57,6 +57,9 @@ final class CasualTransitRowSupport {
             ? ("CLOSED".equals(status) ? "PAID" : ("CANCELED".equals(status) ? "VOID" : "PENDING"))
             : safe(document.getString("paymentStatus")).toUpperCase(Locale.ROOT);
         String receiptNo = safe(document.getString("receiptNo"));
+        String transitType = safe(document.getString("transitType"));
+        String staffType = safe(document.getString("staffType"));
+        String pricingBreakdown = pricingBreakdownText(document.get("pricingItems"));
         return new CasualTransitView.VisitRow(
             document.getId(),
             status,
@@ -65,12 +68,15 @@ final class CasualTransitRowSupport {
             safe(document.getString("guardianName")),
             safe(document.getString("guardianPhone")),
             safe(document.getString("guardianRelationship")),
+            transitType,
+            staffType,
             document.getDate("checkInAt"),
             document.getDate("checkOutAt"),
             amount == null ? 0L : amount,
             receiptNo.isBlank() ? "-" : receiptNo,
             safe(document.getString("notes")),
-            safe(document.getString("paymentMethod"))
+            safe(document.getString("paymentMethod")),
+            pricingBreakdown
         );
     }
 
@@ -180,6 +186,8 @@ final class CasualTransitRowSupport {
             + "Status: " + visitStatusLabel(row.status()) + "\n"
             + "Payment Status: " + paymentStatusLabel(row.paymentStatus()) + "\n"
             + "Child: " + row.childName() + "\n"
+            + "Transit Type: " + (row.transitType().isBlank() ? "-" : humanTransitType(row.transitType())) + "\n"
+            + "Rate Type: " + (row.staffType().isBlank() ? "-" : humanStaffType(row.staffType())) + "\n"
             + "Guardian: " + row.guardianName() + (row.guardianRelationship().isBlank() ? "" : " (" + row.guardianRelationship() + ")") + "\n"
             + "Phone: " + (row.guardianPhone().isBlank() ? "-" : row.guardianPhone()) + "\n"
             + "Check In: " + checkLabel(row.checkInAt()) + "\n"
@@ -187,7 +195,70 @@ final class CasualTransitRowSupport {
             + "Amount: " + amountLabel(row.amountSen()) + "\n"
             + "Payment Method: " + (row.paymentMethod().isBlank() ? "-" : row.paymentMethod()) + "\n"
             + "Receipt: " + row.receiptNo() + "\n"
+            + "Fee Breakdown: " + (row.pricingBreakdown().isBlank() ? "-" : "\n" + row.pricingBreakdown()) + "\n"
             + "Notes: " + (row.notes().isBlank() ? "-" : row.notes());
+    }
+
+    private static String pricingBreakdownText(Object rawPricingItems) {
+        if (!(rawPricingItems instanceof java.util.List<?>)) {
+            return "";
+        }
+        StringBuilder sb = new StringBuilder();
+        for (Object rawItem : (java.util.List<?>) rawPricingItems) {
+            if (!(rawItem instanceof Map<?, ?>)) {
+                continue;
+            }
+            Map<?, ?> item = (Map<?, ?>) rawItem;
+            String description = item.get("description") == null ? "" : String.valueOf(item.get("description")).trim();
+            long amountSen = 0L;
+            Object amountRaw = item.get("amountSen");
+            if (amountRaw instanceof Number) {
+                amountSen = ((Number) amountRaw).longValue();
+            } else if (amountRaw != null) {
+                try {
+                    amountSen = Long.parseLong(String.valueOf(amountRaw).trim());
+                } catch (NumberFormatException ignored) {
+                    amountSen = 0L;
+                }
+            }
+            double qty = 0d;
+            Object qtyRaw = item.containsKey("qty") ? item.get("qty") : item.get("quantity");
+            if (qtyRaw instanceof Number) {
+                qty = ((Number) qtyRaw).doubleValue();
+            } else if (qtyRaw != null) {
+                try {
+                    qty = Double.parseDouble(String.valueOf(qtyRaw).trim());
+                } catch (NumberFormatException ignored) {
+                    qty = 0d;
+                }
+            }
+            if (sb.length() > 0) {
+                sb.append("\n");
+            }
+            sb.append("- ")
+                .append(description.isBlank() ? "Item" : description)
+                .append(" x ")
+                .append(qty == Math.rint(qty) ? String.format(Locale.ROOT, "%.0f", qty) : String.format(Locale.ROOT, "%.2f", qty))
+                .append(" = ")
+                .append(formatMoney(amountSen));
+        }
+        return sb.toString();
+    }
+
+    private static String humanTransitType(String raw) {
+        switch (safe(raw).toUpperCase(Locale.ROOT)) {
+            case "CASUAL_TRANSIT_1_HOUR":
+                return "1 Hour";
+            case "CASUAL_TRANSIT_1_WEEK":
+                return "1 Week";
+            case "CASUAL_TRANSIT_1_DAY":
+            default:
+                return "1 Day";
+        }
+    }
+
+    private static String humanStaffType(String raw) {
+        return "staff".equalsIgnoreCase(safe(raw)) ? "Staff" : "Non-staff";
     }
 
     static String auditExportTitle(CasualTransitView.AuditEntry entry) {

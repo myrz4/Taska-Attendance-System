@@ -16,7 +16,6 @@ final class CRUDChildValidationSupport {
             syncTransitControls(null, null, null, null);
             assessBilling(LocalDate.now(), null, null, false);
             parseAbsenceLetter("", "");
-            parseUniformCharge(false, "", "");
             deriveTransitSettings(null, null, false);
             BillingAssessment billingProbe = new BillingAssessment(null, false, false, "");
             billingProbe.childAgeMonths();
@@ -26,9 +25,6 @@ final class CRUDChildValidationSupport {
             AbsenceLetterInput absenceProbe = new AbsenceLetterInput("", 0);
             absenceProbe.period();
             absenceProbe.days();
-            UniformChargeInput uniformProbe = new UniformChargeInput(0, "");
-            uniformProbe.feeSen();
-            uniformProbe.chargePeriod();
             TransitSettings transitProbe = new TransitSettings(false, null);
             transitProbe.schoolHolidayTransit();
             transitProbe.careDurationHours();
@@ -76,7 +72,7 @@ final class CRUDChildValidationSupport {
             && (childAgeMonths == null || childAgeMonths < 48);
         boolean billingReviewRequired = !selectedFeePlan.code.equals("transit")
             && childAgeMonths != null
-            && (childAgeMonths < 3 || childAgeMonths >= 60);
+            && (childAgeMonths < 3 || childAgeMonths >= 48);
         String reviewReason = billingReviewRequired
             ? (childAgeMonths != null && childAgeMonths < 3 ? "under_3_months" : "age_4y_or_above")
             : "";
@@ -98,28 +94,6 @@ final class CRUDChildValidationSupport {
             throw new IllegalArgumentException("Approved absence letter period must be in yyyy-MM format.");
         }
         return new AbsenceLetterInput(period, days);
-    }
-
-    static UniformChargeInput parseUniformCharge(boolean enabled, String feeRaw, String periodRaw) {
-        if (!enabled) {
-            return new UniformChargeInput(0, "");
-        }
-
-        int uniformFeeSen;
-        try {
-            uniformFeeSen = parseMoneyToSen(feeRaw);
-        } catch (NumberFormatException ex) {
-            throw new IllegalArgumentException("Uniform fee must be a valid amount.", ex);
-        }
-        if (uniformFeeSen <= 0) {
-            throw new IllegalArgumentException("Uniform fee must be greater than zero when uniform billing is enabled.");
-        }
-
-        String chargePeriod = safeStr(periodRaw).trim();
-        if (!chargePeriod.isEmpty() && !chargePeriod.matches("\\d{4}-\\d{2}")) {
-            throw new IllegalArgumentException("Uniform charge period must be in yyyy-MM format.");
-        }
-        return new UniformChargeInput(uniformFeeSen, chargePeriod);
     }
 
     static TransitSettings deriveTransitSettings(
@@ -160,15 +134,6 @@ final class CRUDChildValidationSupport {
 
     private static String safeStr(Object value) {
         return value == null ? "" : String.valueOf(value);
-    }
-
-    private static int parseMoneyToSen(String raw) {
-        String normalized = safeStr(raw).trim().replace("RM", "").replace(",", "");
-        if (normalized.isEmpty()) {
-            return 0;
-        }
-        double value = Double.parseDouble(normalized);
-        return (int) Math.round(Math.max(0d, value) * 100d);
     }
 
     private static Integer ageInMonths(LocalDate at, LocalDate birthDate) {
@@ -227,24 +192,6 @@ final class CRUDChildValidationSupport {
 
         int days() {
             return days;
-        }
-    }
-
-    static final class UniformChargeInput {
-        private final int feeSen;
-        private final String chargePeriod;
-
-        UniformChargeInput(int feeSen, String chargePeriod) {
-            this.feeSen = feeSen;
-            this.chargePeriod = chargePeriod == null ? "" : chargePeriod;
-        }
-
-        int feeSen() {
-            return feeSen;
-        }
-
-        String chargePeriod() {
-            return chargePeriod;
         }
     }
 

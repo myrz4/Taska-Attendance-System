@@ -91,13 +91,6 @@ final class CRUDChildDialogSupport {
         absenceLetterPeriodTf.setText(LocalDate.now().format(BILLING_PERIOD_FORMAT));
         TextField absenceLetterDaysTf = new TextField();
         absenceLetterDaysTf.setPromptText("0");
-        CheckBox uniformChargeCb = new CheckBox("Charge uniform (3 & 4 years, current price)");
-        TextField uniformFeeTf = new TextField();
-        uniformFeeTf.setPromptText("e.g. 45.00");
-        TextField uniformChargePeriodTf = new TextField();
-        uniformChargePeriodTf.setPromptText("yyyy-MM (blank = registration month)");
-        uniformFeeTf.disableProperty().bind(uniformChargeCb.selectedProperty().not());
-        uniformChargePeriodTf.disableProperty().bind(uniformChargeCb.selectedProperty().not());
         Label billingHint = new Label("Full-time monthly fees are age-based. Daily, weekly, and hourly transit plans are billed from actual attendance records.");
         billingHint.setWrapText(true);
 
@@ -142,15 +135,6 @@ final class CRUDChildDialogSupport {
             if (absenceLetterDays instanceof Number) {
                 absenceLetterDaysTf.setText(String.valueOf(((Number) absenceLetterDays).intValue()));
             }
-            Object uniformFeeSen = existingData.get("uniformFeeSen");
-            if (uniformFeeSen instanceof Number && ((Number) uniformFeeSen).intValue() > 0) {
-                uniformChargeCb.setSelected(true);
-                uniformFeeTf.setText(String.format(java.util.Locale.ROOT, "%.2f", ((Number) uniformFeeSen).doubleValue() / 100d));
-            }
-            String uniformChargePeriod = safeStr(existingData.get("uniformChargePeriod")).trim();
-            if (!uniformChargePeriod.isEmpty()) {
-                uniformChargePeriodTf.setText(uniformChargePeriod);
-            }
         }
 
         boolean existingTransportDefault = existingData != null && Boolean.TRUE.equals(existingData.get("transportFromTadika"));
@@ -182,9 +166,6 @@ final class CRUDChildDialogSupport {
             billingHint,
             transportFromTadikaCb,
             new Label("Payment due day:"), billingDueDayCb,
-            uniformChargeCb,
-            new Label("Uniform fee amount (RM):"), uniformFeeTf,
-            new Label("Uniform charge period (optional):"), uniformChargePeriodTf,
             new Label("Approved Absence Letter Period (optional):"), absenceLetterPeriodTf,
             new Label("Absence Days With Letter (optional):"), absenceLetterDaysTf,
             absenceLetterApprovedCb,
@@ -244,10 +225,7 @@ final class CRUDChildDialogSupport {
                     dueDay != null ? dueDay : 7,
                     absenceLetterApprovedCb.isSelected(),
                     absenceLetterPeriodTf.getText(),
-                    absenceLetterDaysTf.getText(),
-                    uniformChargeCb.isSelected(),
-                    uniformFeeTf.getText(),
-                    uniformChargePeriodTf.getText()
+                    absenceLetterDaysTf.getText()
                 );
                 if (!CRUDChildPersistenceSupport.saveChild(request)) {
                     return;

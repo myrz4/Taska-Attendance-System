@@ -97,13 +97,14 @@
 - Base fee source is backend-derived from child profile fields:
   - feePlan monthly/transit
   - careType fallback compatibility
-  - age band (3m-2y, 2y-4y)
+  - age band (3m-2y, 2y-below-4y)
   - payer type from child.staffChild, fallback to parent payerType
-- Registration month logic replaces normal monthly base with registration fee.
+- Registration month logic stacks normal monthly base plus registration fee.
+- Registration-only add-ons:
+  - comms_book_oneoff
+  - insurance_oneoff_age2plus (age >= 24 months)
 - January policy add-ons:
-  - annual_fee_yearly
-  - comms_book_4months (also in May and September)
-  - insurance_yearly_age2plus (age >= 24 months)
+  - annual_fee_yearly only
 - Optional add-ons:
   - transport_tadika_month
   - overtime from attendance aggregation (with manual override support)

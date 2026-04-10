@@ -26,6 +26,12 @@ final class CasualTransitDialogSupport {
         dialog.getDialogPane().getButtonTypes().addAll(createButton, ButtonType.CANCEL);
 
         TextField childNameField = new TextField();
+        ComboBox<String> transitTypeField = new ComboBox<>();
+        transitTypeField.setItems(FXCollections.observableArrayList("1 Hour", "1 Day", "1 Week"));
+        transitTypeField.setValue("1 Day");
+        ComboBox<String> rateTypeField = new ComboBox<>();
+        rateTypeField.setItems(FXCollections.observableArrayList("Non-staff", "Staff"));
+        rateTypeField.setValue("Non-staff");
         TextField guardianNameField = new TextField();
         TextField guardianPhoneField = new TextField();
         TextField guardianRelationshipField = new TextField();
@@ -33,17 +39,21 @@ final class CasualTransitDialogSupport {
 
         GridPane grid = formGrid();
         grid.addRow(0, new Label("Child Name"), childNameField);
-        grid.addRow(1, new Label("Guardian Name"), guardianNameField);
-        grid.addRow(2, new Label("Guardian Phone"), guardianPhoneField);
-        grid.addRow(3, new Label("Relationship"), guardianRelationshipField);
-        grid.addRow(4, new Label("Notes"), notesArea);
-        grow(childNameField, guardianNameField, guardianPhoneField, guardianRelationshipField, notesArea);
+        grid.addRow(1, new Label("Transit Type"), transitTypeField);
+        grid.addRow(2, new Label("Rate Type"), rateTypeField);
+        grid.addRow(3, new Label("Guardian Name"), guardianNameField);
+        grid.addRow(4, new Label("Guardian Phone"), guardianPhoneField);
+        grid.addRow(5, new Label("Relationship"), guardianRelationshipField);
+        grid.addRow(6, new Label("Notes"), notesArea);
+        grow(childNameField, transitTypeField, rateTypeField, guardianNameField, guardianPhoneField, guardianRelationshipField, notesArea);
         dialog.getDialogPane().setContent(grid);
 
         dialog.setResultConverter(button -> {
             if (button != createButton) return null;
             Map<String, String> values = new LinkedHashMap<>();
             values.put("childName", childNameField.getText());
+            values.put("transitType", transitTypeField.getValue());
+            values.put("staffType", rateTypeField.getValue());
             values.put("guardianName", guardianNameField.getText());
             values.put("guardianPhone", guardianPhoneField.getText());
             values.put("guardianRelationship", guardianRelationshipField.getText());
@@ -60,7 +70,7 @@ final class CasualTransitDialogSupport {
         dialog.getDialogPane().getButtonTypes().addAll(checkoutButtonType, ButtonType.CANCEL);
 
         TextField amountField = new TextField();
-        amountField.setPromptText("Amount in RM, example 25.00");
+        amountField.setPromptText("Optional manual override in RM. Leave blank for auto pricing.");
         ComboBox<String> paymentMethodField = new ComboBox<>();
         paymentMethodField.setItems(FXCollections.observableArrayList("Cash", "Transfer"));
         paymentMethodField.setValue("Cash");
@@ -69,7 +79,7 @@ final class CasualTransitDialogSupport {
         GridPane grid = formGrid();
         grid.addRow(0, new Label("Child"), new Label(selected.childName()));
         grid.addRow(1, new Label("Guardian"), new Label(selected.guardianSummary()));
-        grid.addRow(2, new Label("Amount (RM)"), amountField);
+        grid.addRow(2, new Label("Manual Override (RM)"), amountField);
         grid.addRow(3, new Label("Payment Method"), paymentMethodField);
         grid.addRow(4, new Label("Notes"), notesArea);
         grow(amountField, paymentMethodField, notesArea);

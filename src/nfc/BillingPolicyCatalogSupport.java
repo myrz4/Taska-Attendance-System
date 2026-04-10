@@ -18,13 +18,12 @@ final class BillingPolicyCatalogSupport {
         "transit_1hour",
         "overtime_after_530",
         "overtime_8pm_12am",
-        "overtime_12am_7am",
         "transport_tadika_month",
         "registration_fulltime_oneoff",
         "registration_transit_oneoff",
         "annual_fee_yearly",
-        "comms_book_4months",
-        "insurance_yearly_age2plus"
+        "comms_book_oneoff",
+        "insurance_oneoff_age2plus"
     );
 
     @SuppressWarnings("unused")
@@ -50,13 +49,12 @@ final class BillingPolicyCatalogSupport {
         putRow(table, "transit_1hour", 350, 400);
         putRow(table, "overtime_after_530", 500, 600);
         putRow(table, "overtime_8pm_12am", 1000, 1300);
-        putRow(table, "overtime_12am_7am", 700, 1000);
         putRow(table, "transport_tadika_month", 15000, 15000);
         putRow(table, "registration_fulltime_oneoff", 10000, 10000);
         putRow(table, "registration_transit_oneoff", 5000, 5000);
         putRow(table, "annual_fee_yearly", 10000, 10000);
-        putRow(table, "comms_book_4months", 1500, 1500);
-        putRow(table, "insurance_yearly_age2plus", 2000, 2000);
+        putRow(table, "comms_book_oneoff", 1500, 1500);
+        putRow(table, "insurance_oneoff_age2plus", 2000, 2000);
         return table;
     }
 

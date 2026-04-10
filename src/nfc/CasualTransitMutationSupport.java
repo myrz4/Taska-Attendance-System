@@ -19,6 +19,8 @@ public final class CasualTransitMutationSupport {
         try {
             String payload = GSON.toJson(Map.of(
                 "childName", safe(values.get("childName")),
+                "transitType", safe(values.get("transitType")),
+                "staffType", safe(values.get("staffType")),
                 "guardianName", safe(values.get("guardianName")),
                 "guardianPhone", safe(values.get("guardianPhone")),
                 "guardianRelationship", safe(values.get("guardianRelationship")),
@@ -38,18 +40,19 @@ public final class CasualTransitMutationSupport {
 
     public static void checkoutVisit(CasualTransitView.VisitRow row, Map<String, String> values) {
         try {
-            long amountSen = parseRmToSen(values.get("amount"));
-            String payload = GSON.toJson(Map.of(
-                "visitId", row.visitId(),
-                "amountSen", amountSen,
-                "paymentMethod", safe(values.get("paymentMethod")),
-                "notes", safe(values.get("notes")),
-                "adminName", adminName()
-            ));
+            Map<String, Object> payload = new LinkedHashMap<>();
+            payload.put("visitId", row.visitId());
+            payload.put("paymentMethod", safe(values.get("paymentMethod")));
+            payload.put("notes", safe(values.get("notes")));
+            payload.put("adminName", adminName());
+            String amount = safe(values.get("amount"));
+            if (!amount.isBlank()) {
+                payload.put("amountSen", parseRmToSen(amount));
+            }
             FirebaseFunctionsClient.CallResult result = FirebaseFunctionsClient.callCasualTransitCheckoutVisit(
                 FirestoreRest.projectId(),
                 UserSession.getIdToken(),
-                payload
+                GSON.toJson(payload)
             );
             ensureOk(result);
         } catch (IOException error) {

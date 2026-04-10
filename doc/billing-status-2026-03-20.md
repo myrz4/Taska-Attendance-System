@@ -1,5 +1,7 @@
 # Billing Status - 2026-03-20
 
+Superseded by `doc/billing-status-2026-04-05.md` for the current rollout state.
+
 ## Summary
 
 The billing flow is now aligned around family invoices and a realistic dummy payment path.

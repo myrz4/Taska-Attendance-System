@@ -28,9 +28,6 @@ final class CRUDChildPersistenceSupport {
         7,
         false,
         "",
-        "",
-        false,
-        "",
         ""
     );
 
@@ -91,16 +88,10 @@ final class CRUDChildPersistenceSupport {
         }
 
         CRUDChildValidationSupport.AbsenceLetterInput absenceLetter;
-        CRUDChildValidationSupport.UniformChargeInput uniformCharge;
         try {
             absenceLetter = CRUDChildValidationSupport.parseAbsenceLetter(
                 request.absenceLetterPeriodRaw(),
                 request.absenceLetterDaysRaw()
-            );
-            uniformCharge = CRUDChildValidationSupport.parseUniformCharge(
-                request.uniformChargeEnabled(),
-                request.uniformFeeRaw(),
-                request.uniformChargePeriodRaw()
             );
         } catch (IllegalArgumentException ex) {
             new Alert(Alert.AlertType.ERROR, ex.getMessage()).showAndWait();
@@ -120,9 +111,6 @@ final class CRUDChildPersistenceSupport {
         payload.put("absenceLetterApproved", request.absenceLetterApproved());
         payload.put("absenceLetterPeriod", absenceLetter.period());
         payload.put("absenceLetterDays", absenceLetter.days());
-        payload.put("uniformFeeSen", uniformCharge.feeSen());
-        payload.put("uniformChargePeriod", uniformCharge.chargePeriod());
-        payload.put("uniformFeeDescription", "Uniform Taska (3 & 4 tahun)");
         payload.put("careType", request.feePlan().careType);
 
         String registrationType = "monthly".equals(request.feePlan().code) ? "fulltime" : "transit";
@@ -207,9 +195,6 @@ final class CRUDChildPersistenceSupport {
         private final boolean absenceLetterApproved;
         private final String absenceLetterPeriodRaw;
         private final String absenceLetterDaysRaw;
-        private final boolean uniformChargeEnabled;
-        private final String uniformFeeRaw;
-        private final String uniformChargePeriodRaw;
 
         SaveRequest(
             FirestoreRestClient client,
@@ -227,10 +212,7 @@ final class CRUDChildPersistenceSupport {
             int billingDueDay,
             boolean absenceLetterApproved,
             String absenceLetterPeriodRaw,
-            String absenceLetterDaysRaw,
-            boolean uniformChargeEnabled,
-            String uniformFeeRaw,
-            String uniformChargePeriodRaw
+            String absenceLetterDaysRaw
         ) {
             this.client = client;
             this.childId = childId;
@@ -248,9 +230,6 @@ final class CRUDChildPersistenceSupport {
             this.absenceLetterApproved = absenceLetterApproved;
             this.absenceLetterPeriodRaw = absenceLetterPeriodRaw;
             this.absenceLetterDaysRaw = absenceLetterDaysRaw;
-            this.uniformChargeEnabled = uniformChargeEnabled;
-            this.uniformFeeRaw = uniformFeeRaw;
-            this.uniformChargePeriodRaw = uniformChargePeriodRaw;
         }
 
         FirestoreRestClient client() { return client; }
@@ -269,8 +248,5 @@ final class CRUDChildPersistenceSupport {
         boolean absenceLetterApproved() { return absenceLetterApproved; }
         String absenceLetterPeriodRaw() { return absenceLetterPeriodRaw; }
         String absenceLetterDaysRaw() { return absenceLetterDaysRaw; }
-        boolean uniformChargeEnabled() { return uniformChargeEnabled; }
-        String uniformFeeRaw() { return uniformFeeRaw; }
-        String uniformChargePeriodRaw() { return uniformChargePeriodRaw; }
     }
 }

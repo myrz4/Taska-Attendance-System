@@ -1,8 +1,10 @@
 # Billing Manual QA Checklist
 
-Date: 2026-03-20
+Date: 2026-04-05
 
 This checklist covers the current billing work across the parent Flutter app, the JavaFX admin app, and the dummy payment flow.
+
+This remains a manual UI/workflow checklist. For current rollout status and build artifacts, see `doc/billing-status-2026-04-05.md` and `parent_app_taskazurah/RELEASE-MANIFEST-2026-04-05.md`.
 
 ## Scope
 
@@ -15,11 +17,20 @@ This checklist covers the current billing work across the parent Flutter app, th
 
 These checks already passed before running manual QA:
 
-- `flutter analyze lib/screens/billing_invoice_presenter.dart lib/screens/fees_dashboard.dart lib/screens/fee_ledger.dart lib/screens/fee_invoice_details.dart`
-- `flutter analyze lib/screens/parent_profile_page.dart`
+- `flutter analyze`
+- `flutter test`
+- `flutter build apk --release`
+- `flutter build appbundle --release`
+- `flutter build web --release`
+- `flutter build web --release --wasm`
+- `flutter build windows --release`
 - `npm run smoke:postdeploy-billing`
 - `npm run smoke:dummy-billing`
 - `Build (JavaFX + Firestore)`
+
+Not yet validated from this Windows environment:
+
+- Final iOS device/archive validation on a Mac
 
 ## Parent App QA
 

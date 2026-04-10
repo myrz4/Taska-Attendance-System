@@ -53,7 +53,7 @@ public class CasualTransitView extends VBox {
 
     @SuppressWarnings("java:S1848")
     private static VisitRow createVisitRowProbe() {
-        return new VisitRow("", "", "", "", "", "", "", null, null, 0L, "", "", "");
+        return new VisitRow("", "", "", "", "", "", "", "", "", null, null, 0L, "", "", "", "");
     }
 
     @SuppressWarnings("java:S1848")
@@ -622,12 +622,15 @@ public class CasualTransitView extends VBox {
         private final String guardianName;
         private final String guardianPhone;
         private final String guardianRelationship;
+        private final String transitType;
+        private final String staffType;
         private final Date checkInAt;
         private final Date checkOutAt;
         private final long amountSen;
         private final String receiptNo;
         private final String notes;
         private final String paymentMethod;
+        private final String pricingBreakdown;
 
         public VisitRow(
             String visitId,
@@ -637,12 +640,15 @@ public class CasualTransitView extends VBox {
             String guardianName,
             String guardianPhone,
             String guardianRelationship,
+            String transitType,
+            String staffType,
             Date checkInAt,
             Date checkOutAt,
             long amountSen,
             String receiptNo,
             String notes,
-            String paymentMethod
+            String paymentMethod,
+            String pricingBreakdown
         ) {
             this.visitId = visitId;
             this.status = status;
@@ -651,12 +657,15 @@ public class CasualTransitView extends VBox {
             this.guardianName = guardianName;
             this.guardianPhone = guardianPhone;
             this.guardianRelationship = guardianRelationship;
+            this.transitType = transitType;
+            this.staffType = staffType;
             this.checkInAt = checkInAt;
             this.checkOutAt = checkOutAt;
             this.amountSen = amountSen;
             this.receiptNo = receiptNo;
             this.notes = notes;
             this.paymentMethod = paymentMethod;
+            this.pricingBreakdown = pricingBreakdown;
         }
 
         public String visitId() { return visitId; }
@@ -691,7 +700,10 @@ public class CasualTransitView extends VBox {
         public String guardianName() { return guardianName; }
         public String guardianPhone() { return guardianPhone; }
         public String guardianRelationship() { return guardianRelationship; }
+        public String transitType() { return transitType; }
+        public String staffType() { return staffType; }
         public String paymentMethod() { return paymentMethod; }
+        public String pricingBreakdown() { return pricingBreakdown; }
         public String visitDateLabel() {
             LocalDate visitDate = visitLocalDate();
             return visitDate == null ? "" : visitDate.toString();

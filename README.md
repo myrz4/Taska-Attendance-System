@@ -114,6 +114,23 @@ Optional NFC overrides:
 
 Billing rollout now has guarded pre-deploy and post-deploy checks.
 
+Current rollout status and handoff docs:
+
+- Current billing snapshot: `doc/billing-status-2026-04-05.md`
+- Operator-only remaining actions: `doc/operator-closeout-2026-04-09.md`
+- Parent app validated status: `parent_app_taskazurah/README.md`
+- Parent app release manifest refresh command: `npm run manifest:parent-release`
+- Android publish/signing handoff: `parent_app_taskazurah/ANDROID-RELEASE-HANDOFF.md`
+- iOS completion handoff: `parent_app_taskazurah/IOS-HANDOFF.md`
+
+Current billing stance:
+
+- Billing logic is fixed and validated for the current scope.
+- Parent app Android, web, wasm web, and Windows builds are green.
+- Payment remains intentionally in dummy mode.
+- The only platform still requiring external completion is iOS on a Mac.
+- The canonical Cloud Functions deploy target for this repo is `teacher_app_taskazurah/functions`; `parent_app_taskazurah/functions` is a legacy parity mirror and is not used by the repo-level deploy helpers.
+
 Pre-deploy catalog validation:
 
 ```powershell
@@ -254,6 +271,3 @@ npm run smoke:dummy-billing
 ```
 
 If you want me to convert the source layout to follow standard Maven conventions (move source files to `src/main/java` and resources to `src/main/resources`) I can do that in the next step.
-#   T a s k a - A t t e n d a n c e - S y s t e m 
- 
- 

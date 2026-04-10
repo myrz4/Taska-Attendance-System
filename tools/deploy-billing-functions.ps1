@@ -13,6 +13,37 @@ $targetDir = Join-Path $repoRoot $FunctionsDir
 $preDeployCheckScript = Join-Path $repoRoot "tools/check-billing-predeploy.js"
 $postDeploySmokeScript = Join-Path $repoRoot "tools/smoke-billing-postdeploy.js"
 
+$firebaseInvoker = $null
+$firebaseArgsPrefix = @()
+if (Get-Command firebase -ErrorAction SilentlyContinue) {
+  $firebaseInvoker = 'firebase'
+}
+elseif (Get-Command npx -ErrorAction SilentlyContinue) {
+  $firebaseInvoker = 'npx'
+  $firebaseArgsPrefix = @('firebase-tools')
+}
+else {
+  throw "Neither 'firebase' nor 'npx' is available in PATH."
+}
+
+function Invoke-FirebaseCli {
+  param(
+    [Parameter(Mandatory = $true)]
+    [string[]]$Arguments
+  )
+
+  $commandArgs = @()
+  if ($firebaseArgsPrefix.Count -gt 0) {
+    $commandArgs += $firebaseArgsPrefix
+  }
+  $commandArgs += $Arguments
+
+  & $firebaseInvoker @commandArgs
+  if ($LASTEXITCODE -ne 0) {
+    throw "Firebase CLI command failed with exit code ${LASTEXITCODE}: $($Arguments -join ' ')"
+  }
+}
+
 if (-not (Test-Path $targetDir)) {
   throw "Functions directory not found: $targetDir"
 }
@@ -21,11 +52,14 @@ Push-Location $targetDir
 try {
   if (-not $SkipNpmInstall) {
     npm install
+    if ($LASTEXITCODE -ne 0) {
+      throw "npm install failed with exit code $LASTEXITCODE"
+    }
   }
 
   if ($SetSecrets) {
-    firebase functions:secrets:set BILLPLZ_API_KEY
-    firebase functions:secrets:set BILLPLZ_X_SIGNATURE_KEY
+    Invoke-FirebaseCli -Arguments @('functions:secrets:set', 'BILLPLZ_API_KEY')
+    Invoke-FirebaseCli -Arguments @('functions:secrets:set', 'BILLPLZ_X_SIGNATURE_KEY')
   }
 
   if (-not $SkipPreDeployCheck) {
@@ -40,7 +74,7 @@ try {
     }
   }
 
-  firebase deploy --only functions
+  Invoke-FirebaseCli -Arguments @('deploy', '--only', 'functions')
 
   if (-not $SkipPostDeploySmoke) {
     if (-not (Test-Path $postDeploySmokeScript)) {
