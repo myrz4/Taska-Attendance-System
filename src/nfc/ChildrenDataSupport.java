@@ -59,14 +59,32 @@ final class ChildrenDataSupport {
                 nfcUid = childId;
             }
 
+            Map<String, Object> fields = childDoc.fields();
+            LocalDate birthDate = parseBirthDate(childDoc.get("birthDate"));
+            String childIdentifier = safeStr(childDoc.get("childIcNo")).trim();
+            if (childIdentifier.isEmpty()) {
+                childIdentifier = safeStr(childDoc.get("icNo")).trim();
+            }
+            if (childIdentifier.isEmpty()) {
+                childIdentifier = childId;
+            }
+
             rows.add(new ChildrenView.Child(
                 childId,
                 childDoc.getString("name"),
-                parseBirthDate(childDoc.get("birthDate")),
-                parentDetails.parentName(),
+                childIdentifier,
+                birthDate,
+                ageSummary(birthDate),
+                firstLine(parentDetails.parentName()),
+                firstLine(parentDetails.parentContact()),
+                CRUDChildDialogSupport.FeePlanType.fromChildData(fields).toString(),
+                parseDueDay(childDoc.get("billingDueDay")),
+                Boolean.TRUE.equals(childDoc.get("transportFromTadika")),
+                nfcUid,
+                SummaryTableSupport.resolveStatus(fields, "Active"),
                 parentDetails.parentRelationship(),
-                parentDetails.parentContact(),
-                nfcUid
+                parentDetails.parentName(),
+                parentDetails.parentContact()
             ));
         }
 
@@ -92,6 +110,41 @@ final class ChildrenDataSupport {
             return leftId.compareTo(rightId);
         });
         return rows;
+    }
+
+    private static int parseDueDay(Object value) {
+        if (value instanceof Number) {
+            int day = ((Number) value).intValue();
+            return day == 5 ? 5 : 7;
+        }
+        return 7;
+    }
+
+    private static String ageSummary(LocalDate birthDate) {
+        if (birthDate == null) {
+            return "-";
+        }
+        LocalDate today = LocalDate.now(MALAYSIA_ZONE);
+        if (birthDate.isAfter(today)) {
+            return "0m";
+        }
+        java.time.Period age = java.time.Period.between(birthDate, today);
+        if (age.getYears() > 0) {
+            return age.getMonths() > 0 ? age.getYears() + "y " + age.getMonths() + "m" : age.getYears() + "y";
+        }
+        return Math.max(0, age.getMonths()) + "m";
+    }
+
+    private static String firstLine(String value) {
+        if (value == null) {
+            return "-";
+        }
+        String trimmed = value.trim();
+        if (trimmed.isEmpty()) {
+            return "-";
+        }
+        int index = trimmed.indexOf('\n');
+        return index >= 0 ? trimmed.substring(0, index).trim() : trimmed;
     }
 
     private static LocalDate parseBirthDate(Object birthDateValue) {

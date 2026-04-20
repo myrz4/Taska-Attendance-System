@@ -4,6 +4,12 @@
 
 Billing is now functionally complete for the current rollout scope.
 
+Update on 2026-04-11:
+
+- Registered monthly children now bill overtime on the next invoice from the previous closed month instead of the same-period invoice.
+- Production overtime calculation was corrected to use Malaysia local wall-clock time explicitly, avoiding UTC-based underbilling on Cloud Functions.
+- The JavaFX dashboard refresh path now guards against overlapping async refreshes and uncaught runtime failures, reducing intermittent missing `Scanned Today` and `Not Yet Scanned` cards.
+
 - Live billing logic was fixed so invoices no longer depend on fragile Firestore query paths.
 - Taska Zurah fee policy is aligned across the backend, the duplicate parent-app backend copy, and the parent Flutter UI.
 - Parent app validation is clean on Windows for Android, standard web, and wasm web builds.
@@ -29,6 +35,19 @@ Billing is now functionally complete for the current rollout scope.
 - Legacy overnight overtime logic was removed.
 - Age handling now follows the current below-48-month rule.
 
+### Closed-month overtime rollout
+
+- Registered monthly children now carry overtime from the previous closed month onto the next invoice, which freezes historical billed periods instead of recalculating from the current invoice month.
+- The first overtime cycle for a newly registered monthly child now starts at the child registration date rather than the first day of that month.
+- Attendance edits now refresh or adjust the invoice period that actually carries the overtime instead of only touching the attendance month.
+- Canonical and legacy-mirror backends were both updated so the invoice metadata, source-period labels, and parent/admin presentation stay aligned.
+- Production overtime windows now use explicit Malaysia local time handling, so late pickups recorded in Malaysia no longer disappear when the Cloud Functions runtime is on UTC.
+
+### JavaFX dashboard refresh hardening
+
+- `AdminDashboardContentSupport` now single-flights the Firestore dashboard refresh path.
+- Runtime exceptions during async dashboard refresh are now caught and logged instead of silently leaving stale scan counters/cards behind.
+
 ### Parent Flutter app cleanup
 
 - Parent billing summary no longer queries invoices by `period`; it resolves the active period from the parent invoice stream in memory.
@@ -48,6 +67,10 @@ Billing is now functionally complete for the current rollout scope.
 - Live rollout verification was rerun on 2026-04-08 with `npm run verify:billing-rollout`; the project is still intentionally on `provider=dummy`, `mode=dummy`, `allowRealProvider=false`, and the check reported no rollout warnings.
 - Live post-deploy smoke was rerun on 2026-04-08 with `npm run smoke:postdeploy-billing`; `billingGetHealth`, `billingAdminListCatalogs`, and `billingAdminListAudit` all passed, the active catalog pointer stayed consistent at `8MNFkVIanXDjIxB9Sy0K`, and no required billing codes were missing.
 - Dummy-mode billing regression was rerun on 2026-04-08 with `npm run smoke:dummy-billing`; it reaffirmed dummy payment config on the live project and then passed the full Firestore-emulator `e2e:billing` suite, including family invoice aggregation, shared-child payment sync, dummy checkout flow, real-provider lockout, callback idempotency, and January annual-fee-only policy coverage.
+- Canonical billing functions were redeployed on 2026-04-11 after the overtime-cycle and timezone fixes; the live post-deploy billing smoke stayed green with payment intentionally still on `provider=dummy`, `mode=dummy`, `allowRealProvider=false`.
+- The canonical Firestore-emulator `e2e:billing` suite was rerun on 2026-04-11 and passed with the new carried-overtime cases covering previous-month sourcing, unpaid invoice refresh, paid invoice adjustment recording, and first-cycle registration-date cutoff behavior.
+- Live May invoices for existing safe test parents `test` and `1` were refreshed successfully after the rollout, and the zero-overtime registration-cutoff note was removed from invoices that carried no overtime total.
+- A synthetic live verification family with April after-hours attendance was repriced for May 2026 after the timezone fix, and the live invoice updated in place to include `overtime_after_530 = 2400` sen and `overtime_8pm_12am = 1300` sen sourced from `2026-04`, confirming the production UTC-vs-Malaysia bug is fixed.
 
 ### Parent app
 
@@ -84,6 +107,8 @@ Artifact hashes and signer metadata are captured in `parent_app_taskazurah/RELEA
 - JavaFX compile and helper-run paths were kept working during the billing cleanup.
 - Follow-up compile revalidation on 2026-04-09: `powershell -NoProfile -ExecutionPolicy Bypass -File tools/compile-javafx.ps1` exited with code `0`.
 - Follow-up runtime smoke on 2026-04-09: `powershell -NoProfile -ExecutionPolicy Bypass -File tools/run-javafx.ps1 -MainClass nfc.AdminDashboard -NfcPort disabled` reached normal idle startup with the expected REST-mode and NFC-disabled messages and shut down cleanly.
+- Follow-up dashboard reliability hardening on 2026-04-11: `AdminDashboardContentSupport` now blocks overlapping refreshes and logs runtime refresh failures, targeting the intermittent missing `Scanned Today` / `Not Yet Scanned` bars.
+- Follow-up compile revalidation on 2026-04-11: `powershell -NoProfile -ExecutionPolicy Bypass -File tools/compile-javafx.ps1` exited with code `0` after the dashboard refresh guard was added.
 
 ## Intentionally Still True
 

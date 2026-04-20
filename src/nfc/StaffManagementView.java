@@ -11,7 +11,12 @@ import javafx.scene.control.ScrollPane;
 public class StaffManagementView extends javafx.scene.layout.VBox {
 
     private final javafx.scene.control.TableView<Admin> table = new javafx.scene.control.TableView<>();
-    private final javafx.collections.ObservableList<Admin> data = javafx.collections.FXCollections.observableArrayList();
+    private final javafx.collections.ObservableList<Admin> master = javafx.collections.FXCollections.observableArrayList();
+    private final javafx.collections.transformation.FilteredList<Admin> filtered =
+        new javafx.collections.transformation.FilteredList<>(master, row -> true);
+    private final javafx.collections.transformation.SortedList<Admin> sorted =
+        new javafx.collections.transformation.SortedList<>(filtered);
+    private final javafx.scene.control.TableColumn<Admin, String> nameCol;
 
     public StaffManagementView() {
         // Header bar
@@ -37,7 +42,15 @@ public class StaffManagementView extends javafx.scene.layout.VBox {
         mainBody.setPadding(new javafx.geometry.Insets(20));
         mainBody.setAlignment(javafx.geometry.Pos.TOP_LEFT);
 
-        StaffManagementTableSupport.setupTable(table, data, new StaffManagementTableSupport.StaffActions() {
+        javafx.scene.control.TextField searchField = SummaryTableSupport.createSearchField(
+            "Search admin / username / email / phone..."
+        );
+        searchField.textProperty().addListener((obs, oldValue, newValue) -> {
+            String query = newValue == null ? "" : newValue.trim().toLowerCase(java.util.Locale.ROOT);
+            filtered.setPredicate(admin -> admin == null || query.isEmpty() || admin.matchesSearch(query));
+        });
+
+        StaffManagementTableSupport.TableBundle tableBundle = StaffManagementTableSupport.setupTable(table, new StaffManagementTableSupport.StaffActions() {
             @Override
             public void edit(Admin admin) {
                 showEdit(admin);
@@ -48,12 +61,25 @@ public class StaffManagementView extends javafx.scene.layout.VBox {
                 CRUDDialogs.showDeleteAdminDialog(admin, StaffManagementView.this::reload);
             }
         });
+        this.nameCol = tableBundle.nameCol;
 
-        Button addBtn = new Button("Add New Staff");
-        addBtn.setStyle("-fx-background-color: #FFCB3C;-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #222; -fx-background-radius: 28px;");
+        javafx.scene.control.MenuButton columnChooser = SummaryTableSupport.createColumnChooser(
+            "Columns",
+            tableBundle.optionalColumns
+        );
+
+        Button addBtn = SummaryTableSupport.createPrimaryButton("Add New Staff");
         addBtn.setOnAction(e -> CRUDDialogs.showStaffDialog(null, true, this::reload));
 
-        mainBody.getChildren().addAll(table, addBtn);
+        javafx.scene.layout.HBox toolbar = new javafx.scene.layout.HBox(10, searchField, columnChooser, addBtn);
+        toolbar.getStyleClass().add("summary-toolbar");
+        toolbar.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+        javafx.scene.layout.HBox.setHgrow(searchField, javafx.scene.layout.Priority.ALWAYS);
+
+        sorted.comparatorProperty().bind(table.comparatorProperty());
+        table.setItems(sorted);
+
+        mainBody.getChildren().addAll(toolbar, table);
 
         // Layout
         javafx.scene.layout.BorderPane layout = new javafx.scene.layout.BorderPane();
@@ -72,11 +98,15 @@ public class StaffManagementView extends javafx.scene.layout.VBox {
         getChildren().add(scroll);
         javafx.scene.layout.VBox.setVgrow(scroll, javafx.scene.layout.Priority.ALWAYS);
 
+        nameCol.setSortType(javafx.scene.control.TableColumn.SortType.ASCENDING);
+        table.getSortOrder().setAll(java.util.List.of(nameCol));
+        table.sort();
+
         reload();
     }
 
     public final void reload() {
-        data.clear();
+        master.clear();
 
         java.util.concurrent.CompletableFuture
             .supplyAsync(() -> {
@@ -93,7 +123,9 @@ public class StaffManagementView extends javafx.scene.layout.VBox {
                     return;
                 }
 
-                data.setAll(admins);
+                master.setAll(admins);
+                table.getSortOrder().setAll(java.util.List.of(nameCol));
+                table.sort();
                 System.out.println("✅ Loaded " + admins.size() + " admin records.");
             }));
     }
@@ -103,21 +135,68 @@ public class StaffManagementView extends javafx.scene.layout.VBox {
     }
 
     public static class Admin {
+        private final String recordId;
         private final String username;
         private final String password;
         private final String profilePicture;
         private final String name;
+        private final String role;
+        private final String email;
+        private final String phone;
+        private final String status;
+        private final String lastLogin;
 
         public Admin(String username, String password, String profilePicture, String name) {
+            this(username, username, password, profilePicture, name, "Admin", "", "", "Active", "-");
+        }
+
+        public Admin(
+            String recordId,
+            String username,
+            String password,
+            String profilePicture,
+            String name,
+            String role,
+            String email,
+            String phone,
+            String status,
+            String lastLogin
+        ) {
+            this.recordId = recordId;
             this.username = username;
             this.password = password;
             this.profilePicture = profilePicture;
             this.name = name;
+            this.role = role;
+            this.email = email;
+            this.phone = phone;
+            this.status = status;
+            this.lastLogin = lastLogin;
         }
 
+        public String getRecordId() { return recordId; }
         public String getUsername() { return username; }
         public String getPassword() { return password; }
         public String getProfilePicture() { return profilePicture; }
         public String getName() { return name; }
+        public String getRole() { return role; }
+        public String getEmail() { return email; }
+        public String getPhone() { return phone; }
+        public String getStatus() { return status; }
+        public String getLastLogin() { return lastLogin; }
+
+        public boolean matchesSearch(String query) {
+            return contains(name, query)
+                || contains(username, query)
+                || contains(email, query)
+                || contains(phone, query)
+                || contains(role, query)
+                || contains(status, query)
+                || contains(recordId, query);
+        }
+
+        private static boolean contains(String value, String query) {
+            return value != null && value.toLowerCase(java.util.Locale.ROOT).contains(query);
+        }
     }
 }

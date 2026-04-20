@@ -50,6 +50,11 @@ final class ParentsDataSupport {
             String phone = safeStr(doc.get("phone"));
             String relationship = formatRelationship(doc);
             int relationshipPriority = relationshipPriority(doc);
+            String notificationsSummary = notificationsSummary(doc);
+            boolean icVerified = Boolean.TRUE.equals(doc.get("icVerified"));
+            String parentIc = safeStr(doc.get("icNo")).trim();
+            String status = SummaryTableSupport.resolveStatus(doc.fields(), "Active");
+            String customRelationship = safeStr(doc.get("relationshipLabel")).trim();
 
             ChildrenAgg childrenAgg = extractChildrenAgg(doc);
             String childId = childrenAgg.childIdsJoined;
@@ -70,7 +75,12 @@ final class ParentsDataSupport {
                 childName,
                 passcodeExpiry,
                 familyKey,
-                relationshipPriority
+                relationshipPriority,
+                notificationsSummary,
+                icVerified,
+                parentIc,
+                status,
+                customRelationship
             ));
         }
 
@@ -100,6 +110,36 @@ final class ParentsDataSupport {
         });
 
         return rows;
+    }
+
+    private static String notificationsSummary(FsDocument parentDoc) {
+        if (parentDoc == null) {
+            return "-";
+        }
+        Object settingsObj = parentDoc.get("settings");
+        if (!(settingsObj instanceof java.util.Map<?, ?>)) {
+            return "-";
+        }
+        Object notificationsObj = ((java.util.Map<?, ?>) settingsObj).get("notifications");
+        if (!(notificationsObj instanceof java.util.Map<?, ?>)) {
+            return "-";
+        }
+
+        java.util.List<String> labels = new java.util.ArrayList<>();
+        java.util.Map<?, ?> notifications = (java.util.Map<?, ?>) notificationsObj;
+        if (Boolean.TRUE.equals(notifications.get("fees"))) {
+            labels.add("Billing");
+        }
+        if (Boolean.TRUE.equals(notifications.get("attendance"))) {
+            labels.add("Attendance");
+        }
+        if (Boolean.TRUE.equals(notifications.get("emergency"))) {
+            labels.add("Emergency");
+        }
+        if (Boolean.TRUE.equals(notifications.get("activity"))) {
+            labels.add("Activity");
+        }
+        return labels.isEmpty() ? "-" : String.join(" / ", labels);
     }
 
     private static String firstLine(String value) {

@@ -21,7 +21,11 @@ import javafx.scene.layout.VBox;
 public class ParentsPane extends VBox {
 
     private final TableView<ParentRecord> table = new TableView<>();
-    private final ObservableList<ParentRecord> data = FXCollections.observableArrayList();
+    private final ObservableList<ParentRecord> master = FXCollections.observableArrayList();
+    private final javafx.collections.transformation.FilteredList<ParentRecord> filtered =
+        new javafx.collections.transformation.FilteredList<>(master, row -> true);
+    private final javafx.collections.transformation.SortedList<ParentRecord> sorted =
+        new javafx.collections.transformation.SortedList<>(filtered);
 
     private static void logError(String context, Exception error) {
         System.err.println("ParentsPane: " + context + " - " + error.getMessage());
@@ -34,18 +38,32 @@ public class ParentsPane extends VBox {
 
         buildTable();
 
-        Button addBtn = new Button("Add New Parent");
-        addBtn.setStyle("-fx-background-color: #FFCB3C;-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #222; -fx-background-radius: 28px;");
+        javafx.scene.control.TextField searchField = SummaryTableSupport.createSearchField(
+            "Search parent / phone / child / notifications..."
+        );
+        searchField.textProperty().addListener((obs, oldValue, newValue) -> {
+            String query = newValue == null ? "" : newValue.trim().toLowerCase(java.util.Locale.ROOT);
+            filtered.setPredicate(parent -> parent == null || query.isEmpty() || parent.matchesSearch(query));
+        });
+
+        javafx.scene.control.MenuButton columnChooser = createColumnChooser();
+        Button addBtn = SummaryTableSupport.createPrimaryButton("Add New Parent");
         addBtn.setOnAction(e -> CRUDDialogs.showParentDialog(null, true, this::reload));
 
+        javafx.scene.layout.HBox toolbar = new javafx.scene.layout.HBox(10, searchField, columnChooser, addBtn);
+        toolbar.getStyleClass().add("summary-toolbar");
+        toolbar.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+        javafx.scene.layout.HBox.setHgrow(searchField, Priority.ALWAYS);
+
         VBox.setVgrow(table, Priority.ALWAYS);
-        getChildren().addAll(table, addBtn);
+        getChildren().addAll(toolbar, table);
 
         reload();
     }
 
     private void buildTable() {
-        table.setItems(data);
+        sorted.comparatorProperty().bind(table.comparatorProperty());
+        table.setItems(sorted);
         ParentsTableSupport.setupTable(
             table,
             current -> CRUDDialogs.showParentDialog(current, false, ParentsPane.this::reload),
@@ -54,7 +72,18 @@ public class ParentsPane extends VBox {
     }
 
     public final void reload() {
-        FamilyManagementLoadSupport.reloadParents(data, ParentsPane::logError);
+        FamilyManagementLoadSupport.reloadParents(master, ParentsPane::logError);
+    }
+
+    private javafx.scene.control.MenuButton createColumnChooser() {
+        java.util.List<javafx.scene.control.TableColumn<ParentRecord, ?>> optionalColumns = new java.util.ArrayList<>();
+        for (javafx.scene.control.TableColumn<ParentRecord, ?> column : table.getColumns()) {
+            String title = column.getText();
+            if ("Record ID".equals(title) || "Parent IC".equals(title) || "Custom Relationship".equals(title)) {
+                optionalColumns.add(column);
+            }
+        }
+        return SummaryTableSupport.createColumnChooser("Columns", optionalColumns);
     }
 
     private void deleteParent(ParentRecord parent) {
@@ -78,13 +107,18 @@ public class ParentsPane extends VBox {
         private final LocalDate passcodeExpiry;
         private final String familyKey;
         private final int relationshipPriority;
+        private final String notificationsSummary;
+        private final boolean icVerified;
+        private final String parentIc;
+        private final String status;
+        private final String customRelationship;
 
         // Backward-compatible constructor for older call sites.
         public ParentRecord(String parentId, String parentName, String phone,
                             String relationship,
                             String childId, String childName,
                             LocalDate passcodeExpiry) {
-            this(parentId, parentName, phone, relationship, childId, childName, passcodeExpiry, "", 2);
+            this(parentId, parentName, phone, relationship, childId, childName, passcodeExpiry, "", 2, "-", false, "", "Active", "");
         }
 
         public ParentRecord(String parentId, String parentName, String phone,
@@ -93,6 +127,20 @@ public class ParentsPane extends VBox {
                             LocalDate passcodeExpiry,
                             String familyKey,
                             int relationshipPriority) {
+            this(parentId, parentName, phone, relationship, childId, childName, passcodeExpiry, familyKey, relationshipPriority, "-", false, "", "Active", "");
+        }
+
+        public ParentRecord(String parentId, String parentName, String phone,
+                            String relationship,
+                            String childId, String childName,
+                            LocalDate passcodeExpiry,
+                            String familyKey,
+                            int relationshipPriority,
+                            String notificationsSummary,
+                            boolean icVerified,
+                            String parentIc,
+                            String status,
+                            String customRelationship) {
             this.parentId = parentId;
             this.parentName = parentName;
             this.phone = phone;
@@ -102,16 +150,63 @@ public class ParentsPane extends VBox {
             this.passcodeExpiry = passcodeExpiry;
             this.familyKey = familyKey;
             this.relationshipPriority = relationshipPriority;
+            this.notificationsSummary = notificationsSummary;
+            this.icVerified = icVerified;
+            this.parentIc = parentIc;
+            this.status = status;
+            this.customRelationship = customRelationship;
         }
 
         public String getParentId() { return parentId; }
+        public String getRecordId() { return parentId; }
         public String getParentName() { return parentName; }
         public String getPhone() { return phone; }
         public String getRelationship() { return relationship; }
         public String getChildId() { return childId; }
         public String getChildName() { return childName; }
+        public int getLinkedChildrenCount() {
+            if (childName == null || childName.isBlank()) {
+                return 0;
+            }
+            return (int) java.util.Arrays.stream(childName.split("\\R"))
+                .map(String::trim)
+                .filter(value -> !value.isEmpty())
+                .distinct()
+                .count();
+        }
+        public String getLinkedChildrenCountText() { return String.valueOf(getLinkedChildrenCount()); }
+        public String getLinkedChildrenSummary() {
+            java.util.List<String> names = java.util.Arrays.stream((childName == null ? "" : childName).split("\\R"))
+                .map(String::trim)
+                .filter(value -> !value.isEmpty())
+                .distinct()
+                .collect(java.util.stream.Collectors.toList());
+            return SummaryTableSupport.compactListSummary(names, 2);
+        }
+        public String getNotificationsSummary() { return notificationsSummary; }
+        public String getIcVerifiedStatus() { return icVerified ? "Verified" : "Unverified"; }
+        public boolean isIcVerified() { return icVerified; }
+        public String getMaskedParentIc() { return SummaryTableSupport.maskMiddle(parentIc, 3, 2); }
+        public String getParentIc() { return parentIc; }
+        public String getStatus() { return status; }
+        public String getCustomRelationship() { return customRelationship; }
         public LocalDate getPasscodeExpiry() { return passcodeExpiry; }
         public String getFamilyKey() { return familyKey; }
         public int getRelationshipPriority() { return relationshipPriority; }
+
+        public boolean matchesSearch(String query) {
+            return contains(parentName, query)
+                || contains(phone, query)
+                || contains(relationship, query)
+                || contains(childName, query)
+                || contains(notificationsSummary, query)
+                || contains(status, query)
+                || contains(parentIc, query)
+                || contains(parentId, query);
+        }
+
+        private static boolean contains(String value, String query) {
+            return value != null && value.toLowerCase(java.util.Locale.ROOT).contains(query);
+        }
     }
 }

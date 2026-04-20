@@ -1,26 +1,25 @@
 package nfc;
 
-import java.time.LocalDate;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.function.Consumer;
 
 import javafx.geometry.Pos;
 import javafx.scene.control.Alert;
-import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
-import javafx.scene.control.ContentDisplay;
-import javafx.scene.control.Control;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.layout.HBox;
-import javafx.scene.text.Text;
-import javafx.scene.text.TextAlignment;
 
 @SuppressWarnings("unused")
 final class ChildrenTableSupport {
     private ChildrenTableSupport() {}
+
+    private static final TableColumn<ChildrenView.Child, String> RECORD_ID_COL = new TableColumn<>("Record ID");
+    private static final TableColumn<ChildrenView.Child, String> DUE_DAY_COL = new TableColumn<>("Due Day");
+    private static final TableColumn<ChildrenView.Child, String> TRANSPORT_COL = new TableColumn<>("Transport");
 
     static void setupTable(
         TableView<ChildrenView.Child> table,
@@ -31,11 +30,14 @@ final class ChildrenTableSupport {
 
         TableColumn<ChildrenView.Child, Integer> idCol = new TableColumn<>("No");
         TableColumn<ChildrenView.Child, String> nameCol = new TableColumn<>("Name");
-        TableColumn<ChildrenView.Child, LocalDate> dobCol = new TableColumn<>("Birth Date");
-        TableColumn<ChildrenView.Child, String> parentNameCol = new TableColumn<>("Parent Name");
-        TableColumn<ChildrenView.Child, String> relationshipCol = new TableColumn<>("Relationship");
-        TableColumn<ChildrenView.Child, String> parentContactCol = new TableColumn<>("Parent Contact");
+        TableColumn<ChildrenView.Child, String> childIdentifierCol = new TableColumn<>("Child ID / MyKid");
+        TableColumn<ChildrenView.Child, String> dobCol = new TableColumn<>("Date of Birth");
+        TableColumn<ChildrenView.Child, String> ageCol = new TableColumn<>("Age");
+        TableColumn<ChildrenView.Child, String> parentNameCol = new TableColumn<>("Primary Parent");
+        TableColumn<ChildrenView.Child, String> parentContactCol = new TableColumn<>("Parent Phone");
+        TableColumn<ChildrenView.Child, String> billingPlanCol = new TableColumn<>("Billing Plan");
         TableColumn<ChildrenView.Child, String> uidCol = new TableColumn<>("NFC UID");
+        TableColumn<ChildrenView.Child, String> statusCol = new TableColumn<>("Status");
         TableColumn<ChildrenView.Child, Void> actionsCol = new TableColumn<>("Actions");
 
         idCol.setCellFactory(col -> new TableCell<ChildrenView.Child, Integer>() {
@@ -53,116 +55,162 @@ final class ChildrenTableSupport {
         });
 
         nameCol.setCellValueFactory(new PropertyValueFactory<>("name"));
-        dobCol.setCellValueFactory(new PropertyValueFactory<>("birthDate"));
-        parentNameCol.setCellValueFactory(new PropertyValueFactory<>("parentName"));
-        relationshipCol.setCellValueFactory(new PropertyValueFactory<>("parentRelationship"));
-        parentContactCol.setCellValueFactory(new PropertyValueFactory<>("parentContact"));
+        childIdentifierCol.setCellValueFactory(new PropertyValueFactory<>("childIdentifier"));
+        dobCol.setCellValueFactory(new PropertyValueFactory<>("birthDateText"));
+        ageCol.setCellValueFactory(new PropertyValueFactory<>("ageSummary"));
+        parentNameCol.setCellValueFactory(new PropertyValueFactory<>("primaryParentName"));
+        parentContactCol.setCellValueFactory(new PropertyValueFactory<>("parentPhone"));
+        billingPlanCol.setCellValueFactory(new PropertyValueFactory<>("billingPlan"));
         uidCol.setCellValueFactory(new PropertyValueFactory<>("nfcUid"));
+        statusCol.setCellValueFactory(new PropertyValueFactory<>("status"));
 
-        idCol.setStyle("-fx-alignment: CENTER;");
-        nameCol.setStyle("-fx-alignment: CENTER;");
-        dobCol.setStyle("-fx-alignment: CENTER;");
-        parentNameCol.setStyle("-fx-alignment: CENTER;");
-        relationshipCol.setStyle("-fx-alignment: CENTER;");
-        parentContactCol.setStyle("-fx-alignment: CENTER;");
-        uidCol.setStyle("-fx-alignment: CENTER;");
-        actionsCol.setStyle("-fx-alignment: CENTER;");
+        RECORD_ID_COL.setCellValueFactory(new PropertyValueFactory<>("recordId"));
+        DUE_DAY_COL.setCellValueFactory(new PropertyValueFactory<>("paymentDueDayText"));
+        TRANSPORT_COL.setCellValueFactory(new PropertyValueFactory<>("transportEnabledText"));
 
-        String fontStyle = "-fx-font-family: 'Poppins', 'Arial', sans-serif; -fx-font-size: 13px;-fx-font-weight: bold; -fx-text-fill: #181818;";
+        RECORD_ID_COL.setVisible(false);
+        DUE_DAY_COL.setVisible(false);
+        TRANSPORT_COL.setVisible(false);
 
-        nameCol.setCellFactory(tc -> makeCell(fontStyle));
-        dobCol.setCellFactory(tc -> makeCell(fontStyle));
-        parentNameCol.setCellFactory(tc -> makeMultilineCell(fontStyle));
-        relationshipCol.setCellFactory(tc -> makeMultilineCell(fontStyle));
-        parentContactCol.setCellFactory(tc -> makeMultilineCell(fontStyle));
-        uidCol.setCellFactory(tc -> makeCell(fontStyle));
+        nameCol.setCellFactory(col -> copyCell(ChildrenView.Child::getName, Pos.CENTER_LEFT));
+        childIdentifierCol.setCellFactory(col -> copyCell(ChildrenView.Child::getChildIdentifier, Pos.CENTER_LEFT));
+        dobCol.setCellFactory(col -> copyCell(ChildrenView.Child::getBirthDateText, Pos.CENTER));
+        ageCol.setCellFactory(col -> copyCell(ChildrenView.Child::getAgeSummary, Pos.CENTER));
+        parentNameCol.setCellFactory(col -> copyCell(ChildrenView.Child::getPrimaryParentName, Pos.CENTER_LEFT));
+        parentContactCol.setCellFactory(col -> copyCell(ChildrenView.Child::getParentPhone, Pos.CENTER_LEFT));
+        billingPlanCol.setCellFactory(col -> copyCell(ChildrenView.Child::getBillingPlan, Pos.CENTER_LEFT));
+        uidCol.setCellFactory(col -> new MaskedValueTableCell<>(
+            ChildrenView.Child::getNfcUid,
+            value -> SummaryTableSupport.maskMiddle(value, 4, 4),
+            ChildrenTableSupport::rowSummary,
+            ChildrenView.Child::getRecordId,
+            child -> SummaryTableSupport.toPrettyJson(asJson(child)),
+            Pos.CENTER_LEFT
+        ));
+        statusCol.setCellFactory(col -> copyCell(ChildrenView.Child::getStatus, Pos.CENTER));
+        RECORD_ID_COL.setCellFactory(col -> copyCell(ChildrenView.Child::getRecordId, Pos.CENTER_LEFT));
+        DUE_DAY_COL.setCellFactory(col -> copyCell(ChildrenView.Child::getPaymentDueDayText, Pos.CENTER));
+        TRANSPORT_COL.setCellFactory(col -> copyCell(ChildrenView.Child::getTransportEnabledText, Pos.CENTER));
 
-        actionsCol.setCellFactory(tc -> new TableCell<ChildrenView.Child, Void>() {
-            private final Button edit = new Button("Edit");
-            private final Button del = new Button("Delete");
-
-            {
-                edit.setStyle("-fx-background-color: #FFCB3C;-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #222; -fx-background-radius: 28px;");
-                del.setStyle("-fx-background-color: #FFCB3C;-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #222; -fx-background-radius: 28px;");
-
-                edit.setOnAction(e -> onEdit.accept(getCurrent()));
-                del.setOnAction(e -> {
-                    ChildrenView.Child current = getCurrent();
-                    Alert alert = new Alert(Alert.AlertType.CONFIRMATION, "Delete child and all their attendance records?", ButtonType.YES, ButtonType.NO);
-                    alert.setHeaderText("Confirm Delete");
-                    alert.showAndWait().ifPresent(response -> {
-                        if (response == ButtonType.YES) {
-                            onDeleteConfirmed.accept(current);
-                        }
-                    });
+        actionsCol.setCellFactory(col -> new ActionButtonsTableCell<>(
+            ActionButtonsTableCell.ActionSpec.normal("Edit", onEdit),
+            ActionButtonsTableCell.ActionSpec.destructive("Delete", current -> {
+                Alert alert = new Alert(
+                    Alert.AlertType.CONFIRMATION,
+                    "Delete child and all their attendance records?",
+                    ButtonType.YES,
+                    ButtonType.NO
+                );
+                alert.setHeaderText("Confirm Delete");
+                alert.showAndWait().ifPresent(response -> {
+                    if (response == ButtonType.YES) {
+                        onDeleteConfirmed.accept(current);
+                    }
                 });
-            }
+            })
+        ));
 
-            private ChildrenView.Child getCurrent() {
-                return getTableView().getItems().get(getIndex());
-            }
-
-            @Override
-            protected void updateItem(Void item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty) {
-                    setGraphic(null);
-                } else {
-                    setGraphic(new HBox(5, edit, del));
-                }
-            }
-        });
+        setPrefWidth(idCol, 56);
+        setPrefWidth(nameCol, 190);
+        setPrefWidth(childIdentifierCol, 150);
+        setPrefWidth(dobCol, 118);
+        setPrefWidth(ageCol, 76);
+        setPrefWidth(parentNameCol, 180);
+        setPrefWidth(parentContactCol, 138);
+        setPrefWidth(billingPlanCol, 186);
+        setPrefWidth(uidCol, 140);
+        setPrefWidth(statusCol, 96);
+        setPrefWidth(actionsCol, 148);
+        setPrefWidth(RECORD_ID_COL, 180);
+        setPrefWidth(DUE_DAY_COL, 90);
+        setPrefWidth(TRANSPORT_COL, 104);
 
         table.getColumns().clear();
         table.getColumns().setAll(Arrays.<TableColumn<ChildrenView.Child, ?>>asList(
             idCol,
             nameCol,
+            childIdentifierCol,
             dobCol,
+            ageCol,
             parentNameCol,
-            relationshipCol,
             parentContactCol,
+            billingPlanCol,
             uidCol,
+            statusCol,
+            RECORD_ID_COL,
+            DUE_DAY_COL,
+            TRANSPORT_COL,
             actionsCol
         ));
+
+        SummaryTableSupport.configureSummaryTable(
+            table,
+            "No children found.",
+            ChildrenTableSupport::rowSummary,
+            ChildrenView.Child::getRecordId,
+            child -> asJson(child),
+            onEdit
+        );
     }
 
-    private static <T> TableCell<ChildrenView.Child, T> makeCell(String style) {
-        return new TableCell<ChildrenView.Child, T>() {
-            @Override
-            protected void updateItem(T item, boolean empty) {
-                super.updateItem(item, empty);
-                setText(empty || item == null ? null : item.toString());
-                setStyle(style);
-                setAlignment(Pos.CENTER);
-            }
-        };
+    static javafx.scene.control.MenuButton createColumnChooser(TableView<ChildrenView.Child> table) {
+        return SummaryTableSupport.createColumnChooser("Columns", List.of(RECORD_ID_COL, DUE_DAY_COL, TRANSPORT_COL));
     }
 
-    private static TableCell<ChildrenView.Child, String> makeMultilineCell(String style) {
-        return new TableCell<ChildrenView.Child, String>() {
-            private final Text text = new Text();
+    private static CopyableTableCell<ChildrenView.Child> copyCell(
+        java.util.function.Function<ChildrenView.Child, String> valueProvider,
+        Pos alignment
+    ) {
+        return new CopyableTableCell<>(
+            valueProvider,
+            value -> SummaryTableSupport.displayText(value),
+            ChildrenTableSupport::rowSummary,
+            ChildrenView.Child::getRecordId,
+            child -> SummaryTableSupport.toPrettyJson(asJson(child)),
+            alignment,
+            false
+        );
+    }
 
-            {
-                text.setStyle(style);
-                text.setTextAlignment(TextAlignment.CENTER);
-                text.wrappingWidthProperty().bind(widthProperty().subtract(12));
-                setPrefHeight(Control.USE_COMPUTED_SIZE);
-                setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
-            }
+    private static LinkedHashMap<String, Object> asJson(ChildrenView.Child child) {
+        LinkedHashMap<String, Object> json = new LinkedHashMap<>();
+        json.put("recordId", child.getRecordId());
+        json.put("childName", child.getName());
+        json.put("childIdentifier", child.getChildIdentifier());
+        json.put("dateOfBirth", child.getBirthDateText());
+        json.put("age", child.getAgeSummary());
+        json.put("parentNames", child.getFullParentNames());
+        json.put("parentPhones", child.getFullParentPhones());
+        json.put("relationship", child.getParentRelationship());
+        json.put("billingPlan", child.getBillingPlan());
+        json.put("paymentDueDay", child.getPaymentDueDay());
+        json.put("transportEnabled", child.isTransportEnabled());
+        json.put("nfcUid", child.getNfcUid());
+        json.put("status", child.getStatus());
+        return json;
+    }
 
-            @Override
-            protected void updateItem(String item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null || item.isEmpty()) {
-                    setText(null);
-                    setGraphic(null);
-                } else {
-                    text.setText(item);
-                    setText(null);
-                    setGraphic(text);
-                }
-                setAlignment(Pos.CENTER);
-            }
-        };
+    private static String rowSummary(ChildrenView.Child child) {
+        if (child == null) {
+            return "";
+        }
+        return String.join("\n",
+            "Child: " + SummaryTableSupport.displayText(child.getName()),
+            "Record ID: " + SummaryTableSupport.displayText(child.getRecordId()),
+            "Child ID / MyKid: " + SummaryTableSupport.displayText(child.getChildIdentifier()),
+            "DOB: " + SummaryTableSupport.displayText(child.getBirthDateText()),
+            "Age: " + SummaryTableSupport.displayText(child.getAgeSummary()),
+            "Primary Parent: " + SummaryTableSupport.displayText(child.getPrimaryParentName()),
+            "Parent Phone: " + SummaryTableSupport.displayText(child.getParentPhone()),
+            "Billing Plan: " + SummaryTableSupport.displayText(child.getBillingPlan()),
+            "Due Day: " + SummaryTableSupport.displayText(child.getPaymentDueDayText()),
+            "Transport: " + SummaryTableSupport.displayText(child.getTransportEnabledText()),
+            "NFC UID: " + SummaryTableSupport.displayText(child.getNfcUid()),
+            "Status: " + SummaryTableSupport.displayText(child.getStatus())
+        );
+    }
+
+    private static void setPrefWidth(TableColumn<ChildrenView.Child, ?> column, double width) {
+        column.setPrefWidth(width);
     }
 }

@@ -1,25 +1,25 @@
 package nfc;
 
 import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.function.Consumer;
 
 import javafx.geometry.Pos;
 import javafx.scene.control.Alert;
-import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
-import javafx.scene.control.ContentDisplay;
-import javafx.scene.control.Control;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.layout.HBox;
-import javafx.scene.text.Text;
-import javafx.scene.text.TextAlignment;
 
 @SuppressWarnings("unused")
 final class ParentsTableSupport {
     private ParentsTableSupport() {}
+
+    private static final TableColumn<ParentsPane.ParentRecord, String> RECORD_ID_COL = new TableColumn<>("Record ID");
+    private static final TableColumn<ParentsPane.ParentRecord, String> MASKED_IC_COL = new TableColumn<>("Parent IC");
+    private static final TableColumn<ParentsPane.ParentRecord, String> CUSTOM_REL_COL = new TableColumn<>("Custom Relationship");
 
     static void setupTable(
         TableView<ParentsPane.ParentRecord> table,
@@ -32,7 +32,11 @@ final class ParentsTableSupport {
         TableColumn<ParentsPane.ParentRecord, String> nameCol = new TableColumn<>("Parent Name");
         TableColumn<ParentsPane.ParentRecord, String> relationshipCol = new TableColumn<>("Relationship");
         TableColumn<ParentsPane.ParentRecord, String> phoneCol = new TableColumn<>("Phone");
-        TableColumn<ParentsPane.ParentRecord, String> childNameCol = new TableColumn<>("Child Name");
+        TableColumn<ParentsPane.ParentRecord, String> childCountCol = new TableColumn<>("Linked Children");
+        TableColumn<ParentsPane.ParentRecord, String> childNameCol = new TableColumn<>("Children Summary");
+        TableColumn<ParentsPane.ParentRecord, String> notificationsCol = new TableColumn<>("Notifications");
+        TableColumn<ParentsPane.ParentRecord, String> icVerifiedCol = new TableColumn<>("IC Verified");
+        TableColumn<ParentsPane.ParentRecord, String> statusCol = new TableColumn<>("Status");
         TableColumn<ParentsPane.ParentRecord, Void> actionsCol = new TableColumn<>("Actions");
 
         noCol.setCellFactory(col -> new TableCell<ParentsPane.ParentRecord, Integer>() {
@@ -48,62 +52,70 @@ final class ParentsTableSupport {
         nameCol.setCellValueFactory(new PropertyValueFactory<>("parentName"));
         phoneCol.setCellValueFactory(new PropertyValueFactory<>("phone"));
         relationshipCol.setCellValueFactory(new PropertyValueFactory<>("relationship"));
-        childNameCol.setCellValueFactory(new PropertyValueFactory<>("childName"));
+        childCountCol.setCellValueFactory(new PropertyValueFactory<>("linkedChildrenCountText"));
+        childNameCol.setCellValueFactory(new PropertyValueFactory<>("linkedChildrenSummary"));
+        notificationsCol.setCellValueFactory(new PropertyValueFactory<>("notificationsSummary"));
+        icVerifiedCol.setCellValueFactory(new PropertyValueFactory<>("icVerifiedStatus"));
+        statusCol.setCellValueFactory(new PropertyValueFactory<>("status"));
 
-        String fontStyle = "-fx-font-family: 'Poppins', 'Arial', sans-serif; -fx-font-size: 13px;-fx-font-weight: bold; -fx-text-fill: #181818;";
-        String centerCol = "-fx-alignment: CENTER;";
-        nameCol.setStyle(centerCol);
-        relationshipCol.setStyle(centerCol);
-        phoneCol.setStyle(centerCol);
-        childNameCol.setStyle(centerCol);
-        actionsCol.setStyle(centerCol);
-        noCol.setStyle(centerCol);
+        RECORD_ID_COL.setCellValueFactory(new PropertyValueFactory<>("recordId"));
+        MASKED_IC_COL.setCellValueFactory(new PropertyValueFactory<>("maskedParentIc"));
+        CUSTOM_REL_COL.setCellValueFactory(new PropertyValueFactory<>("customRelationship"));
 
-        nameCol.setCellFactory(tc -> makeCell(fontStyle));
-        relationshipCol.setCellFactory(tc -> makeCell(fontStyle));
-        phoneCol.setCellFactory(tc -> makeCell(fontStyle));
-        childNameCol.setCellFactory(tc -> makeMultilineCell(fontStyle));
+        RECORD_ID_COL.setVisible(false);
+        MASKED_IC_COL.setVisible(false);
+        CUSTOM_REL_COL.setVisible(false);
 
-        actionsCol.setCellFactory(tc -> new TableCell<ParentsPane.ParentRecord, Void>() {
-            private final Button edit = new Button("Edit");
-            private final Button del = new Button("Delete");
+        nameCol.setCellFactory(tc -> copyCell(ParentsPane.ParentRecord::getParentName, Pos.CENTER_LEFT));
+        relationshipCol.setCellFactory(tc -> copyCell(ParentsPane.ParentRecord::getRelationship, Pos.CENTER_LEFT));
+        phoneCol.setCellFactory(tc -> copyCell(ParentsPane.ParentRecord::getPhone, Pos.CENTER_LEFT));
+        childCountCol.setCellFactory(tc -> copyCell(ParentsPane.ParentRecord::getLinkedChildrenCountText, Pos.CENTER));
+        childNameCol.setCellFactory(tc -> copyCell(ParentsPane.ParentRecord::getLinkedChildrenSummary, Pos.CENTER_LEFT));
+        notificationsCol.setCellFactory(tc -> copyCell(ParentsPane.ParentRecord::getNotificationsSummary, Pos.CENTER_LEFT));
+        icVerifiedCol.setCellFactory(tc -> copyCell(ParentsPane.ParentRecord::getIcVerifiedStatus, Pos.CENTER));
+        statusCol.setCellFactory(tc -> copyCell(ParentsPane.ParentRecord::getStatus, Pos.CENTER));
+        RECORD_ID_COL.setCellFactory(tc -> copyCell(ParentsPane.ParentRecord::getRecordId, Pos.CENTER_LEFT));
+        MASKED_IC_COL.setCellFactory(tc -> new MaskedValueTableCell<>(
+            ParentsPane.ParentRecord::getParentIc,
+            value -> SummaryTableSupport.maskMiddle(value, 3, 2),
+            ParentsTableSupport::rowSummary,
+            ParentsPane.ParentRecord::getRecordId,
+            row -> SummaryTableSupport.toPrettyJson(asJson(row)),
+            Pos.CENTER_LEFT
+        ));
+        CUSTOM_REL_COL.setCellFactory(tc -> copyCell(ParentsPane.ParentRecord::getCustomRelationship, Pos.CENTER_LEFT));
 
-            {
-                edit.setStyle("-fx-background-color: #FFCB3C;-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #222; -fx-background-radius: 28px;");
-                del.setStyle("-fx-background-color: #FFCB3C;-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #222; -fx-background-radius: 28px;");
-
-                edit.setOnAction(e -> onEdit.accept(getCurrent()));
-                del.setOnAction(e -> {
-                    ParentsPane.ParentRecord current = getCurrent();
-                    Alert alert = new Alert(
-                        Alert.AlertType.CONFIRMATION,
-                        "Delete parent record? This will NOT delete child records.",
-                        ButtonType.YES,
-                        ButtonType.NO
-                    );
-                    alert.setHeaderText("Confirm Delete");
-                    alert.showAndWait().ifPresent(response -> {
-                        if (response == ButtonType.YES) {
-                            onDeleteConfirmed.accept(current);
-                        }
-                    });
+        actionsCol.setCellFactory(tc -> new ActionButtonsTableCell<>(
+            ActionButtonsTableCell.ActionSpec.normal("Edit", onEdit),
+            ActionButtonsTableCell.ActionSpec.destructive("Delete", current -> {
+                Alert alert = new Alert(
+                    Alert.AlertType.CONFIRMATION,
+                    "Delete parent record? This will NOT delete child records.",
+                    ButtonType.YES,
+                    ButtonType.NO
+                );
+                alert.setHeaderText("Confirm Delete");
+                alert.showAndWait().ifPresent(response -> {
+                    if (response == ButtonType.YES) {
+                        onDeleteConfirmed.accept(current);
+                    }
                 });
-            }
+            })
+        ));
 
-            private ParentsPane.ParentRecord getCurrent() {
-                return getTableView().getItems().get(getIndex());
-            }
-
-            @Override
-            protected void updateItem(Void item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty) {
-                    setGraphic(null);
-                } else {
-                    setGraphic(new HBox(5, edit, del));
-                }
-            }
-        });
+        setPrefWidth(noCol, 56);
+        setPrefWidth(nameCol, 190);
+        setPrefWidth(relationshipCol, 130);
+        setPrefWidth(phoneCol, 138);
+        setPrefWidth(childCountCol, 110);
+        setPrefWidth(childNameCol, 220);
+        setPrefWidth(notificationsCol, 180);
+        setPrefWidth(icVerifiedCol, 104);
+        setPrefWidth(statusCol, 96);
+        setPrefWidth(actionsCol, 148);
+        setPrefWidth(RECORD_ID_COL, 180);
+        setPrefWidth(MASKED_IC_COL, 140);
+        setPrefWidth(CUSTOM_REL_COL, 180);
 
         table.getColumns().clear();
         table.getColumns().setAll(Arrays.<TableColumn<ParentsPane.ParentRecord, ?>>asList(
@@ -111,50 +123,80 @@ final class ParentsTableSupport {
             nameCol,
             relationshipCol,
             phoneCol,
+            childCountCol,
             childNameCol,
+            notificationsCol,
+            icVerifiedCol,
+            statusCol,
+            RECORD_ID_COL,
+            MASKED_IC_COL,
+            CUSTOM_REL_COL,
             actionsCol
         ));
+
+        SummaryTableSupport.configureSummaryTable(
+            table,
+            "No parents found.",
+            ParentsTableSupport::rowSummary,
+            ParentsPane.ParentRecord::getRecordId,
+            row -> asJson(row),
+            onEdit
+        );
     }
 
-    private static <T> TableCell<ParentsPane.ParentRecord, T> makeCell(String style) {
-        return new TableCell<ParentsPane.ParentRecord, T>() {
-            @Override
-            protected void updateItem(T item, boolean empty) {
-                super.updateItem(item, empty);
-                setText(empty || item == null ? null : item.toString());
-                setAlignment(Pos.CENTER);
-                setTextAlignment(TextAlignment.CENTER);
-                setStyle(style + " -fx-alignment: CENTER;");
-            }
-        };
+    static javafx.scene.control.MenuButton createColumnChooser(TableView<ParentsPane.ParentRecord> table) {
+        return SummaryTableSupport.createColumnChooser("Columns", List.of(RECORD_ID_COL, MASKED_IC_COL, CUSTOM_REL_COL));
     }
 
-    private static TableCell<ParentsPane.ParentRecord, String> makeMultilineCell(String style) {
-        return new TableCell<ParentsPane.ParentRecord, String>() {
-            private final Text text = new Text();
+    private static CopyableTableCell<ParentsPane.ParentRecord> copyCell(
+        java.util.function.Function<ParentsPane.ParentRecord, String> valueProvider,
+        Pos alignment
+    ) {
+        return new CopyableTableCell<>(
+            valueProvider,
+            SummaryTableSupport::displayText,
+            ParentsTableSupport::rowSummary,
+            ParentsPane.ParentRecord::getRecordId,
+            row -> SummaryTableSupport.toPrettyJson(asJson(row)),
+            alignment,
+            false
+        );
+    }
 
-            {
-                text.setStyle(style);
-                text.setTextAlignment(TextAlignment.CENTER);
-                text.wrappingWidthProperty().bind(widthProperty().subtract(12));
-                setPrefHeight(Control.USE_COMPUTED_SIZE);
-                setAlignment(Pos.CENTER);
-                setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
-            }
+    private static LinkedHashMap<String, Object> asJson(ParentsPane.ParentRecord row) {
+        LinkedHashMap<String, Object> json = new LinkedHashMap<>();
+        json.put("recordId", row.getRecordId());
+        json.put("parentName", row.getParentName());
+        json.put("relationship", row.getRelationship());
+        json.put("customRelationship", row.getCustomRelationship());
+        json.put("phone", row.getPhone());
+        json.put("parentIc", row.getParentIc());
+        json.put("icVerified", row.isIcVerified());
+        json.put("linkedChildIds", row.getChildId());
+        json.put("linkedChildNames", row.getChildName());
+        json.put("linkedChildrenCount", row.getLinkedChildrenCount());
+        json.put("notifications", row.getNotificationsSummary());
+        json.put("status", row.getStatus());
+        return json;
+    }
 
-            @Override
-            protected void updateItem(String item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null || item.isEmpty()) {
-                    setText(null);
-                    setGraphic(null);
-                } else {
-                    text.setText(item);
-                    setText(null);
-                    setAlignment(Pos.CENTER);
-                    setGraphic(text);
-                }
-            }
-        };
+    private static String rowSummary(ParentsPane.ParentRecord row) {
+        if (row == null) {
+            return "";
+        }
+        return String.join("\n",
+            "Parent: " + SummaryTableSupport.displayText(row.getParentName()),
+            "Record ID: " + SummaryTableSupport.displayText(row.getRecordId()),
+            "Relationship: " + SummaryTableSupport.displayText(row.getRelationship()),
+            "Phone: " + SummaryTableSupport.displayText(row.getPhone()),
+            "Linked Children: " + SummaryTableSupport.displayText(row.getLinkedChildrenSummary()),
+            "Notifications: " + SummaryTableSupport.displayText(row.getNotificationsSummary()),
+            "IC Verified: " + SummaryTableSupport.displayText(row.getIcVerifiedStatus()),
+            "Status: " + SummaryTableSupport.displayText(row.getStatus())
+        );
+    }
+
+    private static void setPrefWidth(TableColumn<ParentsPane.ParentRecord, ?> column, double width) {
+        column.setPrefWidth(width);
     }
 }

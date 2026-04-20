@@ -21,7 +21,6 @@ public class TeacherManagementView extends javafx.scene.layout.VBox {
     private final javafx.collections.transformation.FilteredList<java.util.Map<String, Object>> filtered;
     private final javafx.collections.transformation.SortedList<java.util.Map<String, Object>> sorted;
     private final javafx.scene.control.TableColumn<java.util.Map<String, Object>, String> nameCol;
-    private final javafx.scene.control.Button addTeacherButton;
 
     public TeacherManagementView() {
 
@@ -51,19 +50,27 @@ public class TeacherManagementView extends javafx.scene.layout.VBox {
         mainBody.setPadding(new Insets(20));
         mainBody.setAlignment(Pos.TOP_LEFT);
 
-        TextField searchTf = new TextField();
-        searchTf.setPromptText("Search name / username / email / phone...");
-        searchTf.setMaxWidth(Double.MAX_VALUE);
+        TextField searchTf = SummaryTableSupport.createSearchField("Search name / username / email / phone...");
 
         TeacherManagementTableSupport.TableBundle tableBundle = TeacherManagementTableSupport.setupTable(
             table,
             this::showTeacherDialog,
-            this::confirmDeleteTeacher,
-            () -> showTeacherDialog(null)
+            this::confirmDeleteTeacher
         );
         this.nameCol = tableBundle.nameCol;
-        this.addTeacherButton = tableBundle.addTeacherButton;
-        mainBody.getChildren().addAll(searchTf, table, addTeacherButton);
+
+        javafx.scene.control.MenuButton columnChooser = SummaryTableSupport.createColumnChooser(
+            "Columns",
+            tableBundle.optionalColumns
+        );
+        javafx.scene.control.Button addTeacherButton = SummaryTableSupport.createPrimaryButton("Add Teacher");
+        addTeacherButton.setOnAction(event -> showTeacherDialog(null));
+
+        javafx.scene.layout.HBox toolbar = new javafx.scene.layout.HBox(10, searchTf, columnChooser, addTeacherButton);
+        toolbar.getStyleClass().add("summary-toolbar");
+        toolbar.setAlignment(Pos.CENTER_LEFT);
+        javafx.scene.layout.HBox.setHgrow(searchTf, javafx.scene.layout.Priority.ALWAYS);
+        mainBody.getChildren().addAll(toolbar, table);
 
         // ===== WRAPPER LAYOUT (SAME AS ADMINS) =====
         javafx.scene.layout.BorderPane layout = new javafx.scene.layout.BorderPane();

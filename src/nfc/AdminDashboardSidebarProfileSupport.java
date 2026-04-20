@@ -19,14 +19,16 @@ final class AdminDashboardSidebarProfileSupport {
     static VBox createProfileBox() {
         ImageView profileView = createProfileView();
         Label nameLabel = new Label(resolveDisplayName());
-        nameLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
+        nameLabel.getStyleClass().add("sidebar-profile-name");
 
         ImageView beeIcon = new ImageView(ImageLoader.loadSafe("bee-icon.png"));
         beeIcon.setFitWidth(24);
         beeIcon.setFitHeight(24);
+        beeIcon.getStyleClass().add("sidebar-profile-accent");
 
         VBox profileBox = new VBox(10, profileView, createWelcomeBox(nameLabel, beeIcon));
         profileBox.setAlignment(Pos.CENTER);
+        profileBox.getStyleClass().add("sidebar-profile-box");
         return profileBox;
     }
 
@@ -36,8 +38,12 @@ final class AdminDashboardSidebarProfileSupport {
         profileView.setFitHeight(130);
         profileView.setPreserveRatio(true);
 
-        Circle clip = new Circle(65, 65, 65);
+        Circle clip = new Circle();
+        clip.centerXProperty().bind(profileView.fitWidthProperty().divide(2));
+        clip.centerYProperty().bind(profileView.fitHeightProperty().divide(2));
+        clip.radiusProperty().bind(profileView.fitWidthProperty().divide(2));
         profileView.setClip(clip);
+        profileView.getStyleClass().add("sidebar-profile-image");
         profileView.setStyle(
             "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 8, 0.2, 0, 3); "
                 + "-fx-border-color: #FFD700; -fx-border-width: 3; -fx-border-radius: 65px;"
@@ -50,6 +56,7 @@ final class AdminDashboardSidebarProfileSupport {
     private static HBox createWelcomeBox(Label nameLabel, ImageView beeIcon) {
         HBox welcomeBox = new HBox(6, nameLabel, beeIcon);
         welcomeBox.setAlignment(Pos.CENTER);
+        welcomeBox.getStyleClass().add("sidebar-welcome-box");
         return welcomeBox;
     }
 

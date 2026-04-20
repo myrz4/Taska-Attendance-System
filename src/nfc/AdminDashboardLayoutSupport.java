@@ -55,7 +55,7 @@ final class AdminDashboardLayoutSupport {
         VBox dashboardBody = new VBox(20);
         dashboardBody.setPadding(new Insets(20));
         dashboardBody.setAlignment(Pos.TOP_LEFT);
-        dashboardBody.setStyle("-fx-background-color: linear-gradient(to bottom right, #86d67f 0%, #76cc6e 100%);");
+        dashboardBody.setStyle("-fx-background-color: #86d67f;");
 
         Label dateLabel = new Label();
         dateLabel.setStyle("-fx-font-size: 20px; -fx-font-weight: bold;");

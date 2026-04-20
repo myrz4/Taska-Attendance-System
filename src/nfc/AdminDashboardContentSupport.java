@@ -3,6 +3,7 @@ package nfc;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javafx.application.Platform;
 import javafx.scene.control.Label;
@@ -13,6 +14,7 @@ import javafx.scene.layout.VBox;
 @SuppressWarnings({"java:S1144", "java:S1068"})
 final class AdminDashboardContentSupport {
     private static volatile long lastDashboardFirestoreRefreshMs = 0;
+    private static final AtomicBoolean dashboardRefreshInFlight = new AtomicBoolean(false);
 
     private AdminDashboardContentSupport() {
     }
@@ -93,6 +95,9 @@ final class AdminDashboardContentSupport {
         if (now - lastDashboardFirestoreRefreshMs < 1200) {
             return;
         }
+        if (!dashboardRefreshInFlight.compareAndSet(false, true)) {
+            return;
+        }
         lastDashboardFirestoreRefreshMs = now;
 
         CompletableFuture.runAsync(() -> {
@@ -115,8 +120,13 @@ final class AdminDashboardContentSupport {
                 });
 
                 System.out.println("✅ Dashboard refreshed (Firestore) → In=" + snapshot.inLines.size() + " | Out=" + snapshot.outLines.size());
-            } catch (IOException | InterruptedException error) {
+            } catch (InterruptedException error) {
+                Thread.currentThread().interrupt();
                 actions.logError("dashboard refresh failed", error);
+            } catch (IOException | RuntimeException error) {
+                actions.logError("dashboard refresh failed", error);
+            } finally {
+                dashboardRefreshInFlight.set(false);
             }
         });
     }

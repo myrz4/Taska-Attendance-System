@@ -51,6 +51,7 @@ public class BillingPolicyView extends javafx.scene.layout.VBox {
     public BillingPolicyView() {
         super(10);
         setPadding(new Insets(12));
+        setStyle("-fx-background-color: #86d67f;");
 
         liveHealthBadge.setStyle("-fx-background-color: #fff3cd; -fx-text-fill: #7a5200; -fx-font-weight: bold; -fx-padding: 6 12 6 12; -fx-background-radius: 999;");
         liveHealthRefreshBtn.setStyle("-fx-font-size: 11px; -fx-font-weight: bold; -fx-padding: 4 8 4 8;");

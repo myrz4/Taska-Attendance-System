@@ -1,36 +1,42 @@
 package nfc;
 
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import javafx.beans.property.SimpleStringProperty;
 import javafx.geometry.Pos;
-import javafx.scene.control.Button;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.HBox;
 
 @SuppressWarnings("unused")
 final class TeacherManagementTableSupport {
+    private static final TableColumn<Map<String, Object>, String> RECORD_ID_COL = new TableColumn<>("Record ID");
+
     private TeacherManagementTableSupport() {}
 
     static TableBundle setupTable(
         TableView<Map<String, Object>> table,
         Consumer<Map<String, Object>> onEdit,
-        Consumer<Map<String, Object>> onDelete,
-        Runnable onAdd
+        Consumer<Map<String, Object>> onDelete
     ) {
         TableColumn<Map<String, Object>, Integer> noCol = new TableColumn<>("No");
-        TableColumn<Map<String, Object>, String> nameCol = textCol("Name", "name");
-        TableColumn<Map<String, Object>, String> usernameCol = textCol("Username", "username");
-        TableColumn<Map<String, Object>, String> emailCol = textCol("Email", "email");
-        TableColumn<Map<String, Object>, String> phoneCol = textCol("Phone", "phone");
-        TableColumn<Map<String, Object>, String> salaryCol = moneyCol("Base Salary (RM)", "salaryBaseSen");
-        TableColumn<Map<String, Object>, String> imageCol = imageCol("Image", "image");
+        TableColumn<Map<String, Object>, String> avatarCol = imageCol("Avatar", "image");
+        TableColumn<Map<String, Object>, String> nameCol = textCol("Full Name", row -> Objects.toString(row.get("name"), ""));
+        TableColumn<Map<String, Object>, String> usernameCol = textCol("Username", row -> Objects.toString(row.get("username"), ""));
+        TableColumn<Map<String, Object>, String> emailCol = textCol("Email", row -> Objects.toString(row.get("email"), ""));
+        TableColumn<Map<String, Object>, String> phoneCol = textCol("Phone", row -> Objects.toString(row.get("phone"), ""));
+        TableColumn<Map<String, Object>, String> salaryCol = textCol("Base Salary (RM)", row -> formatMoney(row.get("salaryBaseSen")));
+        TableColumn<Map<String, Object>, String> overtimeCol = textCol("Overtime Rates", TeacherManagementTableSupport::overtimeSummary);
+        TableColumn<Map<String, Object>, String> statusCol = textCol("Status", TeacherManagementTableSupport::statusText);
         TableColumn<Map<String, Object>, Void> actionCol = actionCol(onEdit, onDelete);
 
         noCol.setCellFactory(col -> new TableCell<Map<String, Object>, Integer>() {
@@ -43,35 +49,52 @@ final class TeacherManagementTableSupport {
                     setText(String.valueOf(getIndex() + 1));
                 }
                 setAlignment(Pos.CENTER);
-                setStyle("-fx-font-weight: bold; -fx-font-size: 13px; -fx-text-fill: #181818; -fx-alignment: CENTER;");
+                setStyle("-fx-font-weight: bold; -fx-text-fill: #181818;");
             }
         });
 
-        noCol.setPrefWidth(60);
+        RECORD_ID_COL.setCellValueFactory(d -> new SimpleStringProperty(Objects.toString(d.getValue().get("id"), "")));
+        RECORD_ID_COL.setCellFactory(tc -> copyCell(row -> Objects.toString(row.get("id"), ""), Pos.CENTER_LEFT));
+        RECORD_ID_COL.setVisible(false);
+
+        noCol.setPrefWidth(56);
+        avatarCol.setPrefWidth(84);
         nameCol.setPrefWidth(220);
         usernameCol.setPrefWidth(160);
-        emailCol.setPrefWidth(220);
+        emailCol.setPrefWidth(210);
         phoneCol.setPrefWidth(150);
-        salaryCol.setPrefWidth(140);
-        imageCol.setPrefWidth(90);
-        actionCol.setPrefWidth(180);
+        salaryCol.setPrefWidth(130);
+        overtimeCol.setPrefWidth(220);
+        statusCol.setPrefWidth(94);
+        RECORD_ID_COL.setPrefWidth(180);
+        actionCol.setPrefWidth(148);
 
         table.getColumns().clear();
-        table.getColumns().add(noCol);
-        table.getColumns().add(nameCol);
-        table.getColumns().add(usernameCol);
-        table.getColumns().add(emailCol);
-        table.getColumns().add(phoneCol);
-        table.getColumns().add(salaryCol);
-        table.getColumns().add(imageCol);
-        table.getColumns().add(actionCol);
+        table.getColumns().setAll(Arrays.<TableColumn<Map<String, Object>, ?>>asList(
+            noCol,
+            avatarCol,
+            nameCol,
+            usernameCol,
+            emailCol,
+            phoneCol,
+            salaryCol,
+            overtimeCol,
+            statusCol,
+            RECORD_ID_COL,
+            actionCol
+        ));
         table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
 
-        Button addTeacherButton = new Button("Add Teacher");
-        addTeacherButton.setStyle("-fx-background-color: #FFCB3C; -fx-font-size: 16px; -fx-font-weight: bold; -fx-background-radius: 28;");
-        addTeacherButton.setOnAction(e -> onAdd.run());
+        SummaryTableSupport.configureSummaryTable(
+            table,
+            "No teachers found.",
+            TeacherManagementTableSupport::rowSummary,
+            row -> Objects.toString(row.get("id"), ""),
+            TeacherManagementTableSupport::asJson,
+            onEdit
+        );
 
-        return new TableBundle(nameCol, addTeacherButton);
+        return new TableBundle(nameCol, List.of(RECORD_ID_COL));
     }
 
     private static TableColumn<Map<String, Object>, Void> actionCol(
@@ -79,55 +102,11 @@ final class TeacherManagementTableSupport {
         Consumer<Map<String, Object>> onDelete
     ) {
         TableColumn<Map<String, Object>, Void> actionCol = new TableColumn<>("Actions");
-        actionCol.setCellFactory(col -> new TableCell<Map<String, Object>, Void>() {
-            private final Button edit = new Button("Edit");
-            private final Button del = new Button("Delete");
-
-            {
-                edit.setStyle("-fx-background-color: #FFCB3C;-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #222; -fx-background-radius: 28px;");
-                del.setStyle("-fx-background-color: #FFCB3C;-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #222; -fx-background-radius: 28px;");
-
-                edit.setOnAction(e -> {
-                    Map<String, Object> data = getTableView().getItems().get(getIndex());
-                    onEdit.accept(data);
-                });
-
-                del.setOnAction(e -> {
-                    Map<String, Object> data = getTableView().getItems().get(getIndex());
-                    onDelete.accept(data);
-                });
-            }
-
-            @Override
-            protected void updateItem(Void item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty) {
-                    setGraphic(null);
-                } else {
-                    HBox actions = new HBox(8, edit, del);
-                    actions.setAlignment(Pos.CENTER);
-                    setAlignment(Pos.CENTER);
-                    setGraphic(actions);
-                }
-            }
-        });
+        actionCol.setCellFactory(col -> new ActionButtonsTableCell<>(
+            ActionButtonsTableCell.ActionSpec.normal("Edit", onEdit),
+            ActionButtonsTableCell.ActionSpec.destructive("Delete", onDelete)
+        ));
         return actionCol;
-    }
-
-    private static TableColumn<Map<String, Object>, String> moneyCol(String title, String key) {
-        TableColumn<Map<String, Object>, String> column = new TableColumn<>(title);
-        column.setCellValueFactory(d -> {
-            Object raw = d.getValue().get(key);
-            String text = "-";
-            if (raw instanceof Number) {
-                double rm = ((Number) raw).doubleValue() / 100.0;
-                text = String.format(java.util.Locale.US, "RM %.2f", rm);
-            }
-            return new SimpleStringProperty(text);
-        });
-        column.setCellFactory(tc -> centeredTextCell());
-        column.setStyle("-fx-alignment: CENTER;");
-        return column;
     }
 
     private static TableColumn<Map<String, Object>, String> imageCol(String title, String key) {
@@ -167,37 +146,102 @@ final class TeacherManagementTableSupport {
         return column;
     }
 
-    private static TableColumn<Map<String, Object>, String> textCol(String title, String key) {
+    private static TableColumn<Map<String, Object>, String> textCol(
+        String title,
+        Function<Map<String, Object>, String> valueProvider
+    ) {
         TableColumn<Map<String, Object>, String> column = new TableColumn<>(title);
-        column.setCellValueFactory(d -> new SimpleStringProperty(Objects.toString(d.getValue().get(key), "")));
-        column.setCellFactory(tc -> centeredTextCell());
+        column.setCellValueFactory(d -> new SimpleStringProperty(valueProvider.apply(d.getValue())));
+        column.setCellFactory(tc -> copyCell(valueProvider, Pos.CENTER_LEFT));
         column.setStyle("-fx-alignment: CENTER;");
         return column;
     }
 
-    private static TableCell<Map<String, Object>, String> centeredTextCell() {
-        return new TableCell<Map<String, Object>, String>() {
-            @Override
-            protected void updateItem(String item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) {
-                    setText(null);
-                } else {
-                    setText(item);
-                    setStyle("-fx-font-weight: bold; -fx-font-size: 13px; -fx-text-fill: #181818; -fx-alignment: CENTER;");
-                    setAlignment(Pos.CENTER);
-                }
-            }
-        };
+    private static CopyableTableCell<Map<String, Object>> copyCell(
+        Function<Map<String, Object>, String> valueProvider,
+        Pos alignment
+    ) {
+        return new CopyableTableCell<>(
+            valueProvider,
+            SummaryTableSupport::displayText,
+            TeacherManagementTableSupport::rowSummary,
+            row -> Objects.toString(row.get("id"), ""),
+            row -> SummaryTableSupport.toPrettyJson(asJson(row)),
+            alignment,
+            false
+        );
+    }
+
+    private static String overtimeSummary(Map<String, Object> row) {
+        return "5:30=" + shortMoney(row.get("salaryOvertimeAfter530Sen"))
+            + " | 8pm=" + shortMoney(row.get("salaryOvertime8to12Sen"))
+            + " | 12am=" + shortMoney(row.get("salaryOvertime12to7Sen"));
+    }
+
+    private static String statusText(Map<String, Object> row) {
+        String fallback = Boolean.TRUE.equals(row.get("salaryActive")) ? "Active" : "Inactive";
+        return SummaryTableSupport.resolveStatus(row, fallback);
+    }
+
+    private static String shortMoney(Object rawSen) {
+        if (!(rawSen instanceof Number)) {
+            return "-";
+        }
+        double rm = ((Number) rawSen).doubleValue() / 100.0;
+        if (Math.floor(rm) == rm) {
+            return String.valueOf((int) rm);
+        }
+        return String.format(Locale.US, "%.2f", rm);
+    }
+
+    private static String formatMoney(Object rawSen) {
+        if (!(rawSen instanceof Number)) {
+            return "-";
+        }
+        double rm = ((Number) rawSen).doubleValue() / 100.0;
+        return String.format(Locale.US, "RM %.2f", rm);
+    }
+
+    private static LinkedHashMap<String, Object> asJson(Map<String, Object> row) {
+        LinkedHashMap<String, Object> json = new LinkedHashMap<>();
+        json.put("recordId", Objects.toString(row.get("id"), ""));
+        json.put("name", Objects.toString(row.get("name"), ""));
+        json.put("username", Objects.toString(row.get("username"), ""));
+        json.put("email", Objects.toString(row.get("email"), ""));
+        json.put("phone", Objects.toString(row.get("phone"), ""));
+        json.put("baseSalary", formatMoney(row.get("salaryBaseSen")));
+        json.put("overtimeRates", overtimeSummary(row));
+        json.put("status", statusText(row));
+        json.put("image", Objects.toString(row.get("image"), ""));
+        return json;
+    }
+
+    private static String rowSummary(Map<String, Object> row) {
+        if (row == null) {
+            return "";
+        }
+        return String.join("\n",
+            "Teacher: " + SummaryTableSupport.displayText(Objects.toString(row.get("name"), "")),
+            "Record ID: " + SummaryTableSupport.displayText(Objects.toString(row.get("id"), "")),
+            "Username: " + SummaryTableSupport.displayText(Objects.toString(row.get("username"), "")),
+            "Email: " + SummaryTableSupport.displayText(Objects.toString(row.get("email"), "")),
+            "Phone: " + SummaryTableSupport.displayText(Objects.toString(row.get("phone"), "")),
+            "Base Salary: " + SummaryTableSupport.displayText(formatMoney(row.get("salaryBaseSen"))),
+            "Overtime Rates: " + SummaryTableSupport.displayText(overtimeSummary(row)),
+            "Status: " + SummaryTableSupport.displayText(statusText(row))
+        );
     }
 
     static final class TableBundle {
         final TableColumn<Map<String, Object>, String> nameCol;
-        final Button addTeacherButton;
+        final List<TableColumn<Map<String, Object>, ?>> optionalColumns;
 
-        TableBundle(TableColumn<Map<String, Object>, String> nameCol, Button addTeacherButton) {
+        TableBundle(
+            TableColumn<Map<String, Object>, String> nameCol,
+            List<TableColumn<Map<String, Object>, ?>> optionalColumns
+        ) {
             this.nameCol = nameCol;
-            this.addTeacherButton = addTeacherButton;
+            this.optionalColumns = optionalColumns;
         }
     }
 }

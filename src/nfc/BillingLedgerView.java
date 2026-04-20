@@ -91,6 +91,7 @@ public class BillingLedgerView extends VBox {
     public BillingLedgerView() {
         setSpacing(12);
         setPadding(new Insets(12));
+        setStyle("-fx-background-color: #86d67f;");
 
         Label title = new Label("Billing Ledger");
         title.setStyle("-fx-font-size: 28px; -fx-font-weight: bold; -fx-text-fill: #1d2f24;");

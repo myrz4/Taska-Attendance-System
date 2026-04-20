@@ -89,10 +89,12 @@ public class AdminDashboard extends javafx.application.Application {
     private javafx.scene.layout.HBox createBodyLayout() {
         javafx.scene.layout.HBox bodyLayout = new javafx.scene.layout.HBox();
         bodyLayout.setStyle("-fx-background-color: transparent;");
+        bodyLayout.getStyleClass().add("admin-dashboard-body");
 
         javafx.scene.layout.VBox sidebar = createSidebar();
         contentPane = new javafx.scene.layout.StackPane();
         contentPane.setStyle("-fx-background-color: transparent;");
+        contentPane.getStyleClass().add("admin-content-pane");
 
         loadDashboardContent();
 
