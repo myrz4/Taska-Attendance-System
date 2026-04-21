@@ -16,6 +16,7 @@ public final class DailyReportDataSupport {
     public static ObservableList<AttendanceRow> loadAttendance(LocalDate date) {
         ObservableList<AttendanceRow> rows = FXCollections.observableArrayList();
 
+
         try {
             FirestoreRestClient client = FirestoreRest.forCurrentUser();
             Date startOfDay = Date.from(date.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant());
@@ -34,6 +35,11 @@ public final class DailyReportDataSupport {
                 String checkIn = checkInDate != null ? DailyReportPreviewSupport.formatReportTime(checkInDate) : "-";
                 String checkOut = checkOutDate != null ? DailyReportPreviewSupport.formatReportTime(checkOutDate) : "-";
 
+                LocalDate checkOutLocalDate = date;
+                if (checkOutDate != null) {
+                    checkOutLocalDate = checkOutDate.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDate();
+                }
+
                 rows.add(new AttendanceRow(
                     childId,
                     name,
@@ -41,7 +47,8 @@ public final class DailyReportDataSupport {
                     reason != null ? reason : "",
                     checkIn != null ? checkIn : "",
                     checkOut != null ? checkOut : "",
-                    date
+                    date,
+                    checkOutLocalDate
                 ));
             }
 

@@ -65,7 +65,11 @@ final class PDFReportAttendanceSectionSupport {
             table.addCell(bodyCell(row.getDate() != null ? row.getDate().format(dateFormat) : "-", rowBg, palette.border, Element.ALIGN_LEFT, palette.ink, false));
             table.addCell(bodyCell(row.getStatus() == null ? "-" : row.getStatus().toUpperCase(), absent ? palette.dangerBg : palette.successBg, palette.border, Element.ALIGN_CENTER, absent ? palette.dangerText : palette.successText, true));
             table.addCell(bodyCell(formatReportTime(row.getCheckInTime(), inputFormat, displayFormat), rowBg, palette.border, Element.ALIGN_CENTER, palette.ink, false));
-            table.addCell(bodyCell(formatReportTime(row.getCheckOutTime(), inputFormat, displayFormat), rowBg, palette.border, Element.ALIGN_CENTER, palette.ink, false));
+            String checkOutTime = formatReportTime(row.getCheckOutTime(), inputFormat, displayFormat);
+            if (row.getCheckOutDate() != null && row.getDate() != null && row.getCheckOutDate().isAfter(row.getDate())) {
+                checkOutTime += " (next day)";
+            }
+            table.addCell(bodyCell(checkOutTime, rowBg, palette.border, Element.ALIGN_CENTER, palette.ink, false));
             table.addCell(bodyCell(safe(row.getReason()), rowBg, palette.border, Element.ALIGN_LEFT, absent ? palette.dangerText : palette.ink, false));
         }
 

@@ -26,7 +26,7 @@ final class AttendanceOverrideSupport {
         java.util.function.Supplier<String> keepCurrentTime = AttendanceOverrideSupport::currentTimeText;
         java.util.function.BiFunction<LocalDate, String, String> keepIsoTimestamp = AttendanceOverrideSupport::buildIsoTimestamp;
         java.util.function.Function<AttendanceRecord, Map<String, Object>> keepPayload =
-            record -> buildPayload("", record, LocalDate.now(), "", "", "", "", "");
+            record -> buildPayload("", record, LocalDate.now(), "", "", "", "", "", null);
         java.util.function.Function<Map<String, Object>, FirebaseFunctionsClient.CallResult> keepSubmit = payload -> {
             try {
                 return submitOverride(payload);
@@ -95,7 +95,8 @@ final class AttendanceOverrideSupport {
         String notes,
         String adminName,
         String checkInText,
-        String checkOutText
+        String checkOutText,
+        LocalDate checkOutDate
     ) {
         Map<String, Object> payload = new HashMap<>();
         payload.put("action", action);
@@ -108,8 +109,12 @@ final class AttendanceOverrideSupport {
         if (("MANUAL_CHECK_IN".equals(action) || "EDIT_RECORD".equals(action)) && checkInText != null && !checkInText.trim().isEmpty()) {
             payload.put("checkInAt", buildIsoTimestamp(attendanceDate, checkInText.trim()));
         }
+        LocalDate checkOutActualDate = checkOutDate == null ? attendanceDate : checkOutDate;
+        if (checkOutActualDate != null && !checkOutActualDate.equals(attendanceDate)) {
+            payload.put("checkOutDate", checkOutActualDate.toString());
+        }
         if (("MANUAL_CHECK_OUT".equals(action) || "EDIT_RECORD".equals(action)) && checkOutText != null && !checkOutText.trim().isEmpty()) {
-            payload.put("checkOutAt", buildIsoTimestamp(attendanceDate, checkOutText.trim()));
+            payload.put("checkOutAt", buildIsoTimestamp(checkOutActualDate, checkOutText.trim()));
         }
         return payload;
     }

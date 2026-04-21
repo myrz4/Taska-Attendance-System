@@ -21,7 +21,7 @@ final class AttendanceOverrideDialogSupport {
         java.util.function.Function<AttendanceRecord, OverrideDialogResult> keepPrompt =
             record -> promptForOverride("", record, LocalDate.now());
         java.util.function.BiFunction<String, AttendanceRecord, Boolean> keepConfirmSubmit = AttendanceOverrideDialogSupport::confirmSubmit;
-        OverrideDialogResult probe = new OverrideDialogResult(null, null, null, null, null);
+        OverrideDialogResult probe = new OverrideDialogResult(null, null, null, null, null, null);
         java.util.Objects.requireNonNull(keepConfirmCompleted);
         java.util.Objects.requireNonNull(keepPrompt);
         java.util.Objects.requireNonNull(keepConfirmSubmit);
@@ -59,6 +59,7 @@ final class AttendanceOverrideDialogSupport {
         grid.setPadding(new Insets(10));
 
         DatePicker actionDatePicker = new DatePicker(currentDate);
+        DatePicker checkOutDatePicker = new DatePicker(currentDate); // New: check-out date picker
         TextField checkInField = new TextField(AttendanceOverrideSupport.defaultTimeText(record.getCheckInFullTimestamp()));
         TextField checkOutField = new TextField(AttendanceOverrideSupport.defaultTimeText(record.getCheckOutFullTimestamp()));
         if ("MANUAL_CHECK_IN".equals(action) && checkInField.getText().isBlank()) {
@@ -87,6 +88,8 @@ final class AttendanceOverrideDialogSupport {
         if ("MANUAL_CHECK_OUT".equals(action) || "EDIT_RECORD".equals(action)) {
             grid.add(new Label("Check-Out Time"), 0, row);
             grid.add(checkOutField, 1, row++);
+            grid.add(new Label("Check-Out Date"), 0, row);
+            grid.add(checkOutDatePicker, 1, row++);
         }
 
         grid.add(new Label("Reason"), 0, row);
@@ -110,7 +113,8 @@ final class AttendanceOverrideDialogSupport {
             reason,
             notesArea.getText(),
             checkInField.getText(),
-            checkOutField.getText()
+            checkOutField.getText(),
+            checkOutDatePicker.getValue()
         );
     }
 
@@ -132,13 +136,15 @@ final class AttendanceOverrideDialogSupport {
         final String notes;
         final String checkInText;
         final String checkOutText;
+        final LocalDate checkOutDate;
 
-        OverrideDialogResult(LocalDate attendanceDate, String reason, String notes, String checkInText, String checkOutText) {
+        OverrideDialogResult(LocalDate attendanceDate, String reason, String notes, String checkInText, String checkOutText, LocalDate checkOutDate) {
             this.attendanceDate = attendanceDate;
             this.reason = reason == null ? "" : reason;
             this.notes = notes == null ? "" : notes;
             this.checkInText = checkInText == null ? "" : checkInText;
             this.checkOutText = checkOutText == null ? "" : checkOutText;
+            this.checkOutDate = checkOutDate == null ? attendanceDate : checkOutDate;
         }
     }
 }

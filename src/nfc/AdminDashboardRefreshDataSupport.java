@@ -188,7 +188,16 @@ final class AdminDashboardRefreshDataSupport {
             .map(entry -> "✅ " + entry.getKey() + " – " + timeFormat.format(entry.getValue()))
             .toList();
         List<String> outLines = checkOuts.stream()
-            .map(entry -> "🏁 " + entry.getKey() + " – " + timeFormat.format(entry.getValue()))
+            .map(entry -> {
+                String name = entry.getKey();
+                Date outDate = entry.getValue();
+                String timeStr = timeFormat.format(outDate);
+                LocalDate outLocalDate = outDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+                if (outLocalDate.isAfter(today)) {
+                    timeStr += " (next day)";
+                }
+                return "🏁 " + name + " – " + timeStr;
+            })
             .toList();
 
         return new DashboardRefreshSnapshot(

@@ -49,6 +49,11 @@ final class MonthlyReportAggregationSupport {
                     String checkIn = checkInDate != null ? monthlyReport.formatReportTime(checkInDate) : "-";
                     String checkOut = checkOutDate != null ? monthlyReport.formatReportTime(checkOutDate) : "-";
 
+                    LocalDate checkOutLocalDate = docDate;
+                    if (checkOutDate != null) {
+                        checkOutLocalDate = checkOutDate.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDate();
+                    }
+
                     groupedByDate.put(docDate, new AttendanceRow(
                         idStr,
                         name,
@@ -56,7 +61,8 @@ final class MonthlyReportAggregationSupport {
                         reason != null ? reason : "",
                         checkIn,
                         checkOut,
-                        docDate
+                        docDate,
+                        checkOutLocalDate
                     ));
                 }
             }

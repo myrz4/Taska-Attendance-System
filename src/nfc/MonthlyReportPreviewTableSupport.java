@@ -41,7 +41,14 @@ final class MonthlyReportPreviewTableSupport {
         checkInCol.setPrefWidth(130);
 
         TableColumn<AttendanceRow, String> checkOutCol = new TableColumn<>("CHECK-OUT");
-        checkOutCol.setCellValueFactory(data -> new SimpleStringProperty(formatTime(data.getValue().getCheckOutTime())));
+        checkOutCol.setCellValueFactory(data -> {
+            AttendanceRow row = data.getValue();
+            String time = formatTime(row.getCheckOutTime());
+            if (row.getCheckOutDate() != null && row.getDate() != null && row.getCheckOutDate().isAfter(row.getDate())) {
+                time += " (next day)";
+            }
+            return new SimpleStringProperty(time);
+        });
         checkOutCol.setPrefWidth(130);
 
         TableColumn<AttendanceRow, String> reasonCol = new TableColumn<>("REASON");

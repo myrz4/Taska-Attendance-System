@@ -202,6 +202,10 @@ public class AttendanceView {
             dialogResult.checkInText,
             dialogResult.checkOutText
         );
+        // Add checkOutDate to payload if present and different from attendanceDate
+        if (dialogResult.checkOutDate != null && !dialogResult.checkOutDate.equals(dialogResult.attendanceDate)) {
+            payload.put("checkOutDate", dialogResult.checkOutDate.toString());
+        }
 
         java.util.concurrent.CompletableFuture.runAsync(() -> {
             try {

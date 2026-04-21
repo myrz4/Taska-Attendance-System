@@ -87,7 +87,14 @@ final class DailyReportPreviewSupport {
 
         TableColumn<AttendanceRow, String> colCheckOut = new TableColumn<>("Check Out");
         colCheckOut.setStyle("-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #222;");
-        colCheckOut.setCellValueFactory(data -> data.getValue().checkOutTimeProperty());
+        colCheckOut.setCellValueFactory(data -> {
+            AttendanceRow row = data.getValue();
+            String time = row.getCheckOutTime();
+            if (row.getCheckOutDate() != null && row.getDate() != null && row.getCheckOutDate().isAfter(row.getDate())) {
+                time += " (next day)";
+            }
+            return new SimpleStringProperty(time);
+        });
         colCheckOut.setPrefWidth(80);
 
         TableColumn<AttendanceRow, String> colRemark = new TableColumn<>("Remark");
