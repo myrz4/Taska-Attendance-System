@@ -390,23 +390,9 @@ void loop() {
     }
   } 
   else if (hasCheckIn && !hasCheckOut) {
-    Serial.println("🔵 Check-in found — performing CHECK-OUT");
-    FirebaseJson update;
-    update.set("fields/childId/stringValue", childId);
-    update.set("fields/nfc_uid/stringValue", childNfcUid);
-    update.set("fields/childRef/referenceValue", canonicalChildRef);
-    update.set("fields/check_out_time/timestampValue", timestampNow);
-    update.set("fields/checkout_method/stringValue", "NFC");
-    update.set("fields/manualCheckout/booleanValue", false);
-
-    if (Firebase.Firestore.patchDocument(&fbdo, FIREBASE_PROJECT_ID, FIRESTORE_DB_ID,
-                                         docPath.c_str(), update.raw(),
-                                         "childId,nfc_uid,childRef,check_out_time,checkout_method,manualCheckout")) {
-      showLCD("Checked Out", childName);
-      beep(200);
-    } else {
-      showLCD("⚠️ Failed", "Check-Out Error");
-    }
+    Serial.println("ℹ️ Already checked in — NFC scan will not check out. Use parent QR pickup or manual override.");
+    showLCD("Already In", "Use QR/manual");
+    beep(100);
   } 
   else if (hasCheckIn && hasCheckOut) {
     Serial.println("⚠️ Already checked out — new day or reset required");
