@@ -51,7 +51,9 @@ public class AttendanceRecord {
         // Auto time tracking
         this.present.addListener((obs, oldVal, newVal) -> {
             if (newVal) {
-                setCheckInFullTimestamp(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+                if (getCheckInFullTimestamp() == null || getCheckInFullTimestamp().isBlank()) {
+                    setCheckInFullTimestamp(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+                }
             } else {
                 setCheckInFullTimestamp("");
             }
@@ -59,7 +61,9 @@ public class AttendanceRecord {
 
         this.manualCheckOut.addListener((obs, oldVal, newVal) -> {
             if (newVal) {
-                setCheckOutFullTimestamp(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+                if (getCheckOutFullTimestamp() == null || getCheckOutFullTimestamp().isBlank()) {
+                    setCheckOutFullTimestamp(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+                }
             } else {
                 setCheckOutFullTimestamp("");
             }
