@@ -3,7 +3,6 @@ package nfc;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -29,7 +28,7 @@ final class BillingLedgerInvoiceDocumentSupport {
         Function<BillingLedgerView.LedgerRow, String> paymentProvider,
         Predicate<BillingLedgerView.LedgerRow> isDummyPayment,
         Function<String, String> formatProviderLabel,
-        BiFunction<String, String, String> formatPaymentMethod,
+        Function<String, String> formatPaymentMethod,
         Function<String[], String> firstNonBlank
     ) throws Exception {
         PdfPTable cards = new PdfPTable(2);
@@ -61,8 +60,8 @@ final class BillingLedgerInvoiceDocumentSupport {
             {"Due Date", formatDate.apply(row.getDueDate())},
             {"Paid At", formatDateTime.apply(row.getPaidAt())},
             {"Receipt No", nullSafe.apply(row.getReceiptNo())},
-            {isDummyPayment.test(row) ? "Method (simulated)" : "Method", method == null ? "-" : formatPaymentMethod.apply(method, provider)},
-            {isDummyPayment.test(row) ? "Simulated Bank" : "Bank", bank == null ? "-" : bank}
+            {"Method", method == null ? "-" : formatPaymentMethod.apply(method)},
+            {"Bank", bank == null ? "-" : bank}
         }, ink, muted, border));
 
         document.add(cards);

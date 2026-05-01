@@ -7,7 +7,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -25,7 +24,7 @@ final class BillingLedgerDetailSupport {
         Function<BillingLedgerView.LedgerRow, String> paymentProvider,
         Predicate<BillingLedgerView.LedgerRow> isDummyPayment,
         Function<String, String> formatProviderLabel,
-        BiFunction<String, String, String> formatPaymentMethod,
+        Function<String, String> formatPaymentMethod,
         Function<String[], String> firstNonBlank
     ) {
         StringBuilder sb = new StringBuilder();
@@ -62,8 +61,8 @@ final class BillingLedgerDetailSupport {
         });
         String provider = paymentProvider.apply(row);
         if (method != null) {
-            sb.append(isDummyPayment.test(row) ? "Payment Method (simulated): " : "Payment Method: ")
-                .append(formatPaymentMethod.apply(method, provider)).append('\n');
+            sb.append("Payment Method: ")
+                .append(formatPaymentMethod.apply(method)).append('\n');
         }
 
         String bank = firstNonBlank.apply(new String[] {
@@ -71,7 +70,7 @@ final class BillingLedgerDetailSupport {
             payment == null ? null : payment.getString("bank")
         });
         if (bank != null) {
-            sb.append(isDummyPayment.test(row) ? "Simulated Bank: " : "Bank: ").append(bank).append('\n');
+            sb.append("Bank: ").append(bank).append('\n');
         }
 
         String paymentId = firstNonBlank.apply(new String[] {

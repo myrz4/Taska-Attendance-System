@@ -839,16 +839,13 @@ public class BillingLedgerView extends VBox {
         if (value == null) {
             return null;
         }
-        return "dummy".equalsIgnoreCase(value) ? "dummy simulator" : value;
+        return "dummy".equalsIgnoreCase(value) ? "in-app payment" : value;
     }
 
-    private String formatPaymentMethod(String method, String provider) {
+    private String formatPaymentMethod(String method) {
         String value = BillingLedgerValueSupport.firstNonBlank(method);
         if (value == null) {
             return null;
-        }
-        if (provider != null && "dummy".equalsIgnoreCase(provider) && !value.toLowerCase(Locale.ROOT).contains("simulated")) {
-            return value + " (simulated)";
         }
         return value;
     }

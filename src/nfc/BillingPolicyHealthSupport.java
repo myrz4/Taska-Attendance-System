@@ -84,10 +84,10 @@ final class BillingPolicyHealthSupport {
         String mode = String.valueOf(gateway.get("mode") == null ? "dummy" : gateway.get("mode")).trim();
         boolean allowRealProvider = Boolean.TRUE.equals(gateway.get("allowRealProvider"));
         if ("dummy".equalsIgnoreCase(provider)) {
-            return "dummy simulator";
+            return "in-app payment flow";
         }
         if (!allowRealProvider) {
-            return provider + " blocked, dummy simulator active";
+            return provider + " blocked, in-app payment flow active";
         }
         return provider + " / " + mode;
     }

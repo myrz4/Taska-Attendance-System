@@ -7,7 +7,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -37,7 +36,7 @@ final class BillingLedgerPdfSupport {
         Function<Long, String> formatMoney,
         Function<BillingLedgerView.LedgerRow, String> paymentProvider,
         Function<String, String> formatProviderLabel,
-        BiFunction<String, String, String> formatPaymentMethod,
+        Function<String, String> formatPaymentMethod,
         Predicate<BillingLedgerView.LedgerRow> isDummyPayment
     ) throws Exception {
         File file = BillingPolicyUiSupport.chooseSaveFile(
@@ -236,7 +235,7 @@ final class BillingLedgerPdfSupport {
         Function<Long, String> formatMoney,
         Function<BillingLedgerView.LedgerRow, String> paymentProvider,
         Function<String, String> formatProviderLabel,
-        BiFunction<String, String, String> formatPaymentMethod,
+        Function<String, String> formatPaymentMethod,
         java.util.function.Predicate<BillingLedgerView.LedgerRow> isDummyPayment
     ) throws Exception {
         Document document = new Document(PageSize.A4, 34, 34, 38, 34);
