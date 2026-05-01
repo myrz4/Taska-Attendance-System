@@ -325,7 +325,6 @@ C:\Users\zafri\Downloads\Taska\ Attendance\ System\.arduino_build\esp32\sketch\T
  C:\Users\zafri\OneDrive\Documents\Arduino\libraries\Adafruit_PN532/Adafruit_PN532.h \
  C:\Users\zafri\OneDrive\Documents\Arduino\libraries\Adafruit_BusIO/Adafruit_I2CDevice.h \
  C:\Users\zafri\OneDrive\Documents\Arduino\libraries\Adafruit_BusIO/Adafruit_SPIDevice.h \
- C:\Users\zafri\Downloads\Taska\ Attendance\ System\.arduino_build\esp32\sketch\AttendanceDocCandidate.h \
  C:\Users\zafri\Downloads\Taska\ Attendance\ System\.arduino_build\esp32\sketch\addons/TokenHelper.h \
  C:\Users\zafri\OneDrive\Documents\Arduino\libraries\Firebase_Arduino_Client_Library_for_ESP8266_and_ESP32\src/FirebaseFS.h \
  C:\Users\zafri\OneDrive\Documents\Arduino\libraries\Firebase_Arduino_Client_Library_for_ESP8266_and_ESP32\src/Firebase.h \

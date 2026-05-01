@@ -63,6 +63,105 @@ String cleanString(String s) {
   return s;
 }
 
+String extractDocumentIdFromName(const String &documentName) {
+  int slashIndex = documentName.lastIndexOf('/');
+  if (slashIndex < 0 || slashIndex + 1 >= documentName.length()) {
+    return "";
+  }
+  return cleanString(documentName.substring(slashIndex + 1));
+}
+
+bool queryChildDocumentByUid(const String &nfcUID, FirebaseJson &json, String &resolvedDocId) {
+  FirebaseJson query;
+  query.set("from/collectionId", "children");
+  query.set("from/allDescendants", false);
+  query.set("where/fieldFilter/field/fieldPath", "nfc_uid");
+  query.set("where/fieldFilter/op", "EQUAL");
+  query.set("where/fieldFilter/value/stringValue", nfcUID);
+  query.set("limit", 5);
+
+  if (!Firebase.Firestore.runQuery(&fbdo, FIREBASE_PROJECT_ID, FIRESTORE_DB_ID, "/", &query)) {
+    Serial.println("❌ Child lookup query failed for UID: " + nfcUID);
+    Serial.println("   Reason: " + fbdo.errorReason());
+    return false;
+  }
+
+  FirebaseJsonArray rows;
+  if (!rows.setJsonArrayData(fbdo.payload().c_str())) {
+    return false;
+  }
+
+  String migratedToChildId = "";
+
+  for (size_t i = 0; i < rows.size(); i++) {
+    FirebaseJsonData rowData;
+    rows.get(rowData, i);
+
+    String rowText = rowData.to<String>();
+    if (rowText == "") {
+      continue;
+    }
+
+    FirebaseJson rowJson;
+    rowJson.setJsonData(rowText.c_str());
+
+    FirebaseJsonData docResult;
+    rowJson.get(docResult, "document");
+    if (!docResult.success) {
+      continue;
+    }
+
+    String docText = docResult.to<String>();
+    if (docText == "") {
+      continue;
+    }
+
+    FirebaseJson docJson;
+    docJson.setJsonData(docText.c_str());
+
+    FirebaseJsonData storedUidResult;
+    docJson.get(storedUidResult, "fields/nfc_uid/stringValue");
+    String storedUid = storedUidResult.success ? cleanString(storedUidResult.stringValue) : "";
+    storedUid.toUpperCase();
+    if (storedUid != nfcUID) {
+      continue;
+    }
+
+    FirebaseJsonData migratedResult;
+    docJson.get(migratedResult, "fields/migratedToChildId/stringValue");
+    String migratedTo = migratedResult.success ? cleanString(migratedResult.stringValue) : "";
+    if (migratedTo != "") {
+      if (migratedToChildId == "") {
+        migratedToChildId = migratedTo;
+      }
+      continue;
+    }
+
+    FirebaseJsonData docNameResult;
+    docJson.get(docNameResult, "name");
+    String documentName = docNameResult.success ? cleanString(docNameResult.stringValue) : "";
+    String documentId = extractDocumentIdFromName(documentName);
+    if (documentId == "") {
+      continue;
+    }
+
+    resolvedDocId = documentId;
+    json.setJsonData(docText.c_str());
+    return true;
+  }
+
+  if (migratedToChildId != "") {
+    String childDocPath = "children/" + migratedToChildId;
+    if (Firebase.Firestore.getDocument(&fbdo, FIREBASE_PROJECT_ID, FIRESTORE_DB_ID, childDocPath.c_str())) {
+      json.setJsonData(fbdo.payload().c_str());
+      resolvedDocId = migratedToChildId;
+      return true;
+    }
+  }
+
+  return false;
+}
+
 String getUIDString(uint8_t *uid, uint8_t uidLength) {
   String uidString;
   for (uint8_t i = 0; i < uidLength; i++) {
@@ -203,20 +302,19 @@ void loop() {
   showLCD("Card Detected!", nfcUID);
   beep(200);
 
-  String childDocPath = "children/" + nfcUID;
-  if (!Firebase.Firestore.getDocument(&fbdo, FIREBASE_PROJECT_ID, FIRESTORE_DB_ID, childDocPath.c_str())) {
+  FirebaseJson json;
+  String childId = "";
+  if (!queryChildDocumentByUid(nfcUID, json, childId)) {
     showLCD("No record", "Check card/rules");
     Serial.println("❌ Child lookup failed for UID: " + nfcUID);
-    Serial.println("   Reason: " + fbdo.errorReason());
+    Serial.println("   Reason: no matching child document found for nfc_uid");
     delay(2000);
     lcdSplash();
     return;
   }
 
-  FirebaseJson json;
-  json.setJsonData(fbdo.payload().c_str());
   FirebaseJsonData result;
-  String childId, childName, parentName, teacherName;
+  String childNfcUid, childName, parentName, teacherName;
 
   json.get(result, "fields/name/stringValue");
   if (result.success) childName = cleanString(result.stringValue);
@@ -225,12 +323,15 @@ void loop() {
   json.get(result, "fields/teacher_username/stringValue");
   if (result.success) teacherName = cleanString(result.stringValue);
   json.get(result, "fields/nfc_uid/stringValue");
-  if (result.success) childId = cleanString(result.stringValue);
+  if (result.success) childNfcUid = cleanString(result.stringValue);
 
   if (childName == "") childName = "Unknown";
   if (parentName == "") parentName = "Unknown";
   if (teacherName == "") teacherName = "Unknown";
-  if (childId == "") childId = nfcUID;
+  if (childNfcUid == "") childNfcUid = nfcUID;
+  if (childId == "") childId = childNfcUid;
+
+  String canonicalChildRef = String("projects/") + FIREBASE_PROJECT_ID + "/databases/(default)/documents/children/" + childId;
 
   Serial.println("✅ Found: " + childName + " | Parent: " + parentName + " | Teacher: " + teacherName);
 
@@ -239,12 +340,21 @@ void loop() {
   String midnightTimestamp = getMidnightTimestamp();
   String docID = date + "_" + childId;
   String docPath = "attendance/" + docID;
+  String legacyDocID = date + "_" + childNfcUid;
+  String legacyDocPath = "attendance/" + legacyDocID;
   docID.trim();  // ✅ Ensures no hidden spaces, newline, or trailing characters
 
   bool recordExists = false;
   if (Firebase.Firestore.getDocument(&fbdo, FIREBASE_PROJECT_ID, FIRESTORE_DB_ID, docPath.c_str())) {
     String payload = fbdo.payload().c_str();
     if (payload.indexOf("fields") > 0) recordExists = true;
+  } else if (legacyDocID != docID && Firebase.Firestore.getDocument(&fbdo, FIREBASE_PROJECT_ID, FIRESTORE_DB_ID, legacyDocPath.c_str())) {
+    String payload = fbdo.payload().c_str();
+    if (payload.indexOf("fields") > 0) {
+      recordExists = true;
+      docID = legacyDocID;
+      docPath = legacyDocPath;
+    }
   }
 
   if (recordExists) {
@@ -263,13 +373,16 @@ void loop() {
   if (!hasCheckIn) {
     Serial.println("🟢 No check-in found — performing CHECK-IN");
     FirebaseJson update;
+    update.set("fields/childId/stringValue", childId);
+    update.set("fields/nfc_uid/stringValue", childNfcUid);
+    update.set("fields/childRef/referenceValue", canonicalChildRef);
     update.set("fields/check_in_time/timestampValue", timestampNow);
     update.set("fields/checkin_method/stringValue", "NFC");
     update.set("fields/isPresent/booleanValue", true);
 
     if (Firebase.Firestore.patchDocument(&fbdo, FIREBASE_PROJECT_ID, FIRESTORE_DB_ID,
                                          docPath.c_str(), update.raw(),
-                                         "check_in_time,checkin_method,isPresent")) {
+                                         "childId,nfc_uid,childRef,check_in_time,checkin_method,isPresent")) {
       showLCD("Checked In", childName);
       beep(250);
     } else {
@@ -279,13 +392,16 @@ void loop() {
   else if (hasCheckIn && !hasCheckOut) {
     Serial.println("🔵 Check-in found — performing CHECK-OUT");
     FirebaseJson update;
+    update.set("fields/childId/stringValue", childId);
+    update.set("fields/nfc_uid/stringValue", childNfcUid);
+    update.set("fields/childRef/referenceValue", canonicalChildRef);
     update.set("fields/check_out_time/timestampValue", timestampNow);
     update.set("fields/checkout_method/stringValue", "NFC");
     update.set("fields/manualCheckout/booleanValue", false);
 
     if (Firebase.Firestore.patchDocument(&fbdo, FIREBASE_PROJECT_ID, FIRESTORE_DB_ID,
                                          docPath.c_str(), update.raw(),
-                                         "check_out_time,checkout_method,manualCheckout")) {
+                                         "childId,nfc_uid,childRef,check_out_time,checkout_method,manualCheckout")) {
       showLCD("Checked Out", childName);
       beep(200);
     } else {
@@ -302,7 +418,8 @@ else {
   Serial.println("🆕 No record — performing CHECK-IN");
   FirebaseJson content;
   content.set("fields/childId/stringValue", childId);
-  content.set("fields/childRef/referenceValue", "projects/" FIREBASE_PROJECT_ID "/databases/(default)/documents/children/" + nfcUID);
+  content.set("fields/nfc_uid/stringValue", childNfcUid);
+  content.set("fields/childRef/referenceValue", canonicalChildRef);
   content.set("fields/name/stringValue", childName);
   content.set("fields/parentName/stringValue", parentName);
   content.set("fields/teacher/stringValue", teacherName);
