@@ -209,6 +209,28 @@ String getDateNow() {
   return String(buf);
 }
 
+void publishLatestScan(const String &nfcUID) {
+  String bridgePath = "nfcCapture/latest";
+  FirebaseJson content;
+  content.set("fields/uid/stringValue", nfcUID);
+  content.set("fields/scannedAt/timestampValue", getIsoTimestamp());
+  content.set("fields/source/stringValue", "esp32");
+
+  if (Firebase.Firestore.patchDocument(&fbdo, FIREBASE_PROJECT_ID, FIRESTORE_DB_ID,
+                                       bridgePath.c_str(), content.raw(),
+                                       "uid,scannedAt,source")) {
+    return;
+  }
+
+  if (Firebase.Firestore.createDocument(&fbdo, FIREBASE_PROJECT_ID, FIRESTORE_DB_ID,
+                                        bridgePath.c_str(), content.raw())) {
+    return;
+  }
+
+  Serial.println("⚠️ Failed to publish latest NFC scan bridge.");
+  Serial.println("   Reason: " + fbdo.errorReason());
+}
+
 // 🧩 Manual override for debugging or admin correction (optional)
 String selectedDate = ""; // leave empty for auto (today)
 
@@ -301,6 +323,7 @@ void loop() {
   Serial.println("📇 Card UID: " + nfcUID);
   showLCD("Card Detected!", nfcUID);
   beep(200);
+  publishLatestScan(nfcUID);
 
   FirebaseJson json;
   String childId = "";

@@ -3,8 +3,16 @@ package nfc;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.Date;
 import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
 
+import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.control.Alert;
@@ -59,6 +67,8 @@ final class CRUDChildDialogSupport {
         DatePicker dobPicker = new DatePicker();
         TextField uidTf = new TextField();
         uidTf.setPromptText("Scan/write NFC UID (replaceable)");
+        Label uidHint = new Label("Scan an NFC card while this window is open to fill the UID automatically.");
+        uidHint.setWrapText(true);
         TextField childIcTf = new TextField();
         childIcTf.setPromptText("No. IC / MyKid");
         TextField birthCertTf = new TextField();
@@ -156,6 +166,7 @@ final class CRUDChildDialogSupport {
             new Label("Child Name:"), nameTf,
             new Label("Birth Date:"), dobPicker,
             new Label("NFC UID:"), uidTf,
+            uidHint,
             new Label("Child IC / MyKid:"), childIcTf,
             new Label("Birth Certificate No:"), birthCertTf,
             new Label("Address:"), addressTa,
@@ -206,7 +217,83 @@ final class CRUDChildDialogSupport {
             return null;
         });
 
-        dialog.showAndWait().ifPresent(child -> {
+        Consumer<String> tagCapture = tagId -> {
+            if (!dialog.isShowing()) {
+                return;
+            }
+            String normalizedTagId = tagId == null ? "" : tagId.trim().toUpperCase();
+            uidTf.setText(normalizedTagId);
+            uidTf.positionCaret(normalizedTagId.length());
+        };
+
+        Optional<ChildrenView.Child> dialogResult;
+        NFCReader dialogReader = null;
+        Thread dialogReaderThread = null;
+        Date dialogOpenedAt = new Date();
+        AtomicLong lastCapturedAtMs = new AtomicLong(dialogOpenedAt.getTime());
+        ScheduledExecutorService bridgePoller = Executors.newSingleThreadScheduledExecutor(runnable -> {
+            Thread thread = new Thread(runnable);
+            thread.setName("taska-nfc-bridge-poller");
+            thread.setDaemon(true);
+            return thread;
+        });
+        NFCReader.setTagCaptureConsumer(tagCapture);
+        try {
+            bridgePoller.scheduleWithFixedDelay(() -> {
+                try {
+                    FsDocument latestScan = client.getDocument("nfcCapture", "latest");
+                    if (latestScan == null) {
+                        return;
+                    }
+
+                    Date scannedAt = latestScan.getDate("scannedAt");
+                    String uid = latestScan.getString("uid");
+                    if (scannedAt == null || uid == null || uid.isBlank()) {
+                        return;
+                    }
+
+                    long scannedAtMs = scannedAt.getTime();
+                    if (scannedAtMs <= lastCapturedAtMs.get()) {
+                        return;
+                    }
+
+                    if (lastCapturedAtMs.compareAndSet(lastCapturedAtMs.get(), scannedAtMs)) {
+                        Platform.runLater(() -> tagCapture.accept(uid));
+                    }
+                } catch (IOException | InterruptedException ex) {
+                    if (ex instanceof InterruptedException) {
+                        Thread.currentThread().interrupt();
+                    }
+                } catch (RuntimeException ex) {
+                    System.err.println("CRUDChildDialogSupport: NFC bridge poll failed - " + ex.getMessage());
+                }
+            }, 0L, 700L, TimeUnit.MILLISECONDS);
+
+            if (NFCReader.resolveConfiguredPortName() == null) {
+                dialogReader = new NFCReader("auto");
+                dialogReaderThread = new Thread(dialogReader);
+                dialogReaderThread.setName("taska-nfc-dialog-reader");
+                dialogReaderThread.setDaemon(true);
+                dialogReaderThread.start();
+            }
+            dialogResult = dialog.showAndWait();
+        } finally {
+            NFCReader.clearTagCaptureConsumer(tagCapture);
+            bridgePoller.shutdownNow();
+            if (dialogReader != null) {
+                dialogReader.stopReading();
+            }
+            if (dialogReaderThread != null && dialogReaderThread.isAlive()) {
+                dialogReaderThread.interrupt();
+                try {
+                    dialogReaderThread.join(1000L);
+                } catch (InterruptedException ex) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+        }
+
+        dialogResult.ifPresent(child -> {
             try {
                 Integer dueDay = billingDueDayCb.getValue();
                 CRUDChildPersistenceSupport.SaveRequest request = new CRUDChildPersistenceSupport.SaveRequest(

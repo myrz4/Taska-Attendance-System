@@ -6,6 +6,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.function.Consumer;
 
 import com.fazecast.jSerialComm.SerialPort;
 
@@ -14,6 +15,7 @@ import javafx.application.Platform;
 public class NFCReader implements Runnable {
     private static final String DEFAULT_PORT = "disabled";
     private static final int AUTO_ROTATE_EMPTY_READS = 8;
+    private static volatile Consumer<String> tagCaptureConsumer;
 
     private SerialPort serialPort;
     private final String requestedPortName;
@@ -237,6 +239,16 @@ public class NFCReader implements Runnable {
         }
     }
 
+    public static void setTagCaptureConsumer(Consumer<String> consumer) {
+        tagCaptureConsumer = consumer;
+    }
+
+    public static void clearTagCaptureConsumer(Consumer<String> consumer) {
+        if (tagCaptureConsumer == consumer) {
+            tagCaptureConsumer = null;
+        }
+    }
+
     private void logWaiting(String message) {
         long now = System.currentTimeMillis();
         if (now - lastWaitLogMs >= 4000) {
@@ -286,6 +298,18 @@ public class NFCReader implements Runnable {
     }
 
     private void processTag(String tagId) {
+        Consumer<String> captureConsumer = tagCaptureConsumer;
+        if (captureConsumer != null) {
+            Platform.runLater(() -> {
+                try {
+                    captureConsumer.accept(tagId);
+                } catch (RuntimeException ex) {
+                    logError("tag capture callback failed", ex);
+                }
+            });
+            return;
+        }
+
         try {
             NFCAttendanceSupport.AttendanceUpdateResult result = NFCAttendanceSupport.submitCheckIn(tagId, UserSession.getName());
 

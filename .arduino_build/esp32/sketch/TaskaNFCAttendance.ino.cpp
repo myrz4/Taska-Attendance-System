@@ -55,11 +55,13 @@ String getIsoTimestamp();
 String getMidnightTimestamp();
 #line 201 "C:\\Users\\zafri\\Downloads\\Taska Attendance System\\TaskaNFCAttendance\\TaskaNFCAttendance.ino"
 String getDateNow();
-#line 216 "C:\\Users\\zafri\\Downloads\\Taska Attendance System\\TaskaNFCAttendance\\TaskaNFCAttendance.ino"
+#line 212 "C:\\Users\\zafri\\Downloads\\Taska Attendance System\\TaskaNFCAttendance\\TaskaNFCAttendance.ino"
+void publishLatestScan(const String &nfcUID);
+#line 238 "C:\\Users\\zafri\\Downloads\\Taska Attendance System\\TaskaNFCAttendance\\TaskaNFCAttendance.ino"
 String getActiveDate();
-#line 224 "C:\\Users\\zafri\\Downloads\\Taska Attendance System\\TaskaNFCAttendance\\TaskaNFCAttendance.ino"
+#line 246 "C:\\Users\\zafri\\Downloads\\Taska Attendance System\\TaskaNFCAttendance\\TaskaNFCAttendance.ino"
 void setup();
-#line 283 "C:\\Users\\zafri\\Downloads\\Taska Attendance System\\TaskaNFCAttendance\\TaskaNFCAttendance.ino"
+#line 305 "C:\\Users\\zafri\\Downloads\\Taska Attendance System\\TaskaNFCAttendance\\TaskaNFCAttendance.ino"
 void loop();
 #line 41 "C:\\Users\\zafri\\Downloads\\Taska Attendance System\\TaskaNFCAttendance\\TaskaNFCAttendance.ino"
 void beep(int ms = 120, int duty = 180) {
@@ -233,6 +235,28 @@ String getDateNow() {
   return String(buf);
 }
 
+void publishLatestScan(const String &nfcUID) {
+  String bridgePath = "nfcCapture/latest";
+  FirebaseJson content;
+  content.set("fields/uid/stringValue", nfcUID);
+  content.set("fields/scannedAt/timestampValue", getIsoTimestamp());
+  content.set("fields/source/stringValue", "esp32");
+
+  if (Firebase.Firestore.patchDocument(&fbdo, FIREBASE_PROJECT_ID, FIRESTORE_DB_ID,
+                                       bridgePath.c_str(), content.raw(),
+                                       "uid,scannedAt,source")) {
+    return;
+  }
+
+  if (Firebase.Firestore.createDocument(&fbdo, FIREBASE_PROJECT_ID, FIRESTORE_DB_ID,
+                                        bridgePath.c_str(), content.raw())) {
+    return;
+  }
+
+  Serial.println("⚠️ Failed to publish latest NFC scan bridge.");
+  Serial.println("   Reason: " + fbdo.errorReason());
+}
+
 // 🧩 Manual override for debugging or admin correction (optional)
 String selectedDate = ""; // leave empty for auto (today)
 
@@ -325,6 +349,7 @@ void loop() {
   Serial.println("📇 Card UID: " + nfcUID);
   showLCD("Card Detected!", nfcUID);
   beep(200);
+  publishLatestScan(nfcUID);
 
   FirebaseJson json;
   String childId = "";
