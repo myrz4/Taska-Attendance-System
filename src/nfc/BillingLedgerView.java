@@ -15,7 +15,6 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
-import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
@@ -28,7 +27,6 @@ import javafx.scene.control.Tooltip;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.stage.Window;
 
@@ -49,28 +47,28 @@ public class BillingLedgerView extends VBox {
     private final ComboBox<String> parentSortFilter = new ComboBox<>();
     private final TextField issuePeriodField = new TextField();
     private final Button refreshButton = new Button("Refresh");
-    private final Button issueInvoicesButton = new Button("Issue Month Invoices");
-    private final Button issueVisibleInvoicesButton = new Button("Issue Visible Parents");
+    private final Button issueInvoicesButton = new Button("Issue Period");
+    private final Button issueVisibleInvoicesButton = new Button("Issue Visible");
     private final Button quickOverdueButton = new Button("Only Overdue");
-    private final Button quickUnpaidCurrentMonthButton = new Button("Unpaid This Month");
+    private final Button quickUnpaidCurrentMonthButton = new Button("Unpaid Month");
     private final Button quickCurrentMonthButton = new Button("Current Month");
-    private final Button quickCriticalFamiliesButton = new Button("Critical Families");
+    private final Button quickCriticalFamiliesButton = new Button("Critical");
     private final Button quickNeedsReviewButton = new Button("Needs Review");
     private final Button quickAgeReviewButton = new Button("Age Review");
     private final Button quickOvertimeReviewButton = new Button("Overtime Review");
     private final Button resetFiltersButton = new Button("Reset Filters");
     private final Button focusParentButton = new Button("Focus Parent");
     private final Button parentUnpaidButton = new Button("Parent Unpaid");
-    private final Button latestUnpaidInvoiceButton = new Button("Latest Unpaid Invoice");
-    private final Button clearParentFocusButton = new Button("Clear Parent Focus");
-    private final Button exportParentSummaryButton = new Button("Export PDF");
-    private final Button exportParentSummaryOpenButton = new Button("Export PDF + Open");
-    private final Button printParentSummaryButton = new Button("Export PDF + Print");
-    private final Button exportVisibleParentsButton = new Button("Batch Export Visible PDFs");
-    private final Button exportHtmlButton = new Button("Export PDF");
-    private final Button exportHtmlOpenButton = new Button("Export PDF + Open");
-    private final Button printHtmlButton = new Button("Export PDF + Print");
-    private final Button markCashPaidButton = new Button("Mark Paid (Cash)");
+    private final Button latestUnpaidInvoiceButton = new Button("Latest Unpaid");
+    private final Button clearParentFocusButton = new Button("Clear Focus");
+    private final Button exportParentSummaryButton = new Button("PDF");
+    private final Button exportParentSummaryOpenButton = new Button("Open PDF");
+    private final Button printParentSummaryButton = new Button("Print PDF");
+    private final Button exportVisibleParentsButton = new Button("Batch PDFs");
+    private final Button exportHtmlButton = new Button("PDF");
+    private final Button exportHtmlOpenButton = new Button("Open PDF");
+    private final Button printHtmlButton = new Button("Print PDF");
+    private final Button markCashPaidButton = new Button("Cash Paid");
     private final Label statusLabel = new Label("Loading billing ledger...");
     private final Label invoiceCountLabel = new Label("0");
     private final Label paidTotalLabel = new Label("RM0.00");
@@ -193,7 +191,7 @@ public class BillingLedgerView extends VBox {
         printHtmlButton.setDisable(true);
         markCashPaidButton.setDisable(true);
 
-        BillingPolicyUiSupport.configureActionButtons(170,
+        BillingPolicyUiSupport.configureActionButtons(152,
             refreshButton,
             issueInvoicesButton,
             issueVisibleInvoicesButton,
@@ -218,6 +216,7 @@ public class BillingLedgerView extends VBox {
             exportHtmlOpenButton,
             printHtmlButton
         );
+        applyToolbarTooltips();
         AppThemeSupport.styleControls(
             searchField,
             statusFilter,
@@ -418,6 +417,30 @@ public class BillingLedgerView extends VBox {
         VBox.setVgrow(shell, javafx.scene.layout.Priority.ALWAYS);
 
         reloadData();
+    }
+
+    private void applyToolbarTooltips() {
+        refreshButton.setTooltip(new Tooltip("Reload the billing ledger from Firestore."));
+        issueInvoicesButton.setTooltip(new Tooltip("Issue invoices for the period shown beside this button."));
+        issueVisibleInvoicesButton.setTooltip(new Tooltip("Issue invoices only for the parents currently visible in this view."));
+        quickOverdueButton.setTooltip(new Tooltip("Show overdue invoices only."));
+        quickUnpaidCurrentMonthButton.setTooltip(new Tooltip("Show unpaid invoices for the current month only."));
+        quickCurrentMonthButton.setTooltip(new Tooltip("Filter the ledger to the current month."));
+        quickCriticalFamiliesButton.setTooltip(new Tooltip("Show families with critical outstanding balances."));
+        quickNeedsReviewButton.setTooltip(new Tooltip("Show invoices that need management review."));
+        resetFiltersButton.setTooltip(new Tooltip("Reset all billing filters to the default view."));
+        focusParentButton.setTooltip(new Tooltip("Focus the ledger on the currently selected parent."));
+        parentUnpaidButton.setTooltip(new Tooltip("Show unpaid invoices for the selected parent."));
+        latestUnpaidInvoiceButton.setTooltip(new Tooltip("Open the latest unpaid invoice for the selected parent."));
+        clearParentFocusButton.setTooltip(new Tooltip("Clear the current parent focus and return to the full ledger."));
+        exportVisibleParentsButton.setTooltip(new Tooltip("Export PDF summaries for all parents visible in the current view."));
+        exportParentSummaryButton.setTooltip(new Tooltip("Export the selected parent summary to PDF."));
+        exportParentSummaryOpenButton.setTooltip(new Tooltip("Export the selected parent summary to PDF and open it."));
+        printParentSummaryButton.setTooltip(new Tooltip("Export the selected parent summary to PDF and print it."));
+        exportHtmlButton.setTooltip(new Tooltip("Export the selected invoice details to PDF."));
+        exportHtmlOpenButton.setTooltip(new Tooltip("Export the selected invoice details to PDF and open it."));
+        printHtmlButton.setTooltip(new Tooltip("Export the selected invoice details to PDF and print it."));
+        markCashPaidButton.setTooltip(new Tooltip("Mark the selected invoice as paid by cash."));
     }
 
     public void showAgeReviewView() {
