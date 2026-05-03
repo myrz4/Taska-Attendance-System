@@ -3,6 +3,7 @@ package nfc;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
@@ -11,6 +12,7 @@ import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.Border;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
@@ -46,11 +48,23 @@ final class LoginViewFormSupport {
         passLbl.setFont(Font.font("System", FontWeight.SEMI_BOLD, 16));
         passLbl.setTextFill(Color.web("#2a3d2e"));
 
-        TextField username = new TextField();
-        username.setPromptText("Enter username");
-        username.setPrefSize(360, 44);
-        username.setMaxSize(360, 44);
-        username.setFont(Font.font("System", FontWeight.BOLD, 18));
+        ComboBox<String> username = new ComboBox<>();
+        username.setEditable(true);
+        username.setPrefWidth(360);
+        username.setMaxWidth(Double.MAX_VALUE);
+        username.setVisibleRowCount(6);
+        username.setBackground(Background.EMPTY);
+        username.setBorder(Border.EMPTY);
+        username.setStyle(
+            "-fx-background-color: transparent;"
+                + "-fx-border-color: transparent;"
+                + "-fx-padding: 0;"
+        );
+        TextField usernameEditor = username.getEditor();
+        usernameEditor.setPromptText("Enter username");
+        usernameEditor.setFont(Font.font("System", FontWeight.BOLD, 18));
+        usernameEditor.setBackground(Background.EMPTY);
+        usernameEditor.setBorder(Border.EMPTY);
 
         ImageView lockUser = new ImageView(ImageLoader.loadSafe("mangga1.png"));
         lockUser.setFitWidth(20);
@@ -68,8 +82,7 @@ final class LoginViewFormSupport {
                 + "-fx-border-color: #2C6B39;"
                 + "-fx-border-width: 2;"
         );
-        username.setBackground(Background.EMPTY);
-        username.setBorder(Border.EMPTY);
+            HBox.setHgrow(username, Priority.ALWAYS);
         userRow.getChildren().addAll(lockUser, username);
 
         PasswordField password = new PasswordField();
@@ -136,14 +149,14 @@ final class LoginViewFormSupport {
     @SuppressWarnings("unused")
     static final class LoginFormBundle {
         final StackPane cardHolder;
-        final TextField username;
+        final ComboBox<String> username;
         final PasswordField password;
         final Label msg;
         final Button loginBtn;
         @SuppressWarnings("unused")
         final Label forgot;
 
-        LoginFormBundle(StackPane cardHolder, TextField username, PasswordField password, Label msg, Button loginBtn, Label forgot) {
+        LoginFormBundle(StackPane cardHolder, ComboBox<String> username, PasswordField password, Label msg, Button loginBtn, Label forgot) {
             this.cardHolder = cardHolder;
             this.username = username;
             this.password = password;

@@ -9,7 +9,7 @@ import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 import javafx.application.Platform;
@@ -33,6 +33,8 @@ import javafx.stage.Screen;
 @SuppressWarnings("unused")
 final class CRUDChildDialogSupport {
     private static final DateTimeFormatter BILLING_PERIOD_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM");
+    private static final String UID_HINT_TEXT = "Scan an NFC card while this window is open to fill the UID automatically.";
+    private static final String UID_HINT_BRIDGE_ERROR_TEXT = "Scanner bridge unavailable. Check Firestore access for nfcCapture/latest or use the direct USB scanner.";
 
     private CRUDChildDialogSupport() {
     }
@@ -67,7 +69,7 @@ final class CRUDChildDialogSupport {
         DatePicker dobPicker = new DatePicker();
         TextField uidTf = new TextField();
         uidTf.setPromptText("Scan/write NFC UID (replaceable)");
-        Label uidHint = new Label("Scan an NFC card while this window is open to fill the UID automatically.");
+        Label uidHint = new Label(UID_HINT_TEXT);
         uidHint.setWrapText(true);
         TextField childIcTf = new TextField();
         childIcTf.setPromptText("No. IC / MyKid");
@@ -229,8 +231,16 @@ final class CRUDChildDialogSupport {
         Optional<ChildrenView.Child> dialogResult;
         NFCReader dialogReader = null;
         Thread dialogReaderThread = null;
-        Date dialogOpenedAt = new Date();
-        AtomicLong lastCapturedAtMs = new AtomicLong(dialogOpenedAt.getTime());
+        String initialBridgeFingerprint = "";
+        try {
+            initialBridgeFingerprint = latestBridgeFingerprint(client.getDocument("nfcCapture", "latest"));
+        } catch (IOException | InterruptedException ex) {
+            if (ex instanceof InterruptedException) {
+                Thread.currentThread().interrupt();
+            }
+        }
+        AtomicReference<String> lastCapturedBridgeFingerprint = new AtomicReference<>(initialBridgeFingerprint);
+        AtomicReference<String> lastBridgeError = new AtomicReference<>("");
         ScheduledExecutorService bridgePoller = Executors.newSingleThreadScheduledExecutor(runnable -> {
             Thread thread = new Thread(runnable);
             thread.setName("taska-nfc-bridge-poller");
@@ -246,23 +256,32 @@ final class CRUDChildDialogSupport {
                         return;
                     }
 
-                    Date scannedAt = latestScan.getDate("scannedAt");
-                    String uid = latestScan.getString("uid");
-                    if (scannedAt == null || uid == null || uid.isBlank()) {
+                    String bridgeFingerprint = latestBridgeFingerprint(latestScan);
+                    String uid = safeStr(latestScan.getString("uid")).trim();
+                    if (bridgeFingerprint.isEmpty() || uid.isEmpty()) {
                         return;
                     }
 
-                    long scannedAtMs = scannedAt.getTime();
-                    if (scannedAtMs <= lastCapturedAtMs.get()) {
+                    String previousFingerprint = lastCapturedBridgeFingerprint.getAndSet(bridgeFingerprint);
+                    if (bridgeFingerprint.equals(previousFingerprint)) {
                         return;
                     }
 
-                    if (lastCapturedAtMs.compareAndSet(lastCapturedAtMs.get(), scannedAtMs)) {
-                        Platform.runLater(() -> tagCapture.accept(uid));
+                    if (!lastBridgeError.get().isEmpty()) {
+                        lastBridgeError.set("");
+                        Platform.runLater(() -> uidHint.setText(UID_HINT_TEXT));
                     }
+                    Platform.runLater(() -> tagCapture.accept(uid));
                 } catch (IOException | InterruptedException ex) {
                     if (ex instanceof InterruptedException) {
                         Thread.currentThread().interrupt();
+                        return;
+                    }
+
+                    String previousError = lastBridgeError.getAndSet(UID_HINT_BRIDGE_ERROR_TEXT);
+                    if (!UID_HINT_BRIDGE_ERROR_TEXT.equals(previousError)) {
+                        System.err.println("CRUDChildDialogSupport: NFC bridge read failed - " + ex.getMessage());
+                        Platform.runLater(() -> uidHint.setText(UID_HINT_BRIDGE_ERROR_TEXT));
                     }
                 } catch (RuntimeException ex) {
                     System.err.println("CRUDChildDialogSupport: NFC bridge poll failed - " + ex.getMessage());
@@ -330,6 +349,19 @@ final class CRUDChildDialogSupport {
 
     private static String safeStr(Object value) {
         return value == null ? "" : String.valueOf(value);
+    }
+
+    private static String latestBridgeFingerprint(FsDocument latestScan) {
+        if (latestScan == null) {
+            return "";
+        }
+
+        Date scannedAt = latestScan.getDate("scannedAt");
+        String uid = safeStr(latestScan.getString("uid")).trim().toUpperCase();
+        if (scannedAt == null || uid.isEmpty()) {
+            return "";
+        }
+        return scannedAt.getTime() + ":" + uid;
     }
 
     private static String newDocId() {

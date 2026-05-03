@@ -57,6 +57,7 @@ public class AdminDashboard extends javafx.application.Application {
         primaryStage.initStyle(javafx.stage.StageStyle.UNDECORATED);
         primaryStage.setScene(scene);
         primaryStage.setOnCloseRequest(event -> closeApplication());
+        AdminDashboardWindowSupport.applyScreenSizedLaunch(primaryStage);
 
         primaryStage.show();
 

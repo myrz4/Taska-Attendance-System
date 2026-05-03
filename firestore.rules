@@ -246,6 +246,13 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // Latest scanner bridge event used by JavaFX child CRUD dialogs to auto-fill NFC UID.
+    match /nfcCapture/{docId} {
+      allow read: if isAdmin() || isTeacher() || isDevice();
+      allow create, update: if isDevice();
+      allow delete: if isAdmin();
+    }
+
     match /attendanceAudit/{docId} {
       allow read: if isAdmin() || isTeacher() || isParentForAttendanceChildId(resource.data.childId);
       allow create, update, delete: if isAdmin();

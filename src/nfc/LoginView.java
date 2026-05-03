@@ -1,13 +1,12 @@
 package nfc;
 
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
-import javafx.scene.control.*;
-import javafx.scene.layout.*;
+import javafx.scene.control.Alert;
+import javafx.scene.layout.AnchorPane;
 import javafx.stage.Stage;
-
-import javafx.application.Platform;
 
 public class LoginView extends Application {
 
@@ -27,9 +26,10 @@ public class LoginView extends Application {
 
         LoginViewLayoutSupport.LoginScaffold scaffold = LoginViewLayoutSupport.buildScaffold(getClass());
         LoginViewFormSupport.LoginFormBundle form = LoginViewFormSupport.buildLoginCard(CARD_BG, CARD_STROKE, BTN_GREEN);
+        LoginHistorySupport.applySavedUsernames(form.username);
 
         form.loginBtn.setOnAction(e -> {
-            String u = form.username.getText().trim();
+            String u = form.username.getEditor().getText().trim();
             String p = form.password.getText().trim();
 
             if (u.isEmpty() || p.isEmpty()) {
@@ -40,6 +40,7 @@ public class LoginView extends Application {
             new Thread(() -> {
                 try {
                     LoginAuthSupport.authenticateAndBootstrapSession(u, p);
+                    LoginHistorySupport.rememberUsername(u);
 
                     Platform.runLater(() -> {
                         try {
