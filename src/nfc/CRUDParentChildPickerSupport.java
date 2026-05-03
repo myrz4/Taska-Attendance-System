@@ -63,6 +63,7 @@ final class CRUDParentChildPickerSupport {
 
         TextField searchTf = new TextField();
         searchTf.setPromptText("Search children...");
+        AppThemeSupport.styleControls(searchTf);
         searchTf.textProperty().addListener((obs, oldValue, newValue) -> {
             String query = newValue == null ? "" : newValue.trim().toLowerCase();
             filteredChildren.setPredicate(child -> query.isEmpty()
@@ -72,6 +73,8 @@ final class CRUDParentChildPickerSupport {
 
         ListView<CRUDParentDialogSupport.ChildOption> childrenList = new ListView<>(filteredChildren);
         childrenList.setPrefHeight(260);
+        childrenList.setPrefWidth(360);
+        AppThemeSupport.styleControls(childrenList);
         childrenList.setCellFactory(listView -> new CheckBoxListCell<CRUDParentDialogSupport.ChildOption>(
             item -> selectedProps.computeIfAbsent(item, ignored -> trackedProperty(false, refreshSelection))
         ) {
@@ -84,6 +87,8 @@ final class CRUDParentChildPickerSupport {
 
         Button applyChildrenBtn = new Button("Apply");
         Button clearChildrenBtn = new Button("Clear");
+        AppThemeSupport.stylePrimaryButtons(applyChildrenBtn);
+        AppThemeSupport.styleGhostButtons(clearChildrenBtn);
         HBox popupActions = new HBox(10, applyChildrenBtn, clearChildrenBtn);
 
         VBox popupContent = new VBox(10,
@@ -93,6 +98,7 @@ final class CRUDParentChildPickerSupport {
             popupActions
         );
         popupContent.setPadding(new Insets(12));
+        popupContent.getStyleClass().addAll("app-card", "app-editor-card");
 
         CustomMenuItem popupItem = new CustomMenuItem(popupContent);
         popupItem.setHideOnClick(false);

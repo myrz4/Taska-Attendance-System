@@ -13,9 +13,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 import javafx.application.Platform;
-import javafx.geometry.Insets;
 import javafx.geometry.Rectangle2D;
-import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.CheckBox;
@@ -26,6 +24,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Screen;
@@ -42,7 +41,12 @@ final class CRUDChildDialogSupport {
     static void showChildDialog(ChildrenView.Child existing, boolean isNew, Runnable onSave) {
         Dialog<ChildrenView.Child> dialog = new Dialog<>();
         dialog.initModality(Modality.APPLICATION_MODAL);
-        dialog.setTitle(isNew ? "Add New Child" : "Edit Child");
+        AppThemeSupport.prepareDialog(
+            dialog,
+            isNew ? "Add New Child" : "Edit Child",
+            "Manage child identity, NFC registration, and billing configuration.",
+            AppThemeSupport.Tone.INFO
+        );
 
         FirestoreRestClient client;
         String childId;
@@ -61,7 +65,7 @@ final class CRUDChildDialogSupport {
             if (e instanceof InterruptedException) {
                 Thread.currentThread().interrupt();
             }
-            new Alert(Alert.AlertType.ERROR, "Firestore REST Error: " + e.getMessage()).showAndWait();
+            AppThemeSupport.showException(null, "Firestore REST Error", e);
             return;
         }
 
@@ -105,6 +109,22 @@ final class CRUDChildDialogSupport {
         absenceLetterDaysTf.setPromptText("0");
         Label billingHint = new Label("Full-time monthly fees are age-based. Daily, weekly, and hourly transit plans are billed from actual attendance records.");
         billingHint.setWrapText(true);
+        uidHint.getStyleClass().add("app-helper-text");
+        transitHint.getStyleClass().add("app-helper-text");
+        billingHint.getStyleClass().add("app-helper-text");
+        AppThemeSupport.styleControls(
+            nameTf,
+            dobPicker,
+            uidTf,
+            childIcTf,
+            birthCertTf,
+            addressTa,
+            feePlanCb,
+            transitDurationHintCb,
+            billingDueDayCb,
+            absenceLetterPeriodTf,
+            absenceLetterDaysTf
+        );
 
         Runnable syncTransitControls = () -> CRUDChildValidationSupport.syncTransitControls(
             feePlanCb.getValue(),
@@ -164,32 +184,61 @@ final class CRUDChildDialogSupport {
         billingDueDayCb.setValue(dueDayDefault);
         syncTransitControls.run();
 
-        VBox content = new VBox(10,
-            new Label("Child Name:"), nameTf,
-            new Label("Birth Date:"), dobPicker,
-            new Label("NFC UID:"), uidTf,
-            uidHint,
-            new Label("Child IC / MyKid:"), childIcTf,
-            new Label("Birth Certificate No:"), birthCertTf,
-            new Label("Address:"), addressTa,
-            new Label("Billing Plan:"), feePlanCb,
-            new Label("Auto Monthly Transit Duration Hint:"), transitDurationHintCb,
-            schoolHolidayTransitCb,
-            transitHint,
-            billingHint,
-            transportFromTadikaCb,
-            new Label("Payment due day:"), billingDueDayCb,
-            new Label("Approved Absence Letter Period (optional):"), absenceLetterPeriodTf,
-            new Label("Absence Days With Letter (optional):"), absenceLetterDaysTf,
-            absenceLetterApprovedCb,
-            new Label("Note: All monthly/yearly totals are auto-calculated by backend."),
-            staffChildCb
+        GridPane basicGrid = createFormGrid();
+        basicGrid.addRow(0, new Label("Child Name"), nameTf);
+        basicGrid.addRow(1, new Label("Birth Date"), dobPicker);
+        basicGrid.addRow(2, new Label("NFC UID"), uidTf);
+        basicGrid.add(uidHint, 1, 3);
+
+        GridPane identificationGrid = createFormGrid();
+        identificationGrid.addRow(0, new Label("Child IC / MyKid"), childIcTf);
+        identificationGrid.addRow(1, new Label("Birth Certificate No"), birthCertTf);
+        identificationGrid.addRow(2, new Label("Address"), addressTa);
+
+        GridPane billingGrid = createFormGrid();
+        int billingRow = 0;
+        billingGrid.addRow(billingRow++, new Label("Billing Plan"), feePlanCb);
+        billingGrid.addRow(billingRow++, new Label("Transit Duration Hint"), transitDurationHintCb);
+        billingGrid.add(schoolHolidayTransitCb, 1, billingRow++);
+        billingGrid.add(transitHint, 1, billingRow++);
+        billingGrid.add(billingHint, 1, billingRow++);
+        billingGrid.add(transportFromTadikaCb, 1, billingRow++);
+        billingGrid.addRow(billingRow++, new Label("Payment Due Day"), billingDueDayCb);
+
+        GridPane optionalGrid = createFormGrid();
+        int optionalRow = 0;
+        optionalGrid.addRow(optionalRow++, new Label("Approved Absence Letter Period"), absenceLetterPeriodTf);
+        optionalGrid.addRow(optionalRow++, new Label("Absence Days With Letter"), absenceLetterDaysTf);
+        optionalGrid.add(absenceLetterApprovedCb, 1, optionalRow++);
+        optionalGrid.add(staffChildCb, 1, optionalRow++);
+        Label optionalNote = new Label("All monthly and yearly totals remain auto-calculated by the backend.");
+        optionalNote.getStyleClass().add("app-helper-text");
+        optionalNote.setWrapText(true);
+        optionalGrid.add(optionalNote, 1, optionalRow);
+
+        VBox content = AppThemeSupport.createDialogContent(
+            AppThemeSupport.createFormSection(
+                "Basic Info",
+                "Capture the child profile and keep the NFC UID ready for attendance scanning.",
+                basicGrid
+            ),
+            AppThemeSupport.createFormSection(
+                "Identification",
+                "Keep identity and address fields tidy for admin review and parent support.",
+                identificationGrid
+            ),
+            AppThemeSupport.createFormSection(
+                "Billing Plan",
+                "These controls feed the existing billing and transit logic without changing the backend rules.",
+                billingGrid
+            ),
+            AppThemeSupport.createFormSection(
+                "Optional Billing Controls",
+                "Use these toggles for approved absence-letter discounts, staff-child rules, and transport options.",
+                optionalGrid
+            )
         );
-        content.setPadding(new Insets(20));
-        ScrollPane scrollPane = new ScrollPane(content);
-        scrollPane.setFitToWidth(true);
-        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        ScrollPane scrollPane = AppThemeSupport.wrapDialogContent(content);
 
         Rectangle2D visualBounds = Screen.getPrimary().getVisualBounds();
         double maxDialogWidth = Math.min(visualBounds.getWidth() * 0.78, 760);
@@ -203,6 +252,7 @@ final class CRUDChildDialogSupport {
 
         ButtonType saveType = new ButtonType("Save", ButtonBar.ButtonData.OK_DONE);
         dialog.getDialogPane().getButtonTypes().addAll(saveType, ButtonType.CANCEL);
+        AppThemeSupport.styleDialogButtons(dialog, saveType);
 
         dialog.setResultConverter(btn -> {
             if (btn == saveType) {
@@ -342,9 +392,17 @@ final class CRUDChildDialogSupport {
                 if (ex instanceof InterruptedException) {
                     Thread.currentThread().interrupt();
                 }
-                new Alert(Alert.AlertType.ERROR, "Firestore REST Error: " + ex.getMessage()).showAndWait();
+                AppThemeSupport.showException(null, "Firestore REST Error", ex);
             }
         });
+    }
+
+    private static GridPane createFormGrid() {
+        GridPane grid = new GridPane();
+        grid.setHgap(12);
+        grid.setVgap(10);
+        grid.getStyleClass().add("app-form-grid");
+        return grid;
     }
 
     private static String safeStr(Object value) {

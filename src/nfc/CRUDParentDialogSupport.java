@@ -15,8 +15,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import javafx.beans.binding.Bindings;
-import javafx.geometry.Insets;
-import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
@@ -26,6 +24,7 @@ import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
@@ -40,7 +39,12 @@ final class CRUDParentDialogSupport {
     static void showParentDialog(ParentsPane.ParentRecord existing, boolean isNew, Runnable onSave) {
         Dialog<ParentsPane.ParentRecord> dialog = new Dialog<>();
         dialog.initModality(Modality.APPLICATION_MODAL);
-        dialog.setTitle(isNew ? "Add New Parent" : "Edit Parent");
+        AppThemeSupport.prepareDialog(
+            dialog,
+            isNew ? "Add New Parent" : "Edit Parent",
+            "Link children, relationship details, and family notification settings.",
+            AppThemeSupport.Tone.INFO
+        );
         dialog.setResizable(true);
 
         FirestoreRestClient client;
@@ -55,13 +59,13 @@ final class CRUDParentDialogSupport {
             if (e instanceof InterruptedException) {
                 Thread.currentThread().interrupt();
             }
-            new Alert(Alert.AlertType.ERROR, "Firestore REST Error: " + e.getMessage()).showAndWait();
+            AppThemeSupport.showException(null, "Firestore REST Error", e);
             return;
         }
 
         String parentId = isNew ? newDocId() : (existing == null ? "" : existing.getParentId());
         if (parentId == null || parentId.isBlank()) {
-            new Alert(Alert.AlertType.ERROR, "Missing parent ID.").showAndWait();
+            AppThemeSupport.showError(null, "Missing Parent ID", "Missing parent ID.");
             return;
         }
 
@@ -88,6 +92,7 @@ final class CRUDParentDialogSupport {
         childrenSummaryTf.setEditable(false);
         childrenSummaryTf.setPromptText("Select one or more children");
         Button selectChildrenBtn = new Button("Select");
+        AppThemeSupport.styleToolbarButtons(selectChildrenBtn);
         HBox childrenPickerBox = new HBox(10, childrenSummaryTf, selectChildrenBtn);
         HBox.setHgrow(childrenSummaryTf, Priority.ALWAYS);
 
@@ -146,7 +151,7 @@ final class CRUDParentDialogSupport {
             if (e instanceof InterruptedException) {
                 Thread.currentThread().interrupt();
             }
-            new Alert(Alert.AlertType.ERROR, "Firestore REST Error loading children: " + e.getMessage()).showAndWait();
+            AppThemeSupport.showException(null, "Firestore REST Error", e);
             return;
         }
         allChildren.sort(Comparator.comparing(ChildOption::getName, String.CASE_INSENSITIVE_ORDER));
@@ -202,24 +207,60 @@ final class CRUDParentDialogSupport {
             phoneTf.setText(existing.getPhone());
         }
 
-        VBox content = new VBox(10,
-            new Label("Parent Name:"), parentNameTf,
-            new Label("Phone:"), phoneTf,
-            new Label("Parent IC:"), parentIcTf,
-            parentIcVerifiedCb,
-            new Label("Relationship:"), relationshipCb,
-            new Label("Custom Relationship (optional):"), relationshipLabelTf,
-            new Label("Children (select multiple):"), childrenPickerBox,
-            new Label("Notifications:"), new HBox(12, notifActivityCb, notifAttendanceCb, notifEmergencyCb, notifFeesCb)
+        AppThemeSupport.styleControls(
+            parentNameTf,
+            phoneTf,
+            parentIcTf,
+            relationshipCb,
+            relationshipLabelTf,
+            childrenSummaryTf
         );
-        content.setPadding(new Insets(20));
-        content.setFillWidth(true);
 
-        ScrollPane scroll = new ScrollPane(content);
-        scroll.setFitToWidth(true);
+        GridPane parentInfoGrid = createFormGrid();
+        parentInfoGrid.addRow(0, new Label("Parent Name"), parentNameTf);
+        parentInfoGrid.addRow(1, new Label("Phone"), phoneTf);
+        parentInfoGrid.addRow(2, new Label("Parent IC"), parentIcTf);
+        parentInfoGrid.add(parentIcVerifiedCb, 1, 3);
+
+        GridPane relationshipGrid = createFormGrid();
+        relationshipGrid.addRow(0, new Label("Relationship"), relationshipCb);
+        relationshipGrid.addRow(1, new Label("Custom Relationship"), relationshipLabelTf);
+
+        GridPane childrenGrid = createFormGrid();
+        childrenGrid.addRow(0, new Label("Children"), childrenPickerBox);
+        Label childHelper = new Label("Link one or more children to keep the family record and notification targets in sync.");
+        childHelper.getStyleClass().add("app-helper-text");
+        childHelper.setWrapText(true);
+        childrenGrid.add(childHelper, 1, 1);
+
+        HBox notificationsBox = new HBox(12, notifActivityCb, notifAttendanceCb, notifEmergencyCb, notifFeesCb);
+        notificationsBox.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+
+        VBox content = AppThemeSupport.createDialogContent(
+            AppThemeSupport.createFormSection(
+                "Parent Info",
+                "Keep the core parent record accurate for contact and verification workflows.",
+                parentInfoGrid
+            ),
+            AppThemeSupport.createFormSection(
+                "Relationship",
+                "Use a guardian custom label only when the standard family roles are not enough.",
+                relationshipGrid
+            ),
+            AppThemeSupport.createFormSection(
+                "Children Linking",
+                "Attach the children that belong to this parent record.",
+                childrenGrid
+            ),
+            AppThemeSupport.createFormSection(
+                "Notifications",
+                "Choose which update categories this parent should receive.",
+                notificationsBox
+            )
+        );
+
+        ScrollPane scroll = AppThemeSupport.wrapDialogContent(content);
         scroll.setPannable(true);
-        scroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        scroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
         scroll.setPrefViewportWidth(520);
         scroll.setPrefViewportHeight(650);
 
@@ -228,6 +269,7 @@ final class CRUDParentDialogSupport {
 
         ButtonType saveType = new ButtonType("Save", ButtonBar.ButtonData.OK_DONE);
         dialog.getDialogPane().getButtonTypes().addAll(saveType, ButtonType.CANCEL);
+        AppThemeSupport.styleDialogButtons(dialog, saveType);
 
         Button saveBtn = (Button) dialog.getDialogPane().lookupButton(saveType);
         saveBtn.disableProperty().bind(
@@ -244,7 +286,7 @@ final class CRUDParentDialogSupport {
         dialog.setResultConverter(btn -> {
             if (btn == saveType) {
                 if (!childPickerState.hasSelectedChildProperty().get()) {
-                    new Alert(Alert.AlertType.ERROR, "Please select at least one child.").showAndWait();
+                    AppThemeSupport.showError(null, "Child Selection Required", "Please select at least one child.");
                     return null;
                 }
                 return new ParentsPane.ParentRecord(
@@ -268,7 +310,7 @@ final class CRUDParentDialogSupport {
                 document.put("parentName", parentNameTf.getText().trim());
                 String phoneLocal = PhoneUtil.toLocalMy(phoneTf.getText());
                 if (phoneLocal == null || phoneLocal.isBlank()) {
-                    new Alert(Alert.AlertType.ERROR, "Phone cannot be empty.").showAndWait();
+                    AppThemeSupport.showError(null, "Phone Required", "Phone cannot be empty.");
                     return;
                 }
                 document.put("phone", phoneLocal);
@@ -313,12 +355,13 @@ final class CRUDParentDialogSupport {
                             String otherPhone = safeStr(other.get("phone")).trim();
                             String childName = childIdToName.getOrDefault(childId, childId);
 
-                            new Alert(
-                                Alert.AlertType.ERROR,
+                            AppThemeSupport.showError(
+                                null,
+                                "Duplicate Relationship",
                                 "Cannot save: \"" + childName + "\" already has a " + relationshipType.display.toLowerCase()
                                     + ": " + (otherName.isEmpty() ? other.getId() : otherName)
                                     + (otherPhone.isEmpty() ? "" : (" (" + otherPhone + ")"))
-                            ).showAndWait();
+                            );
                             return;
                         }
                     }
@@ -359,9 +402,17 @@ final class CRUDParentDialogSupport {
                 if (ex instanceof InterruptedException) {
                     Thread.currentThread().interrupt();
                 }
-                new Alert(Alert.AlertType.ERROR, "Firestore REST Error: " + ex.getMessage()).showAndWait();
+                AppThemeSupport.showException(null, "Firestore REST Error", ex);
             }
         });
+    }
+
+    private static GridPane createFormGrid() {
+        GridPane grid = new GridPane();
+        grid.setHgap(12);
+        grid.setVgap(10);
+        grid.getStyleClass().add("app-form-grid");
+        return grid;
     }
 
     private static void refreshChildParentCacheAsync(FirestoreRestClient client, List<String> childIds) {

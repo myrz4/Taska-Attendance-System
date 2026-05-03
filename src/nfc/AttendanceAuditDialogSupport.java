@@ -9,9 +9,11 @@ import java.util.concurrent.atomic.AtomicReference;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.geometry.Pos;
-import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonBar;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.layout.HBox;
@@ -38,9 +40,18 @@ final class AttendanceAuditDialogSupport {
             return;
         }
 
-        Alert auditDialog = new Alert(Alert.AlertType.INFORMATION);
-        auditDialog.setTitle("Attendance Audit");
-        auditDialog.setHeaderText("Attendance Audit for " + record.getName() + " on " + attendanceDate);
+        Dialog<ButtonType> auditDialog = new Dialog<>();
+        if (owner != null) {
+            auditDialog.initOwner(owner);
+        }
+        AppThemeSupport.prepareDialog(
+            auditDialog,
+            "Attendance Audit",
+            "Attendance audit for " + record.getName() + " on " + attendanceDate,
+            AppThemeSupport.Tone.INFO
+        );
+        ButtonType closeType = new ButtonType("Close", ButtonBar.ButtonData.CANCEL_CLOSE);
+        auditDialog.getDialogPane().getButtonTypes().add(closeType);
 
         ComboBox<String> actionFilter = new ComboBox<>(FXCollections.observableArrayList(ATTENDANCE_AUDIT_ACTIONS));
         actionFilter.setValue("all");
@@ -54,7 +65,9 @@ final class AttendanceAuditDialogSupport {
         body.setWrapText(false);
         body.setPrefColumnCount(96);
         body.setPrefRowCount(24);
-        body.setStyle("-fx-font-family: 'Consolas'; -fx-font-size: 12px;");
+        AppThemeSupport.styleControls(actionFilter, body);
+        body.getStyleClass().add("app-detail-area");
+        AppThemeSupport.styleToolbarButtons(refreshBtn, exportTxtBtn);
 
         HBox controls = new HBox(8,
             new Label("Action:"),
@@ -74,8 +87,22 @@ final class AttendanceAuditDialogSupport {
         actionFilter.setOnAction(e -> refreshAction.run());
         exportTxtBtn.setOnAction(e -> AttendanceAuditSupport.exportAttendanceAuditTxt(owner, record, currentSnapshot.get()));
 
-        auditDialog.getDialogPane().setContent(content);
-        auditDialog.getDialogPane().setMinWidth(860);
+        auditDialog.getDialogPane().setContent(
+            AppThemeSupport.createDialogContent(
+                AppThemeSupport.createFormSection(
+                    "Audit controls",
+                    "Filter the attendance audit trail or export the current view.",
+                    controls
+                ),
+                AppThemeSupport.createFormSection(
+                    "Audit entries",
+                    "Every manual attendance change should leave a readable audit trail here.",
+                    body
+                )
+            )
+        );
+        auditDialog.getDialogPane().setPrefSize(900, 640);
+        AppThemeSupport.styleDialogButtons(auditDialog, closeType);
         auditDialog.show();
 
         refreshAttendanceAuditLog(attendanceDate, record, body, currentSnapshot, "all");

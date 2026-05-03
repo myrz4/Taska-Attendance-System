@@ -22,7 +22,7 @@ final class BillingPolicyStatusSupport {
 
     static void refreshLiveHealthStatus(BillingPolicyStatusUi ui) {
         ui.badge.setText("Live Backend: checking...");
-        ui.badge.setStyle(warningBadgeStyle());
+        AppThemeSupport.applyStatusTone(ui.badge, "app-status-badge", AppThemeSupport.Tone.WARNING);
         java.util.concurrent.CompletableFuture.runAsync(() -> {
             BillingPolicyRemoteSupport.RemoteHealthSnapshot snapshot = BillingPolicyRemoteSupport.fetchRemoteHealthSummary();
             Platform.runLater(() -> applyRemoteHealthSnapshot(ui, snapshot));
@@ -34,28 +34,28 @@ final class BillingPolicyStatusSupport {
         ui.metaLabel.setText("Last checked: " + checkedAt);
         if (snapshot == null) {
             ui.badge.setText("Live Backend: error");
-            ui.badge.setStyle(errorBadgeStyle());
-            ui.detailsBox.setStyle(errorDetailsStyle());
+            AppThemeSupport.applyStatusTone(ui.badge, "app-status-badge", AppThemeSupport.Tone.DANGER);
+            AppThemeSupport.applyStatusTone(ui.detailsBox, "app-status-panel", AppThemeSupport.Tone.DANGER);
             setLiveHealthDetails(ui, "-", "-", "-", "unknown", "unknown");
             return;
         }
         if (!snapshot.ok) {
             ui.badge.setText("Live Backend: failed");
-            ui.badge.setStyle(errorBadgeStyle());
-            ui.detailsBox.setStyle(errorDetailsStyle());
+            AppThemeSupport.applyStatusTone(ui.badge, "app-status-badge", AppThemeSupport.Tone.DANGER);
+            AppThemeSupport.applyStatusTone(ui.detailsBox, "app-status-panel", AppThemeSupport.Tone.DANGER);
             setLiveHealthDetails(ui, snapshot.version, snapshot.rowCount, snapshot.resolvedTransit, snapshot.missingSummary, snapshot.gatewaySummary);
             return;
         }
         if (snapshot.valid) {
             ui.badge.setText("Live Backend: healthy");
-            ui.badge.setStyle(successBadgeStyle());
-            ui.detailsBox.setStyle(successDetailsStyle());
+            AppThemeSupport.applyStatusTone(ui.badge, "app-status-badge", AppThemeSupport.Tone.SUCCESS);
+            AppThemeSupport.applyStatusTone(ui.detailsBox, "app-status-panel", AppThemeSupport.Tone.SUCCESS);
             setLiveHealthDetails(ui, snapshot.version, snapshot.rowCount, snapshot.resolvedTransit, snapshot.missingSummary, snapshot.gatewaySummary);
             return;
         }
         ui.badge.setText("Live Backend: invalid");
-        ui.badge.setStyle(invalidBadgeStyle());
-        ui.detailsBox.setStyle(invalidDetailsStyle());
+        AppThemeSupport.applyStatusTone(ui.badge, "app-status-badge", AppThemeSupport.Tone.WARNING);
+        AppThemeSupport.applyStatusTone(ui.detailsBox, "app-status-panel", AppThemeSupport.Tone.WARNING);
         setLiveHealthDetails(ui, snapshot.version, snapshot.rowCount, snapshot.resolvedTransit, snapshot.missingSummary, snapshot.gatewaySummary);
     }
 
@@ -76,34 +76,6 @@ final class BillingPolicyStatusSupport {
         ui.transitLabel.setText("Resolved Default Transit: " + String.valueOf(resolvedTransit == null || resolvedTransit.isBlank() ? "-" : resolvedTransit));
         ui.missingLabel.setText("Missing Required Codes: " + String.valueOf(missingSummary == null || missingSummary.isBlank() ? "none" : missingSummary));
         ui.gatewayLabel.setText("Payment Mode: " + String.valueOf(gatewaySummary == null || gatewaySummary.isBlank() ? "-" : gatewaySummary));
-    }
-
-    private static String warningBadgeStyle() {
-        return "-fx-background-color: #fff3cd; -fx-text-fill: #7a5200; -fx-font-weight: bold; -fx-padding: 6 12 6 12; -fx-background-radius: 999;";
-    }
-
-    private static String errorBadgeStyle() {
-        return "-fx-background-color: #fde2e1; -fx-text-fill: #9f1d1d; -fx-font-weight: bold; -fx-padding: 6 12 6 12; -fx-background-radius: 999;";
-    }
-
-    private static String successBadgeStyle() {
-        return "-fx-background-color: #dff6e4; -fx-text-fill: #17643a; -fx-font-weight: bold; -fx-padding: 6 12 6 12; -fx-background-radius: 999;";
-    }
-
-    private static String invalidBadgeStyle() {
-        return "-fx-background-color: #fff1d6; -fx-text-fill: #8a5800; -fx-font-weight: bold; -fx-padding: 6 12 6 12; -fx-background-radius: 999;";
-    }
-
-    private static String errorDetailsStyle() {
-        return "-fx-background-color: rgba(253,226,225,0.78); -fx-border-color: #d36b6b; -fx-border-radius: 10; -fx-background-radius: 10; -fx-padding: 8 12 8 12;";
-    }
-
-    private static String successDetailsStyle() {
-        return "-fx-background-color: rgba(223,246,228,0.78); -fx-border-color: #52a071; -fx-border-radius: 10; -fx-background-radius: 10; -fx-padding: 8 12 8 12;";
-    }
-
-    private static String invalidDetailsStyle() {
-        return "-fx-background-color: rgba(255,241,214,0.82); -fx-border-color: #d39a32; -fx-border-radius: 10; -fx-background-radius: 10; -fx-padding: 8 12 8 12;";
     }
 
     static final class BillingPolicyStatusUi {

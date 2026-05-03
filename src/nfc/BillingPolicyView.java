@@ -14,10 +14,12 @@ import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Priority;
+import javafx.scene.layout.VBox;
 import javafx.stage.Window;
 import javafx.util.Duration;
 
@@ -49,12 +51,13 @@ public class BillingPolicyView extends javafx.scene.layout.VBox {
     private Map<String, Map<String, Long>> workingTable = new LinkedHashMap<>();
 
     public BillingPolicyView() {
-        super(10);
-        setPadding(new Insets(12));
-        setStyle("-fx-background-color: #86d67f;");
+        super(0);
+        setFillWidth(true);
 
-        liveHealthBadge.setStyle("-fx-background-color: #fff3cd; -fx-text-fill: #7a5200; -fx-font-weight: bold; -fx-padding: 6 12 6 12; -fx-background-radius: 999;");
-        liveHealthRefreshBtn.setStyle("-fx-font-size: 11px; -fx-font-weight: bold; -fx-padding: 4 8 4 8;");
+        liveHealthBadge.getStyleClass().add("app-status-badge");
+        AppThemeSupport.applyStatusTone(liveHealthBadge, "app-status-badge", AppThemeSupport.Tone.WARNING);
+        liveHealthMetaLabel.getStyleClass().add("app-muted-text");
+        healthLabel.getStyleClass().add("app-helper-text");
         liveHealthRefreshBtn.setOnAction(e -> refreshLiveHealthStatus());
         liveHealthDetailsBtn.setOnAction(e -> toggleLiveHealthDetails());
         javafx.scene.layout.HBox titleRow = BillingPolicyLayoutSupport.createTitleRow(liveHealthBadge, liveHealthRefreshBtn, liveHealthDetailsBtn);
@@ -69,6 +72,7 @@ public class BillingPolicyView extends javafx.scene.layout.VBox {
         catalogSelect.setItems(catalogs);
         catalogSelect.setPrefWidth(340);
         catalogSelect.setOnAction(e -> onCatalogSelected());
+        AppThemeSupport.styleControls(catalogSelect, versionField, defaultTransitCodeField, selectedCode, selectedStaff, selectedNonStaff);
 
         javafx.scene.control.Button refreshBtn = new javafx.scene.control.Button("Refresh");
         refreshBtn.setOnAction(e -> {
@@ -110,7 +114,7 @@ public class BillingPolicyView extends javafx.scene.layout.VBox {
             exportJsonBtn
         );
 
-        javafx.scene.layout.FlowPane topActions = BillingPolicyLayoutSupport.createTopActions(
+        javafx.scene.layout.VBox topActions = BillingPolicyLayoutSupport.createTopActions(
             catalogSelect,
             refreshBtn,
             seedDefaultBtn,
@@ -124,8 +128,6 @@ public class BillingPolicyView extends javafx.scene.layout.VBox {
             exportJsonBtn
         );
 
-        healthLabel.setStyle("-fx-font-weight: bold;");
-        liveHealthMetaLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #476150;");
         javafx.scene.layout.VBox detailsBox = BillingPolicyLayoutSupport.createLiveHealthDetailsBox(
             liveHealthVersionLabel,
             liveHealthRowCountLabel,
@@ -134,6 +136,7 @@ public class BillingPolicyView extends javafx.scene.layout.VBox {
             liveHealthGatewayLabel
         );
         liveHealthDetailsBox.getChildren().setAll(detailsBox.getChildren());
+        liveHealthDetailsBox.getStyleClass().setAll(detailsBox.getStyleClass());
         liveHealthDetailsBox.setPadding(detailsBox.getPadding());
         liveHealthDetailsBox.setStyle(detailsBox.getStyle());
         liveHealthDetailsBox.setVisible(detailsBox.isVisible());
@@ -168,12 +171,29 @@ public class BillingPolicyView extends javafx.scene.layout.VBox {
         updateRowBtn.setOnAction(e -> updateSelectedRow());
         BillingPolicyUiSupport.configureActionButtons(updateRowBtn);
 
-        javafx.scene.layout.FlowPane rowEditor = BillingPolicyLayoutSupport.createRowEditor(selectedCode, selectedStaff, selectedNonStaff, updateRowBtn);
+        javafx.scene.layout.VBox rowEditor = BillingPolicyLayoutSupport.createRowEditor(selectedCode, selectedStaff, selectedNonStaff, updateRowBtn);
+        VBox tableCard = BillingPolicyLayoutSupport.createTableCard(table);
+        table.setMinHeight(420);
 
-        BorderPane wrapper = BillingPolicyLayoutSupport.createWrapper(topActions, table, rowEditor);
+        VBox liveStatusCard = AppThemeSupport.createSectionCard(
+            "Catalog Health",
+            "Local validation and live backend health are shown together so you can spot issues before publishing changes.",
+            healthLabel,
+            liveHealthMetaLabel,
+            liveHealthDetailsBox
+        );
+        liveStatusCard.getStyleClass().add("app-toolbar-card");
 
-        getChildren().addAll(titleRow, healthLabel, liveHealthMetaLabel, liveHealthDetailsBox, wrapper);
-        javafx.scene.layout.VBox.setVgrow(wrapper, Priority.ALWAYS);
+        VBox body = new VBox(12, liveStatusCard, topActions, tableCard, rowEditor);
+        body.setPadding(new Insets(16, 18, 18, 18));
+        body.setFillWidth(true);
+        VBox.setVgrow(tableCard, Priority.ALWAYS);
+
+        ScrollPane bodyScroll = AppThemeSupport.createPageBodyScrollWrapper(body);
+        BorderPane shell = AppThemeSupport.createStandardPageShell(titleRow, bodyScroll);
+
+        getChildren().setAll(shell);
+        javafx.scene.layout.VBox.setVgrow(shell, Priority.ALWAYS);
 
         liveHealthTimeline = new Timeline(new KeyFrame(Duration.seconds(45), e -> refreshLiveHealthStatus()));
         liveHealthTimeline.setCycleCount(Timeline.INDEFINITE);

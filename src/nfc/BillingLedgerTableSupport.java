@@ -22,6 +22,7 @@ final class BillingLedgerTableSupport {
         Consumer<BillingLedgerView.LedgerRow> onSelectionChanged
     ) {
         table.setItems(rows);
+        table.getStyleClass().add("app-data-table");
         table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
         table.setFixedCellSize(50);
 
@@ -44,6 +45,21 @@ final class BillingLedgerTableSupport {
         TableColumn<BillingLedgerView.LedgerRow, String> statusCol = new TableColumn<>("Status");
         statusCol.setCellValueFactory(new PropertyValueFactory<>("status"));
         statusCol.setPrefWidth(90);
+        statusCol.setCellFactory(column -> new TableCell<BillingLedgerView.LedgerRow, String>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null || getTableRow() == null || getTableRow().getItem() == null) {
+                    setGraphic(null);
+                    setText(null);
+                    return;
+                }
+                BillingLedgerView.LedgerRow row = getTableRow().getItem();
+                Label badge = AppThemeSupport.createChip(item, statusStyleClass(row));
+                setGraphic(badge);
+                setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
+            }
+        });
 
         TableColumn<BillingLedgerView.LedgerRow, String> dueCol = new TableColumn<>("Due Date");
         dueCol.setCellValueFactory(new PropertyValueFactory<>("dueDateText"));
@@ -62,15 +78,15 @@ final class BillingLedgerTableSupport {
                 super.updateItem(item, empty);
                 if (empty || item == null || item.isBlank()) {
                     setText(null);
+                    setGraphic(null);
                     setTooltip(null);
-                    setStyle("");
                     return;
                 }
                 BillingLedgerView.LedgerRow row = getTableRow() == null ? null : getTableRow().getItem();
-                setText(item);
                 String reviewReason = row == null ? null : row.getReviewReason();
                 setTooltip(reviewReason == null || reviewReason.isBlank() ? null : new Tooltip(reviewReason));
-                setStyle("-fx-background-color: rgba(255, 228, 181, 0.95); -fx-text-fill: #8a4b00; -fx-font-weight: bold; -fx-alignment: CENTER;");
+                setGraphic(AppThemeSupport.createChip(item, "app-chip-warning"));
+                setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
             }
         });
 
@@ -101,11 +117,11 @@ final class BillingLedgerTableSupport {
                 String reviewReason = row == null ? null : row.getReviewReason();
                 if (reviewReason == null || reviewReason.isBlank()) {
                     content.setText("-");
-                    content.setStyle("-fx-font-size: 11px; -fx-text-fill: #7a7a7a;");
+                    content.getStyleClass().setAll("app-muted-text");
                     setTooltip(null);
                 } else {
                     content.setText(reviewReason);
-                    content.setStyle("-fx-font-size: 11px; -fx-text-fill: #6d4b21;");
+                    content.getStyleClass().setAll("app-helper-text");
                     setTooltip(new Tooltip(reviewReason));
                 }
                 setGraphic(content);
@@ -131,27 +147,25 @@ final class BillingLedgerTableSupport {
             @Override
             protected void updateItem(BillingLedgerView.LedgerRow item, boolean empty) {
                 super.updateItem(item, empty);
+                getStyleClass().removeAll("row-paid", "row-warning", "row-danger", "row-review");
                 if (empty || item == null) {
-                    setStyle("");
                     return;
                 }
                 if (item.isOverdue()) {
-                    setStyle("-fx-background-color: rgba(255, 214, 209, 0.85);");
+                    getStyleClass().add("row-danger");
                     return;
                 }
                 if (item.isPaid()) {
-                    setStyle("-fx-background-color: rgba(220, 245, 221, 0.75);");
+                    getStyleClass().add("row-paid");
                     return;
                 }
                 if ("Pending".equalsIgnoreCase(item.getStatus())) {
-                    setStyle("-fx-background-color: rgba(255, 244, 180, 0.80);");
+                    getStyleClass().add("row-warning");
                     return;
                 }
                 if (item.isManagementReviewRecommended()) {
-                    setStyle("-fx-background-color: rgba(255, 228, 181, 0.65);");
-                    return;
+                    getStyleClass().add("row-review");
                 }
-                setStyle("");
             }
         });
         table.getSelectionModel().selectedItemProperty().addListener((obs, oldValue, newValue) -> onSelectionChanged.accept(newValue));
@@ -163,6 +177,7 @@ final class BillingLedgerTableSupport {
         Consumer<BillingLedgerView.ParentSummaryRow> onSelectionChanged
     ) {
         table.setItems(rows);
+        table.getStyleClass().add("app-data-table");
         table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
 
         TableColumn<BillingLedgerView.ParentSummaryRow, String> parentCol = new TableColumn<>("Parent");
@@ -185,19 +200,19 @@ final class BillingLedgerTableSupport {
                 super.updateItem(item, empty);
                 if (empty || item == null) {
                     setText(null);
-                    setStyle("");
+                    setGraphic(null);
                     return;
                 }
-                setText(item);
                 if ("Critical".equalsIgnoreCase(item)) {
-                    setStyle("-fx-background-color: rgba(255, 217, 212, 0.95); -fx-text-fill: #8c1d13; -fx-font-weight: bold; -fx-alignment: CENTER;");
+                    setGraphic(AppThemeSupport.createChip(item, "app-chip-danger"));
                     return;
                 }
                 if ("Watch".equalsIgnoreCase(item)) {
-                    setStyle("-fx-background-color: rgba(255, 244, 180, 0.95); -fx-text-fill: #7a5200; -fx-font-weight: bold; -fx-alignment: CENTER;");
+                    setGraphic(AppThemeSupport.createChip(item, "app-chip-warning"));
                     return;
                 }
-                setStyle("-fx-background-color: rgba(220, 245, 221, 0.90); -fx-text-fill: #1f5d26; -fx-font-weight: bold; -fx-alignment: CENTER;");
+                setGraphic(AppThemeSupport.createChip(item, "app-chip-success"));
+                setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
             }
         });
 
@@ -218,15 +233,15 @@ final class BillingLedgerTableSupport {
                 super.updateItem(item, empty);
                 if (empty || item == null || item.isBlank()) {
                     setText(null);
+                    setGraphic(null);
                     setTooltip(null);
-                    setStyle("");
                     return;
                 }
                 BillingLedgerView.ParentSummaryRow row = getTableRow() == null ? null : getTableRow().getItem();
-                setText(item);
                 String reviewSummary = row == null ? null : row.getReviewSummary();
                 setTooltip(reviewSummary == null || reviewSummary.isBlank() ? null : new Tooltip(reviewSummary));
-                setStyle("-fx-background-color: rgba(255, 228, 181, 0.95); -fx-text-fill: #8a4b00; -fx-font-weight: bold; -fx-alignment: CENTER;");
+                setGraphic(AppThemeSupport.createChip(item, "app-chip-warning"));
+                setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
             }
         });
 
@@ -248,29 +263,43 @@ final class BillingLedgerTableSupport {
             @Override
             protected void updateItem(BillingLedgerView.ParentSummaryRow item, boolean empty) {
                 super.updateItem(item, empty);
+                getStyleClass().removeAll("row-paid", "row-warning", "row-danger", "row-review");
                 if (empty || item == null) {
-                    setStyle("");
                     return;
                 }
                 if ("Critical".equalsIgnoreCase(item.getRiskLevel())) {
-                    setStyle("-fx-background-color: rgba(255, 217, 212, 0.55);");
+                    getStyleClass().add("row-danger");
                     return;
                 }
                 if ("Watch".equalsIgnoreCase(item.getRiskLevel())) {
-                    setStyle("-fx-background-color: rgba(255, 244, 180, 0.50);");
+                    getStyleClass().add("row-warning");
                     return;
                 }
                 if (item.getOutstandingSen() <= 0L) {
-                    setStyle("-fx-background-color: rgba(220, 245, 221, 0.40);");
+                    getStyleClass().add("row-paid");
                     return;
                 }
                 if (item.getReviewCount() > 0) {
-                    setStyle("-fx-background-color: rgba(255, 228, 181, 0.45);");
-                    return;
+                    getStyleClass().add("row-review");
                 }
-                setStyle("");
             }
         });
         table.getSelectionModel().selectedItemProperty().addListener((obs, oldValue, newValue) -> onSelectionChanged.accept(newValue));
+    }
+
+    private static String statusStyleClass(BillingLedgerView.LedgerRow row) {
+        if (row == null) {
+            return "app-chip-neutral";
+        }
+        if (row.isOverdue()) {
+            return "app-chip-danger";
+        }
+        if (row.isPaid()) {
+            return "app-chip-success";
+        }
+        if ("Pending".equalsIgnoreCase(row.getStatus())) {
+            return "app-chip-warning";
+        }
+        return row.isManagementReviewRecommended() ? "app-chip-info" : "app-chip-neutral";
     }
 }

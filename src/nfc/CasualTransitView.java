@@ -12,19 +12,21 @@ import java.util.Map;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
-import javafx.geometry.Pos;
-import javafx.scene.control.Alert;
+import javafx.geometry.Orientation;
 import javafx.scene.control.Button;
-import javafx.scene.control.ButtonType;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.control.SplitPane;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.FlowPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 
 @SuppressWarnings("java:S1848")
@@ -91,11 +93,13 @@ public class CasualTransitView extends VBox {
     private List<AuditEntry> visibleAuditEntries = List.of();
 
     public CasualTransitView() {
-        setSpacing(12);
-        setPadding(new Insets(12));
+        setSpacing(0);
+        setFillWidth(true);
 
-        Label title = new Label("Casual Transit");
-        title.setStyle("-fx-font-size: 28px; -fx-font-weight: bold; -fx-text-fill: #1d2f24;");
+        javafx.scene.layout.HBox header = AppThemeSupport.createStandardPageBanner(
+            "Casual Transit",
+            "Track walk-in visits, settle payments, and review override history in a cleaner operational workspace."
+        );
 
         searchField.setPromptText("Search child, guardian, phone, receipt, or notes");
         searchField.textProperty().addListener((obs, oldValue, newValue) -> applyFilters());
@@ -142,6 +146,23 @@ public class CasualTransitView extends VBox {
         CasualTransitTableSupport.configureActionButton(exportSummaryButton);
         CasualTransitTableSupport.configureActionButton(exportCsvButton);
         CasualTransitTableSupport.configureActionButton(exportAuditButton);
+        AppThemeSupport.styleControls(
+            searchField,
+            statusFilter,
+            paymentStatusFilter,
+            dateScopeFilter,
+            rangeFromPicker,
+            rangeToPicker,
+            auditActionFilter,
+            auditDateScopeFilter,
+            detailsArea,
+            auditArea,
+            table
+        );
+        totalsLabel.getStyleClass().add("app-helper-text");
+        statusLabel.getStyleClass().add("app-muted-text");
+        detailsArea.getStyleClass().add("app-detail-area");
+        auditArea.getStyleClass().add("app-detail-area");
 
         refreshButton.setOnAction(e -> reloadData());
         addVisitButton.setOnAction(e -> openCreateVisitDialog());
@@ -154,25 +175,25 @@ public class CasualTransitView extends VBox {
         exportCsvButton.setOnAction(e -> exportVisibleSummaryCsv());
         exportAuditButton.setOnAction(e -> exportSelectedAuditPdf());
 
-        FlowPane controls = new FlowPane(10, 10,
+        FlowPane filters = new FlowPane(10, 10,
             new Label("Search:"), searchField,
             new Label("Status:"), statusFilter,
             new Label("Payment:"), paymentStatusFilter,
             new Label("Date Scope:"), dateScopeFilter,
             new Label("From:"), rangeFromPicker,
-            new Label("To:"), rangeToPicker,
+            new Label("To:"), rangeToPicker
+        );
+
+        FlowPane actions = new FlowPane(10, 10,
             refreshButton,
             addVisitButton,
             checkoutButton,
             editButton,
             reopenButton,
             cancelButton,
-            exportReceiptButton,
             exportSummaryButton,
-            exportCsvButton,
-            exportAuditButton
+            exportCsvButton
         );
-        controls.setAlignment(Pos.CENTER_LEFT);
 
         buildTable();
 
@@ -186,32 +207,87 @@ public class CasualTransitView extends VBox {
         auditArea.setPrefRowCount(10);
         auditArea.setPromptText("Select a visit to inspect audit history.");
 
-        VBox mainContent = new VBox(10,
-            controls,
-            totalsLabel,
-            statusLabel,
-            table,
-            new Label("Visit Details"),
-            detailsArea,
-            new Label("Audit History"),
-            new FlowPane(10, 10,
-                new Label("Audit Action:"), auditActionFilter,
-                new Label("Audit Date:"), auditDateScopeFilter
+        HBox summaryRow = new HBox(12, totalsLabel, new Region(), statusLabel);
+        HBox.setHgrow(summaryRow.getChildren().get(1), Priority.ALWAYS);
+
+        FlowPane auditFilters = new FlowPane(10, 10,
+            new Label("Audit Action:"), auditActionFilter,
+            new Label("Audit Date:"), auditDateScopeFilter,
+            exportAuditButton
+        );
+
+        VBox controlsCard = AppThemeSupport.createSectionCard(
+            "Transit Controls",
+            "Keep filters, actions, and the current summary compact so the visits table remains the main operational area.",
+            filters,
+            actions,
+            summaryRow
+        );
+        controlsCard.getStyleClass().add("app-toolbar-card");
+
+        VBox visitTableCard = new VBox(
+            12,
+            AppThemeSupport.createSectionHeader(
+                "Visits",
+                "Use the visit list for live transit operations, payment closeout, and status follow-up."
             ),
+            table
+        );
+        visitTableCard.getStyleClass().addAll("app-card", "app-section-card");
+        visitTableCard.setMinWidth(0);
+        visitTableCard.setMinHeight(0);
+        table.setMinHeight(380);
+
+        VBox detailsCard = new VBox(
+            12,
+            AppThemeSupport.createSectionHeader(
+                "Visit Details",
+                "Inspect guardian, timing, receipt, and payment context for the selected visit.",
+                exportReceiptButton
+            ),
+            detailsArea
+        );
+        detailsCard.getStyleClass().addAll("app-card", "app-detail-card");
+        detailsCard.setMinHeight(0);
+
+        VBox auditCard = new VBox(
+            12,
+            AppThemeSupport.createSectionHeader(
+                "Audit History",
+                "Filter override and lifecycle events for the selected visit by action or date."
+            ),
+            auditFilters,
             auditArea
         );
+        auditCard.getStyleClass().addAll("app-card", "app-detail-card");
+        auditCard.setMinHeight(0);
+
         VBox.setVgrow(table, Priority.ALWAYS);
         VBox.setVgrow(detailsArea, Priority.ALWAYS);
         VBox.setVgrow(auditArea, Priority.ALWAYS);
+        VBox.setVgrow(detailsCard, Priority.ALWAYS);
+        VBox.setVgrow(auditCard, Priority.ALWAYS);
 
-        BorderPane layout = new BorderPane();
-        layout.setTop(title);
-        BorderPane.setMargin(title, new Insets(0, 0, 8, 0));
-        layout.setCenter(mainContent);
-        layout.setStyle("-fx-background-color: linear-gradient(to bottom right, #86d67f 0%, #76cc6e 100%);");
+        SplitPane rightSplit = new SplitPane(detailsCard, auditCard);
+        rightSplit.setOrientation(Orientation.VERTICAL);
+        rightSplit.setDividerPositions(0.42);
+        rightSplit.setMinWidth(320);
+        rightSplit.setMinHeight(0);
 
-        getChildren().add(layout);
-        VBox.setVgrow(layout, Priority.ALWAYS);
+        SplitPane contentSplit = new SplitPane(visitTableCard, rightSplit);
+        contentSplit.setDividerPositions(0.68);
+        contentSplit.setMinHeight(0);
+
+        VBox body = new VBox(12, controlsCard, contentSplit);
+        body.setPadding(new Insets(16, 18, 18, 18));
+        body.setFillWidth(true);
+        VBox.setVgrow(contentSplit, Priority.ALWAYS);
+
+        ScrollPane bodyScroll = AppThemeSupport.createPageBodyScrollWrapper(body);
+        BorderPane shell = AppThemeSupport.createStandardPageShell(header, bodyScroll);
+
+        getChildren().setAll(shell);
+        VBox.setVgrow(shell, Priority.ALWAYS);
 
         reloadData();
     }
@@ -297,7 +373,7 @@ public class CasualTransitView extends VBox {
     private void applyAuditFilters() {
         VisitRow selected = table.getSelectionModel().getSelectedItem();
         if (selected == null) {
-            auditArea.setText("");
+            auditArea.setText("No visit selected yet.\n\nSelect a record to load its audit history.");
             return;
         }
         CasualTransitDataSupport.AuditFilterResult result = CasualTransitDataSupport.applyAuditFilters(
@@ -597,17 +673,11 @@ public class CasualTransitView extends VBox {
     }
 
     private void showSimple(String title, String message) {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION, message, ButtonType.OK);
-        alert.setTitle(title);
-        alert.setHeaderText(title);
-        alert.showAndWait();
+        AppThemeSupport.showInfo(getWindow(), title, message);
     }
 
     private void showError(String title, Exception error) {
-        Alert alert = new Alert(Alert.AlertType.ERROR, CasualTransitWorkflowSupport.rootMessage(error), ButtonType.OK);
-        alert.setTitle(title);
-        alert.setHeaderText(title);
-        alert.showAndWait();
+        AppThemeSupport.showError(getWindow(), title, CasualTransitWorkflowSupport.rootMessage(error));
     }
 
     private javafx.stage.Window getWindow() {

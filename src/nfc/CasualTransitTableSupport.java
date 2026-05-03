@@ -5,10 +5,14 @@ import java.util.function.Consumer;
 
 import javafx.collections.ObservableList;
 import javafx.geometry.Pos;
+import javafx.scene.control.ContentDisplay;
+import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.Label;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.cell.PropertyValueFactory;
@@ -67,12 +71,42 @@ final class CasualTransitTableSupport {
         Consumer<CasualTransitView.VisitRow> onSelectionChanged
     ) {
         table.setItems(rows);
+        table.getStyleClass().add("app-data-table");
+        table.setFixedCellSize(48);
 
         TableColumn<CasualTransitView.VisitRow, String> statusCol = new TableColumn<>("Status");
         statusCol.setCellValueFactory(new PropertyValueFactory<>("statusLabel"));
+        statusCol.setCellFactory(col -> new TableCell<CasualTransitView.VisitRow, String>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null || getTableRow() == null || getTableRow().getItem() == null) {
+                    setText(null);
+                    setGraphic(null);
+                    return;
+                }
+                CasualTransitView.VisitRow row = getTableRow().getItem();
+                setGraphic(AppThemeSupport.createChip(item, statusChipClass(row.status())));
+                setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
+            }
+        });
 
         TableColumn<CasualTransitView.VisitRow, String> paymentStatusCol = new TableColumn<>("Payment");
         paymentStatusCol.setCellValueFactory(new PropertyValueFactory<>("paymentStatusLabel"));
+        paymentStatusCol.setCellFactory(col -> new TableCell<CasualTransitView.VisitRow, String>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null || getTableRow() == null || getTableRow().getItem() == null) {
+                    setText(null);
+                    setGraphic(null);
+                    return;
+                }
+                CasualTransitView.VisitRow row = getTableRow().getItem();
+                setGraphic(AppThemeSupport.createChip(item, paymentChipClass(row.paymentStatus())));
+                setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
+            }
+        });
 
         TableColumn<CasualTransitView.VisitRow, String> childCol = new TableColumn<>("Child");
         childCol.setCellValueFactory(new PropertyValueFactory<>("childName"));
@@ -93,8 +127,6 @@ final class CasualTransitTableSupport {
         receiptCol.setCellValueFactory(new PropertyValueFactory<>("receiptNo"));
 
         for (TableColumn<CasualTransitView.VisitRow, String> column : List.of(
-            statusCol,
-            paymentStatusCol,
             childCol,
             guardianCol,
             checkInCol,
@@ -112,6 +144,31 @@ final class CasualTransitTableSupport {
                 }
             });
         }
+        childCol.setStyle("-fx-alignment: CENTER-LEFT;");
+        guardianCol.setStyle("-fx-alignment: CENTER-LEFT;");
+        amountCol.setStyle("-fx-alignment: CENTER-RIGHT;");
+
+        table.setRowFactory(ignored -> new TableRow<CasualTransitView.VisitRow>() {
+            @Override
+            protected void updateItem(CasualTransitView.VisitRow item, boolean empty) {
+                super.updateItem(item, empty);
+                getStyleClass().removeAll("row-paid", "row-warning", "row-danger", "row-review");
+                if (empty || item == null) {
+                    return;
+                }
+                if ("Canceled".equalsIgnoreCase(item.status())) {
+                    getStyleClass().add("row-danger");
+                    return;
+                }
+                if ("Closed".equalsIgnoreCase(item.status())) {
+                    getStyleClass().add("row-paid");
+                    return;
+                }
+                if ("Pending".equalsIgnoreCase(item.paymentStatus())) {
+                    getStyleClass().add("row-warning");
+                }
+            }
+        });
 
         table.getColumns().clear();
         table.getColumns().add(statusCol);
@@ -126,7 +183,7 @@ final class CasualTransitTableSupport {
     }
 
     static void configureActionButton(Button button) {
-        button.setStyle("-fx-background-color: #FFCB3C; -fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #222; -fx-background-radius: 24px;");
+        AppThemeSupport.styleToolbarButtons(button);
     }
 
     static void updateSelectionState(
@@ -154,8 +211,12 @@ final class CasualTransitTableSupport {
         exportSummaryButton.setDisable(rows.isEmpty());
         exportCsvButton.setDisable(rows.isEmpty());
         exportAuditButton.setDisable(row == null || visibleAuditEntries.isEmpty());
-        detailsArea.setText(row == null ? "" : row.detailText());
-        auditArea.setText(row == null ? "" : "Loading audit history...");
+        detailsArea.setText(row == null
+            ? "No visit selected yet.\n\nChoose a casual transit record to inspect guardian details, pricing, receipt, and notes."
+            : row.detailText());
+        auditArea.setText(row == null
+            ? "No visit selected yet.\n\nSelect a record to load its audit history."
+            : "Loading audit history...");
         if (row == null) {
             auditActionFilter.getItems().setAll("All Actions");
             auditActionFilter.setValue("All Actions");
@@ -191,5 +252,31 @@ final class CasualTransitTableSupport {
         exportSummaryButton.setDisable(disabled || rows.isEmpty());
         exportCsvButton.setDisable(disabled || rows.isEmpty());
         exportAuditButton.setDisable(disabled || selected == null || visibleAuditEntries.isEmpty());
+    }
+
+    private static String statusChipClass(String status) {
+        if ("Closed".equalsIgnoreCase(status)) {
+            return "app-chip-success";
+        }
+        if ("Canceled".equalsIgnoreCase(status)) {
+            return "app-chip-danger";
+        }
+        if ("Open".equalsIgnoreCase(status)) {
+            return "app-chip-info";
+        }
+        return "app-chip-neutral";
+    }
+
+    private static String paymentChipClass(String paymentStatus) {
+        if ("Paid".equalsIgnoreCase(paymentStatus)) {
+            return "app-chip-success";
+        }
+        if ("Pending".equalsIgnoreCase(paymentStatus)) {
+            return "app-chip-warning";
+        }
+        if ("Void".equalsIgnoreCase(paymentStatus)) {
+            return "app-chip-danger";
+        }
+        return "app-chip-neutral";
     }
 }

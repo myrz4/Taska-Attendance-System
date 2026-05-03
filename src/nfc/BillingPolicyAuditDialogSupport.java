@@ -8,9 +8,11 @@ import java.util.concurrent.atomic.AtomicReference;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.geometry.Pos;
-import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonBar;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.layout.HBox;
@@ -30,9 +32,18 @@ final class BillingPolicyAuditDialogSupport {
 
     @SuppressWarnings("unused")
     static void showAuditLogDialog(Window owner, BillingPolicyStatusSupport.AlertSink alerts) {
-        Alert auditDialog = new Alert(Alert.AlertType.INFORMATION);
-        auditDialog.setHeaderText("Recent Billing Audit Log");
-        auditDialog.setTitle("Billing Audit");
+        Dialog<ButtonType> auditDialog = new Dialog<>();
+        if (owner != null) {
+            auditDialog.initOwner(owner);
+        }
+        AppThemeSupport.prepareDialog(
+            auditDialog,
+            "Billing Audit",
+            "Recent billing catalog save and activation activity.",
+            AppThemeSupport.Tone.INFO
+        );
+        ButtonType closeType = new ButtonType("Close", ButtonBar.ButtonData.CANCEL_CLOSE);
+        auditDialog.getDialogPane().getButtonTypes().add(closeType);
 
         ComboBox<String> actionFilter = new ComboBox<>(FXCollections.observableArrayList(AUDIT_ACTION_OPTIONS));
         actionFilter.setValue("all");
@@ -47,7 +58,9 @@ final class BillingPolicyAuditDialogSupport {
         body.setWrapText(false);
         body.setPrefColumnCount(100);
         body.setPrefRowCount(24);
-        body.setStyle("-fx-font-family: 'Consolas'; -fx-font-size: 12px;");
+        AppThemeSupport.styleControls(actionFilter, body);
+        body.getStyleClass().add("app-detail-area");
+        AppThemeSupport.styleToolbarButtons(refreshBtn, exportTxtBtn, exportJsonBtn);
 
         HBox controls = new HBox(8,
             new Label("Action:"),
@@ -71,8 +84,22 @@ final class BillingPolicyAuditDialogSupport {
         exportTxtBtn.setOnAction(event -> exportAuditLogTxt(owner, currentSnapshot.get(), alerts));
         exportJsonBtn.setOnAction(event -> exportAuditLogJson(owner, currentSnapshot.get(), alerts));
 
-        auditDialog.getDialogPane().setContent(content);
-        auditDialog.getDialogPane().setMinWidth(860);
+        auditDialog.getDialogPane().setContent(
+            AppThemeSupport.createDialogContent(
+                AppThemeSupport.createFormSection(
+                    "Audit controls",
+                    "Filter the billing audit history or export the current view.",
+                    controls
+                ),
+                AppThemeSupport.createFormSection(
+                    "Audit entries",
+                    "Catalog changes and activation events will appear here.",
+                    body
+                )
+            )
+        );
+        auditDialog.getDialogPane().setPrefSize(900, 640);
+        AppThemeSupport.styleDialogButtons(auditDialog, closeType);
         auditDialog.show();
 
         refreshAuditLog(body, currentSnapshot, "all");

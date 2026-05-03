@@ -18,7 +18,9 @@ final class BillingPolicyTableSupport {
         Consumer<BillingPolicyView.Row> onSelected
     ) {
         table.setItems(rows);
+        table.getStyleClass().add("app-data-table");
         table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
+        table.setFixedCellSize(42);
 
         TableColumn<BillingPolicyView.Row, String> codeCol = new TableColumn<>("Code");
         codeCol.setCellValueFactory(new PropertyValueFactory<>("code"));
@@ -27,10 +29,12 @@ final class BillingPolicyTableSupport {
         TableColumn<BillingPolicyView.Row, Long> staffCol = new TableColumn<>("Staff (sen)");
         staffCol.setCellValueFactory(new PropertyValueFactory<>("staff"));
         staffCol.setMinWidth(140);
+        staffCol.setStyle("-fx-alignment: CENTER-RIGHT;");
 
         TableColumn<BillingPolicyView.Row, Long> nonStaffCol = new TableColumn<>("Non-staff (sen)");
         nonStaffCol.setCellValueFactory(new PropertyValueFactory<>("nonStaff"));
         nonStaffCol.setMinWidth(160);
+        nonStaffCol.setStyle("-fx-alignment: CENTER-RIGHT;");
 
         table.getColumns().clear();
         table.getColumns().add(codeCol);

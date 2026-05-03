@@ -1,13 +1,11 @@
 package nfc;
 
 import javafx.geometry.Insets;
-import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.FlowPane;
-import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 
@@ -17,13 +15,14 @@ final class BillingPolicyLayoutSupport {
     }
 
     @SuppressWarnings("unused")
-    static HBox createTitleRow(Label liveHealthBadge, Button liveHealthRefreshBtn, Button liveHealthDetailsBtn) {
-        Label title = new Label("Billing Policy Catalog");
-        title.setStyle("-fx-font-size: 28px; -fx-font-weight: bold; -fx-text-fill: #1d2f24;");
-
-        HBox titleRow = new HBox(8, title, liveHealthRefreshBtn, liveHealthDetailsBtn, liveHealthBadge);
-        titleRow.setAlignment(Pos.CENTER_LEFT);
-        return titleRow;
+    static javafx.scene.layout.HBox createTitleRow(Label liveHealthBadge, Button liveHealthRefreshBtn, Button liveHealthDetailsBtn) {
+        return AppThemeSupport.createStandardPageBanner(
+            "Billing Policy Catalog",
+            "Manage active billing catalogs, monitor live backend health, and keep policy rows clean and auditable.",
+            liveHealthRefreshBtn,
+            liveHealthDetailsBtn,
+            liveHealthBadge
+        );
     }
 
     @SuppressWarnings("unused")
@@ -35,6 +34,7 @@ final class BillingPolicyLayoutSupport {
         Label liveHealthGatewayLabel
     ) {
         VBox liveHealthDetailsBox = new VBox(4);
+        liveHealthDetailsBox.getStyleClass().addAll("app-card", "app-status-panel");
         liveHealthDetailsBox.getChildren().setAll(
             liveHealthVersionLabel,
             liveHealthRowCountLabel,
@@ -42,15 +42,14 @@ final class BillingPolicyLayoutSupport {
             liveHealthMissingLabel,
             liveHealthGatewayLabel
         );
-        liveHealthDetailsBox.setPadding(new Insets(8, 12, 8, 12));
-        liveHealthDetailsBox.setStyle("-fx-background-color: rgba(255,243,205,0.70); -fx-border-color: #d6b656; -fx-border-radius: 10; -fx-background-radius: 10; -fx-padding: 8 12 8 12;");
+        liveHealthDetailsBox.setPadding(new Insets(12));
         liveHealthDetailsBox.setVisible(false);
         liveHealthDetailsBox.setManaged(false);
         return liveHealthDetailsBox;
     }
 
     @SuppressWarnings("unused")
-    static FlowPane createTopActions(
+    static VBox createTopActions(
         javafx.scene.control.ComboBox<BillingPolicyWorkflowSupport.CatalogItemOption> catalogSelect,
         Button refreshBtn,
         Button seedDefaultBtn,
@@ -63,46 +62,70 @@ final class BillingPolicyLayoutSupport {
         Button exportTxtBtn,
         Button exportJsonBtn
     ) {
-        return BillingPolicyUiSupport.createWrapRow(
+        FlowPane catalogRow = BillingPolicyUiSupport.createWrapRow(
             new Label("Catalog:"), catalogSelect,
             refreshBtn,
-            seedDefaultBtn,
-            versionField,
+            seedDefaultBtn
+        );
+        FlowPane versionRow = BillingPolicyUiSupport.createWrapRow(
+            new Label("Version:"), versionField,
             new Label("Default Transit:"), defaultTransitCodeField,
             saveNewBtn,
-            activateBtn,
+            activateBtn
+        );
+        FlowPane healthRow = BillingPolicyUiSupport.createWrapRow(
             healthBtn,
             auditBtn,
             exportTxtBtn,
             exportJsonBtn
         );
+
+        VBox controlsCard = AppThemeSupport.createSectionCard(
+            "Catalog Controls",
+            "Keep versioning and export actions compact so the policy table stays dominant.",
+            catalogRow,
+            versionRow,
+            healthRow
+        );
+        controlsCard.getStyleClass().add("app-toolbar-card");
+        return controlsCard;
     }
 
     @SuppressWarnings("unused")
-    static FlowPane createRowEditor(
+    static VBox createRowEditor(
         TextField selectedCode,
         TextField selectedStaff,
         TextField selectedNonStaff,
         Button updateRowBtn
     ) {
-        return BillingPolicyUiSupport.createWrapRow(
-            new Label("Selected:"),
-            selectedCode,
-            selectedStaff,
-            selectedNonStaff,
-            updateRowBtn
+        VBox editorCard = AppThemeSupport.createSectionCard(
+            "Selected Policy Row",
+            "Keep the selected row editor visible without taking height away from the table.",
+            BillingPolicyUiSupport.createWrapRow(
+                new Label("Selected:"),
+                selectedCode,
+                selectedStaff,
+                selectedNonStaff,
+                updateRowBtn
+            )
         );
+        editorCard.getStyleClass().add("app-editor-card");
+        return editorCard;
     }
 
     @SuppressWarnings("unused")
-    static BorderPane createWrapper(FlowPane topActions, javafx.scene.control.TableView<BillingPolicyView.Row> table, FlowPane rowEditor) {
-        BorderPane wrapper = new BorderPane();
-        wrapper.setTop(topActions);
-        wrapper.setCenter(table);
-        wrapper.setBottom(rowEditor);
-        BorderPane.setMargin(topActions, new Insets(0, 0, 8, 0));
-        BorderPane.setMargin(rowEditor, new Insets(8, 0, 0, 0));
-        VBox.setVgrow(wrapper, Priority.ALWAYS);
-        return wrapper;
+    static VBox createTableCard(TableView<BillingPolicyView.Row> table) {
+        VBox tableCard = new VBox(
+            10,
+            AppThemeSupport.createSectionHeader(
+                "Policy Table",
+                "The working catalog rows below should stay visible and resizable while you edit policy values."
+            ),
+            table
+        );
+        tableCard.getStyleClass().addAll("app-card", "app-detail-card");
+        tableCard.setMinHeight(0);
+        VBox.setVgrow(table, Priority.ALWAYS);
+        return tableCard;
     }
 }

@@ -14,17 +14,18 @@ import java.util.Objects;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
+import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
-import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
-import javafx.scene.control.ButtonType;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.control.Tooltip;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
@@ -71,12 +72,12 @@ public class BillingLedgerView extends VBox {
     private final Button printHtmlButton = new Button("Export PDF + Print");
     private final Button markCashPaidButton = new Button("Mark Paid (Cash)");
     private final Label statusLabel = new Label("Loading billing ledger...");
-    private final Label invoiceCountLabel = new Label("Invoices: 0");
-    private final Label paidTotalLabel = new Label("Paid: RM0.00");
-    private final Label outstandingTotalLabel = new Label("Outstanding: RM0.00");
-    private final Label overdueCountLabel = new Label("Overdue: 0");
-    private final Label ageReviewSummaryLabel = new Label("Age Review: 0 fam / 0 inv");
-    private final Label overtimeReviewSummaryLabel = new Label("OT Review: 0 fam / 0 inv");
+    private final Label invoiceCountLabel = new Label("0");
+    private final Label paidTotalLabel = new Label("RM0.00");
+    private final Label outstandingTotalLabel = new Label("RM0.00");
+    private final Label overdueCountLabel = new Label("0");
+    private final Label ageReviewSummaryLabel = new Label("0 fam / 0 inv");
+    private final Label overtimeReviewSummaryLabel = new Label("0 fam / 0 inv");
     private final Label periodTotalsLabel = new Label("Periods: -");
     private final Label parentFocusLabel = new Label("Parent Focus: none");
     private final TableView<ParentSummaryRow> parentSummaryTable = new TableView<>();
@@ -89,12 +90,13 @@ public class BillingLedgerView extends VBox {
     private String focusedParentId;
 
     public BillingLedgerView() {
-        setSpacing(12);
-        setPadding(new Insets(12));
-        setStyle("-fx-background-color: #86d67f;");
+        setSpacing(0);
+        setFillWidth(true);
 
-        Label title = new Label("Billing Ledger");
-        title.setStyle("-fx-font-size: 28px; -fx-font-weight: bold; -fx-text-fill: #1d2f24;");
+        javafx.scene.layout.HBox header = AppThemeSupport.createStandardPageBanner(
+            "Billing Ledger",
+            "Track invoices, family risk, receipts, and review work in one cleaner billing workflow."
+        );
 
         searchField.setPromptText("Search parent, student(s), invoice ID, receipt, or period");
         searchField.setPrefWidth(340);
@@ -216,6 +218,23 @@ public class BillingLedgerView extends VBox {
             exportHtmlOpenButton,
             printHtmlButton
         );
+        AppThemeSupport.styleControls(
+            searchField,
+            statusFilter,
+            dateScopeFilter,
+            sortFilter,
+            riskFilter,
+            reviewFilter,
+            parentSortFilter,
+            issuePeriodField,
+            detailsArea,
+            parentSummaryTable,
+            table
+        );
+        detailsArea.getStyleClass().add("app-detail-area");
+        statusLabel.getStyleClass().add("app-muted-text");
+        periodTotalsLabel.getStyleClass().add("app-helper-text");
+        parentFocusLabel.getStyleClass().add("app-muted-text");
 
         FlowPane filters = BillingPolicyUiSupport.createWrapRow(10, 8,
             new Label("Search:"), searchField,
@@ -253,13 +272,8 @@ public class BillingLedgerView extends VBox {
             clearParentFocusButton,
             parentFocusLabel
         );
+        VBox currentViewMeta = new VBox(4, periodTotalsLabel, statusLabel);
 
-        styleBadge(invoiceCountLabel, "#ecf6f0", "#285943");
-        styleBadge(paidTotalLabel, "#dff6e7", "#1f7a43");
-        styleBadge(outstandingTotalLabel, "#ffe1dc", "#7d2218");
-        styleBadge(overdueCountLabel, "#ffd9d4", "#8c1d13");
-        styleBadge(ageReviewSummaryLabel, "#ffe8d2", "#8a4b00");
-        styleBadge(overtimeReviewSummaryLabel, "#fff0bf", "#7a5200");
         configureInteractiveBadge(
             ageReviewSummaryLabel,
             "Show age-review invoices and sort parents by age-review exposure.",
@@ -276,24 +290,6 @@ public class BillingLedgerView extends VBox {
                 applyQuickFilter("All", "All Dates", null, "Needs Review", "Overtime Review");
             }
         );
-        statusLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #476150;");
-        periodTotalsLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #345041; -fx-font-weight: bold;");
-
-        Region summarySpacer = new Region();
-        HBox.setHgrow(summarySpacer, javafx.scene.layout.Priority.ALWAYS);
-        HBox summaryRow = new HBox(10,
-            invoiceCountLabel,
-            paidTotalLabel,
-            outstandingTotalLabel,
-            overdueCountLabel,
-            ageReviewSummaryLabel,
-            overtimeReviewSummaryLabel,
-            summarySpacer,
-            statusLabel
-        );
-        summaryRow.setAlignment(Pos.CENTER_LEFT);
-
-        VBox summaryBox = new VBox(6, summaryRow, periodTotalsLabel);
 
         buildParentSummaryTable();
         buildTable();
@@ -303,22 +299,36 @@ public class BillingLedgerView extends VBox {
         detailsArea.setPrefRowCount(18);
         detailsArea.setPromptText("Select an invoice row to view invoice items, due date, receipt, and payment details.");
 
-        Label detailsTitle = new Label("Invoice and Receipt Details");
-        detailsTitle.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
-        FlowPane detailsHeader = BillingPolicyUiSupport.createWrapRow(10, 8, detailsTitle, markCashPaidButton, exportHtmlButton, exportHtmlOpenButton, printHtmlButton);
+        FlowPane detailActions = BillingPolicyUiSupport.createWrapRow(
+            10,
+            8,
+            markCashPaidButton,
+            exportHtmlButton,
+            exportHtmlOpenButton,
+            printHtmlButton
+        );
 
-        VBox detailsBox = new VBox(8, detailsHeader, detailsArea);
-        detailsBox.setPadding(new Insets(8, 0, 0, 0));
+        VBox detailsBox = new VBox(
+            12,
+            AppThemeSupport.createSectionHeader(
+                "Invoice & Receipt Details",
+                "Inspect invoice metadata, policy notes, payment context, and the parent billing snapshot."
+            ),
+            detailActions,
+            detailsArea
+        );
+        detailsBox.getStyleClass().addAll("app-card", "app-detail-card");
         detailsBox.setMinWidth(360);
+        detailsBox.setMinHeight(0);
         VBox.setVgrow(detailsArea, javafx.scene.layout.Priority.ALWAYS);
 
-        Label parentSummaryTitle = new Label("Parent Summary");
-        parentSummaryTitle.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
-        parentSummaryTable.setPrefHeight(190);
+        parentSummaryTable.setMinHeight(220);
+        parentSummaryTable.setPrefHeight(260);
 
-        FlowPane parentSummaryHeader = BillingPolicyUiSupport.createWrapRow(10, 8,
-            parentSummaryTitle,
-            new Label("Sort Parents:"),
+        FlowPane parentSummaryActions = BillingPolicyUiSupport.createWrapRow(
+            10,
+            8,
+            new Label("Sort:"),
             parentSortFilter,
             exportVisibleParentsButton,
             exportParentSummaryButton,
@@ -326,18 +336,86 @@ public class BillingLedgerView extends VBox {
             printParentSummaryButton
         );
 
-        Label invoiceTableTitle = new Label("Invoices");
-        invoiceTableTitle.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
+        VBox parentSummaryCard = new VBox(
+            12,
+            AppThemeSupport.createSectionHeader(
+                "Parent Summary",
+                "Review family-level outstanding balances, risk, and management-review pressure."
+            ),
+            parentSummaryActions,
+            parentSummaryTable
+        );
+        parentSummaryCard.getStyleClass().addAll("app-card", "app-section-card");
+        parentSummaryCard.setMinHeight(0);
+        VBox.setVgrow(parentSummaryTable, javafx.scene.layout.Priority.ALWAYS);
 
-        VBox leftPane = new VBox(10, parentSummaryHeader, parentSummaryTable, invoiceTableTitle, table);
-        leftPane.setMinWidth(0);
+        VBox invoiceCard = new VBox(
+            12,
+            AppThemeSupport.createSectionHeader(
+                "Invoices",
+                "Use the invoice list for daily collection, PDF exports, and cash settlement follow-up."
+            ),
+            table
+        );
+        invoiceCard.getStyleClass().addAll("app-card", "app-section-card");
+        invoiceCard.setMinHeight(0);
+        table.setMinHeight(260);
         VBox.setVgrow(table, javafx.scene.layout.Priority.ALWAYS);
 
-        SplitPane splitPane = new SplitPane(leftPane, detailsBox);
-        splitPane.setDividerPositions(0.62);
+        FlowPane kpiStrip = new FlowPane(
+            12,
+            12,
+            AppThemeSupport.createKpiCard("Invoices", invoiceCountLabel),
+            AppThemeSupport.createKpiCard("Paid Amount", paidTotalLabel, "app-kpi-success"),
+            AppThemeSupport.createKpiCard("Outstanding", outstandingTotalLabel, "app-kpi-danger"),
+            AppThemeSupport.createKpiCard("Overdue", overdueCountLabel, "app-kpi-danger"),
+            AppThemeSupport.createKpiCard("Age Review", ageReviewSummaryLabel, "app-kpi-warning"),
+            AppThemeSupport.createKpiCard("OT Review", overtimeReviewSummaryLabel, "app-kpi-warning")
+        );
+
+        VBox filterCard = AppThemeSupport.createSectionCard(
+            "Filters & Quick Views",
+            "Keep search and quick follow-up views visible without stealing height from the main billing workspace.",
+            filters,
+            quickFilters
+        );
+        filterCard.getStyleClass().add("app-toolbar-card");
+        filterCard.setMinWidth(0);
+
+        VBox actionCard = AppThemeSupport.createSectionCard(
+            "Billing Actions",
+            "Issue invoices, focus one family, and keep the current view context nearby while the main workspace stays large.",
+            issueActions,
+            parentActions,
+            currentViewMeta
+        );
+        actionCard.getStyleClass().add("app-toolbar-card");
+        actionCard.setMinWidth(0);
+
+        HBox helperRow = new HBox(12, filterCard, actionCard);
+        helperRow.setFillHeight(true);
+        HBox.setHgrow(filterCard, javafx.scene.layout.Priority.ALWAYS);
+        HBox.setHgrow(actionCard, javafx.scene.layout.Priority.ALWAYS);
+
+        SplitPane leftWorkflow = new SplitPane(parentSummaryCard, invoiceCard);
+        leftWorkflow.setOrientation(Orientation.VERTICAL);
+        leftWorkflow.setDividerPositions(0.4);
+        leftWorkflow.setMinHeight(0);
+
+        SplitPane splitPane = new SplitPane(leftWorkflow, detailsBox);
+        splitPane.setDividerPositions(0.56);
+        splitPane.setMinHeight(0);
+
+        VBox body = new VBox(12, helperRow, kpiStrip, splitPane);
+        body.setPadding(new Insets(16, 18, 18, 18));
+        body.setFillWidth(true);
         VBox.setVgrow(splitPane, javafx.scene.layout.Priority.ALWAYS);
 
-        getChildren().addAll(title, filters, quickFilters, issueActions, parentActions, summaryBox, splitPane);
+        ScrollPane bodyScroll = AppThemeSupport.createPageBodyScrollWrapper(body);
+        BorderPane shell = AppThemeSupport.createStandardPageShell(header, bodyScroll);
+
+        getChildren().setAll(shell);
+        VBox.setVgrow(shell, javafx.scene.layout.Priority.ALWAYS);
 
         reloadData();
     }
@@ -436,12 +514,15 @@ public class BillingLedgerView extends VBox {
             return;
         }
 
-        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
-        confirm.setTitle("Issue Monthly Invoices");
-        confirm.setHeaderText(BillingLedgerCommandSupport.buildInvoiceIssueHeader(prepared));
-        confirm.setContentText(BillingLedgerCommandSupport.buildInvoiceIssueMessage(prepared));
-        confirm.initOwner(getWindow());
-        if (confirm.showAndWait().orElse(ButtonType.CANCEL) != ButtonType.OK) {
+        if (!AppThemeSupport.showConfirm(
+            getWindow(),
+            "Issue Monthly Invoices",
+            BillingLedgerCommandSupport.buildInvoiceIssueHeader(prepared),
+            BillingLedgerCommandSupport.buildInvoiceIssueMessage(prepared),
+            AppThemeSupport.Tone.WARNING,
+            "Issue Invoices",
+            "Cancel"
+        )) {
             return;
         }
 
@@ -459,6 +540,7 @@ public class BillingLedgerView extends VBox {
                 issueVisibleInvoicesButton.setDisable(false);
 
                 statusLabel.setText("Invoice issuance finished for " + prepared.period + ".");
+                AppThemeSupport.showToast(getWindow(), "Invoice Issuance Complete", "Billing run for " + prepared.period + " finished.", AppThemeSupport.Tone.SUCCESS);
                 showSimple("Invoice issuance complete", BillingLedgerMessageSupport.buildInvoiceGenerationSummary(result));
                 reloadData();
             },
@@ -618,12 +700,12 @@ public class BillingLedgerView extends VBox {
 
     private void updateSummary(List<LedgerRow> rows) {
         BillingLedgerSummarySupport.SummarySnapshot snapshot = BillingLedgerSummarySupport.summarizeVisibleRows(rows, this::formatMoney);
-        invoiceCountLabel.setText(snapshot.invoiceCountText);
-        paidTotalLabel.setText(snapshot.paidTotalText);
-        outstandingTotalLabel.setText(snapshot.outstandingTotalText);
-        overdueCountLabel.setText(snapshot.overdueCountText);
-        ageReviewSummaryLabel.setText(snapshot.ageReviewSummaryText);
-        overtimeReviewSummaryLabel.setText(snapshot.overtimeReviewSummaryText);
+        invoiceCountLabel.setText(metricValue(snapshot.invoiceCountText));
+        paidTotalLabel.setText(metricValue(snapshot.paidTotalText));
+        outstandingTotalLabel.setText(metricValue(snapshot.outstandingTotalText));
+        overdueCountLabel.setText(metricValue(snapshot.overdueCountText));
+        ageReviewSummaryLabel.setText(metricValue(snapshot.ageReviewSummaryText));
+        overtimeReviewSummaryLabel.setText(metricValue(snapshot.overtimeReviewSummaryText));
         periodTotalsLabel.setText(snapshot.periodTotalsText);
     }
 
@@ -664,12 +746,15 @@ public class BillingLedgerView extends VBox {
             return;
         }
 
-        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
-        confirm.setTitle("Record Cash Payment");
-        confirm.setHeaderText("Mark this invoice as paid by cash?");
-        confirm.setContentText(BillingLedgerCommandSupport.buildCashPaymentConfirmation(row, BillingLedgerValueSupport::nullSafe));
-        confirm.initOwner(getWindow());
-        if (confirm.showAndWait().orElse(ButtonType.CANCEL) != ButtonType.OK) {
+        if (!AppThemeSupport.showConfirm(
+            getWindow(),
+            "Record Cash Payment",
+            "Mark this invoice as paid by cash?",
+            BillingLedgerCommandSupport.buildCashPaymentConfirmation(row, BillingLedgerValueSupport::nullSafe),
+            AppThemeSupport.Tone.INFO,
+            "Mark Paid",
+            "Cancel"
+        )) {
             return;
         }
 
@@ -682,6 +767,7 @@ public class BillingLedgerView extends VBox {
             () -> {
                 refreshButton.setDisable(false);
                 statusLabel.setText("Cash payment recorded for invoice " + BillingLedgerValueSupport.nullSafe(row.getInvoiceId()) + ".");
+                AppThemeSupport.showToast(getWindow(), "Cash Payment Recorded", "Invoice " + BillingLedgerValueSupport.nullSafe(row.getInvoiceId()) + " is now marked as paid.", AppThemeSupport.Tone.SUCCESS);
                 showSimple("Cash payment recorded", "The selected invoice is now marked as paid.");
                 reloadData();
             },
@@ -813,16 +899,6 @@ public class BillingLedgerView extends VBox {
         return (int) rows.stream().map(LedgerRow::getParentId).filter(Objects::nonNull).distinct().count();
     }
 
-    private void styleBadge(Label label, String bgColor, String textColor) {
-        label.setStyle(
-            "-fx-background-color: " + bgColor + ";" +
-            "-fx-text-fill: " + textColor + ";" +
-            "-fx-font-weight: bold;" +
-            "-fx-padding: 6 12 6 12;" +
-            "-fx-background-radius: 999;"
-        );
-    }
-
     private String paymentProvider(LedgerRow row) {
         if (row == null) {
             return null;
@@ -852,9 +928,20 @@ public class BillingLedgerView extends VBox {
     }
 
     private void configureInteractiveBadge(Label label, String tooltipText, Runnable action) {
-        label.setStyle(label.getStyle() + "-fx-cursor: hand;");
+        if (!label.getStyleClass().contains("app-chip-info")) {
+            label.getStyleClass().add("app-chip-info");
+        }
+        label.setStyle("-fx-cursor: hand;");
         label.setTooltip(new Tooltip(tooltipText));
         label.setOnMouseClicked(event -> action.run());
+    }
+
+    private String metricValue(String text) {
+        if (text == null) {
+            return "-";
+        }
+        int separator = text.indexOf(':');
+        return separator >= 0 && separator + 1 < text.length() ? text.substring(separator + 1).trim() : text.trim();
     }
 
     private String formatMoney(long sen) {
@@ -885,21 +972,11 @@ public class BillingLedgerView extends VBox {
     }
 
     private void showSimple(String title, String message) {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle(title);
-        alert.setHeaderText(null);
-        alert.setContentText(message);
-        alert.initOwner(getWindow());
-        alert.showAndWait();
+        AppThemeSupport.showInfo(getWindow(), title, message);
     }
 
     private void showError(String context, Exception ex) {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle("Billing Ledger Error");
-        alert.setHeaderText(context);
-        alert.setContentText(BillingLedgerMessageSupport.rootMessage(ex));
-        alert.initOwner(getWindow());
-        alert.showAndWait();
+        AppThemeSupport.showError(getWindow(), context, BillingLedgerMessageSupport.rootMessage(ex));
     }
 
     public static final class LedgerRow {

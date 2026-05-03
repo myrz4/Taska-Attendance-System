@@ -24,6 +24,7 @@ final class CasualTransitDialogSupport {
         Dialog<Map<String, String>> dialog = baseDialog(owner, "New Casual Transit Visit", "Create a walk-in visit for an unregistered child");
         ButtonType createButton = new ButtonType("Create Visit", ButtonBar.ButtonData.OK_DONE);
         dialog.getDialogPane().getButtonTypes().addAll(createButton, ButtonType.CANCEL);
+        AppThemeSupport.styleDialogButtons(dialog, createButton);
 
         TextField childNameField = new TextField();
         ComboBox<String> transitTypeField = new ComboBox<>();
@@ -36,6 +37,15 @@ final class CasualTransitDialogSupport {
         TextField guardianPhoneField = new TextField();
         TextField guardianRelationshipField = new TextField();
         TextArea notesArea = notesArea(3, "");
+        AppThemeSupport.styleControls(
+            childNameField,
+            transitTypeField,
+            rateTypeField,
+            guardianNameField,
+            guardianPhoneField,
+            guardianRelationshipField,
+            notesArea
+        );
 
         GridPane grid = formGrid();
         grid.addRow(0, new Label("Child Name"), childNameField);
@@ -46,7 +56,15 @@ final class CasualTransitDialogSupport {
         grid.addRow(5, new Label("Relationship"), guardianRelationshipField);
         grid.addRow(6, new Label("Notes"), notesArea);
         grow(childNameField, transitTypeField, rateTypeField, guardianNameField, guardianPhoneField, guardianRelationshipField, notesArea);
-        dialog.getDialogPane().setContent(grid);
+        dialog.getDialogPane().setContent(
+            AppThemeSupport.createDialogContent(
+                AppThemeSupport.createFormSection(
+                    "Visit details",
+                    "Capture the child, guardian, and rate type for this casual transit visit.",
+                    grid
+                )
+            )
+        );
 
         dialog.setResultConverter(button -> {
             if (button != createButton) return null;
@@ -68,6 +86,7 @@ final class CasualTransitDialogSupport {
         Dialog<Map<String, String>> dialog = baseDialog(owner, "Checkout Casual Transit Visit", "Record pickup payment and close this visit");
         ButtonType checkoutButtonType = new ButtonType("Checkout", ButtonBar.ButtonData.OK_DONE);
         dialog.getDialogPane().getButtonTypes().addAll(checkoutButtonType, ButtonType.CANCEL);
+        AppThemeSupport.styleDialogButtons(dialog, checkoutButtonType);
 
         TextField amountField = new TextField();
         amountField.setPromptText("Optional manual override in RM. Leave blank for auto pricing.");
@@ -75,6 +94,7 @@ final class CasualTransitDialogSupport {
         paymentMethodField.setItems(FXCollections.observableArrayList("Cash", "Transfer"));
         paymentMethodField.setValue("Cash");
         TextArea notesArea = notesArea(3, selected.notes());
+        AppThemeSupport.styleControls(amountField, paymentMethodField, notesArea);
 
         GridPane grid = formGrid();
         grid.addRow(0, new Label("Child"), new Label(selected.childName()));
@@ -83,7 +103,15 @@ final class CasualTransitDialogSupport {
         grid.addRow(3, new Label("Payment Method"), paymentMethodField);
         grid.addRow(4, new Label("Notes"), notesArea);
         grow(amountField, paymentMethodField, notesArea);
-        dialog.getDialogPane().setContent(grid);
+        dialog.getDialogPane().setContent(
+            AppThemeSupport.createDialogContent(
+                AppThemeSupport.createFormSection(
+                    "Checkout details",
+                    "Confirm payment details and capture any notes before closing this visit.",
+                    grid
+                )
+            )
+        );
 
         dialog.setResultConverter(button -> {
             if (button != checkoutButtonType) return null;
@@ -101,6 +129,7 @@ final class CasualTransitDialogSupport {
         Dialog<Map<String, String>> dialog = baseDialog(owner, "Edit Casual Transit Visit", "Update visit details and keep an audit reason");
         ButtonType saveButton = new ButtonType("Save Changes", ButtonBar.ButtonData.OK_DONE);
         dialog.getDialogPane().getButtonTypes().addAll(saveButton, ButtonType.CANCEL);
+        AppThemeSupport.styleDialogButtons(dialog, saveButton);
 
         TextField childNameField = new TextField(selected.childName());
         TextField guardianNameField = new TextField(selected.guardianName());
@@ -114,6 +143,19 @@ final class CasualTransitDialogSupport {
         paymentMethodField.setValue(selected.paymentMethod());
         TextArea notesArea = notesArea(3, selected.notes());
         TextField reasonField = new TextField();
+        reasonField.setPromptText("Required reason");
+        AppThemeSupport.styleControls(
+            childNameField,
+            guardianNameField,
+            guardianPhoneField,
+            guardianRelationshipField,
+            checkInField,
+            checkOutField,
+            amountField,
+            paymentMethodField,
+            notesArea,
+            reasonField
+        );
 
         GridPane grid = formGrid();
         grid.addRow(0, new Label("Child Name"), childNameField);
@@ -126,7 +168,18 @@ final class CasualTransitDialogSupport {
         grid.addRow(7, new Label("Payment Method"), paymentMethodField);
         grid.addRow(8, new Label("Notes"), notesArea);
         grid.addRow(9, new Label("Reason"), reasonField);
-        dialog.getDialogPane().setContent(grid);
+        Label reasonHelper = new Label("Reason is required so other admins can understand why this visit was edited.");
+        reasonHelper.getStyleClass().add("app-required-text");
+        dialog.getDialogPane().setContent(
+            AppThemeSupport.createDialogContent(
+                AppThemeSupport.createFormSection(
+                    "Visit updates",
+                    "Adjust visit timing, guardian details, and payment information.",
+                    grid,
+                    reasonHelper
+                )
+            )
+        );
 
         dialog.setResultConverter(button -> {
             if (button != saveButton) return null;
@@ -171,14 +224,26 @@ final class CasualTransitDialogSupport {
         Dialog<Map<String, String>> dialog = baseDialog(owner, title, header);
         ButtonType actionType = new ButtonType(actionLabel, ButtonBar.ButtonData.OK_DONE);
         dialog.getDialogPane().getButtonTypes().addAll(actionType, ButtonType.CANCEL);
+        boolean dangerAction = title != null && title.toLowerCase().contains("cancel");
+        AppThemeSupport.styleDialogButtons(dialog, actionType, dangerAction ? new ButtonType[] {actionType} : new ButtonType[0]);
 
         TextArea notesArea = notesArea(3, initialNotes);
         TextField reasonField = new TextField();
+        reasonField.setPromptText("Required reason");
+        AppThemeSupport.styleControls(notesArea, reasonField);
         GridPane grid = formGrid();
         grid.addRow(0, new Label("Notes"), notesArea);
         grid.addRow(1, new Label("Reason"), reasonField);
         grow(notesArea, reasonField);
-        dialog.getDialogPane().setContent(grid);
+        dialog.getDialogPane().setContent(
+            AppThemeSupport.createDialogContent(
+                AppThemeSupport.createFormSection(
+                    "Review action",
+                    "Explain why this visit is being reopened or canceled so the audit trail stays clear.",
+                    grid
+                )
+            )
+        );
 
         dialog.setResultConverter(button -> {
             if (button != actionType) return null;
@@ -193,11 +258,16 @@ final class CasualTransitDialogSupport {
 
     private static Dialog<Map<String, String>> baseDialog(Window owner, String title, String header) {
         Dialog<Map<String, String>> dialog = new Dialog<>();
-        dialog.setTitle(title);
-        dialog.setHeaderText(header);
         if (owner != null) {
             dialog.initOwner(owner);
         }
+        AppThemeSupport.prepareDialog(
+            dialog,
+            title,
+            header,
+            title != null && title.toLowerCase().contains("cancel") ? AppThemeSupport.Tone.DANGER : AppThemeSupport.Tone.INFO
+        );
+        dialog.getDialogPane().setPrefWidth(560);
         return dialog;
     }
 
@@ -205,6 +275,7 @@ final class CasualTransitDialogSupport {
         GridPane grid = new GridPane();
         grid.setHgap(10);
         grid.setVgap(10);
+        grid.getStyleClass().add("app-form-grid");
         return grid;
     }
 

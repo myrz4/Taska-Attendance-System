@@ -7,7 +7,6 @@ import java.io.PrintWriter;
 
 import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.layout.FlowPane;
 import javafx.stage.FileChooser;
@@ -26,6 +25,7 @@ final class BillingPolicyUiSupport {
         row.setHgap(hgap);
         row.setVgap(vgap);
         row.setAlignment(Pos.CENTER_LEFT);
+        row.getStyleClass().add("app-chip-strip");
         row.getChildren().addAll(nodes);
         return row;
     }
@@ -36,6 +36,7 @@ final class BillingPolicyUiSupport {
 
     static void configureActionButtons(double maxWidth, Button... buttons) {
         for (Button button : buttons) {
+            AppThemeSupport.styleToolbarButtons(button);
             button.setWrapText(true);
             button.setMinHeight(32);
             button.setMaxWidth(maxWidth);
@@ -57,20 +58,10 @@ final class BillingPolicyUiSupport {
     }
 
     static void showInfo(Window owner, String header, String message) {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION, message);
-        alert.setHeaderText(header);
-        if (owner != null) {
-            alert.initOwner(owner);
-        }
-        alert.showAndWait();
+        AppThemeSupport.showInfo(owner, header, message);
     }
 
     static void showError(Window owner, String header, Exception ex) {
-        Alert alert = new Alert(Alert.AlertType.ERROR, ex.getMessage());
-        alert.setHeaderText(header);
-        if (owner != null) {
-            alert.initOwner(owner);
-        }
-        alert.showAndWait();
+        AppThemeSupport.showException(owner, header, ex);
     }
 }

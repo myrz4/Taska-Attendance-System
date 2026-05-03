@@ -4,9 +4,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 
-import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.CheckBox;
@@ -48,27 +46,33 @@ final class AttendanceOverrideDialogSupport {
 
     @SuppressWarnings("java:S1144")
     static boolean confirmCompletedRecordEdit(AttendanceRecord record) {
-        Alert strongWarning = new Alert(
-            Alert.AlertType.WARNING,
-            "This attendance record is already completed. Editing it can affect billing and pickup history. Continue?",
-            ButtonType.OK,
-            ButtonType.CANCEL
+        return AppThemeSupport.showConfirm(
+            null,
+            "Completed Record Warning",
+            "This record already has a completed check-out.",
+            "Editing it can affect billing and pickup history. Continue?",
+            AppThemeSupport.Tone.WARNING,
+            "Continue",
+            "Cancel"
         );
-        strongWarning.setHeaderText("Completed Record Warning");
-        return strongWarning.showAndWait().orElse(ButtonType.CANCEL) == ButtonType.OK;
     }
 
     @SuppressWarnings("java:S1144")
     static OverrideDialogResult promptForOverride(String action, AttendanceRecord record, LocalDate currentDate) {
         Dialog<ButtonType> dialog = new Dialog<>();
-        dialog.setTitle(AttendanceOverrideSupport.overrideTitle(action));
-        dialog.setHeaderText(record.getName() + " on " + currentDate);
+        AppThemeSupport.prepareDialog(
+            dialog,
+            AttendanceOverrideSupport.overrideTitle(action),
+            record.getName() + " on " + currentDate,
+            "EDIT_RECORD".equals(action) ? AppThemeSupport.Tone.WARNING : AppThemeSupport.Tone.INFO
+        );
         dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+        AppThemeSupport.styleDialogButtons(dialog, ButtonType.OK);
 
         GridPane grid = new GridPane();
         grid.setHgap(10);
         grid.setVgap(10);
-        grid.setPadding(new Insets(10));
+        grid.getStyleClass().add("app-form-grid");
 
         DatePicker actionDatePicker = new DatePicker(currentDate);
         String initialCheckInText = AttendanceOverrideSupport.defaultTimeText(record.getCheckInFullTimestamp());
@@ -87,6 +91,11 @@ final class AttendanceOverrideDialogSupport {
         notesArea.setPrefRowCount(3);
         reasonField.setPromptText("Required reason");
         notesArea.setPromptText("Optional notes");
+        AppThemeSupport.styleControls(actionDatePicker, reasonField, notesArea);
+
+        Label reasonHelper = new Label("Reason is required and becomes part of the billing and attendance audit trail.");
+        reasonHelper.getStyleClass().add("app-required-text");
+        reasonHelper.setWrapText(true);
 
         int row = 0;
         grid.add(new Label("Attendance Date"), 0, row);
@@ -101,19 +110,38 @@ final class AttendanceOverrideDialogSupport {
             grid.add(checkOutControl.node(), 1, row++);
         }
 
-        grid.add(new Label("Reason"), 0, row);
-        grid.add(reasonField, 1, row++);
-        grid.add(new Label("Notes"), 0, row);
-        grid.add(notesArea, 1, row);
+        GridPane notesGrid = new GridPane();
+        notesGrid.setHgap(10);
+        notesGrid.setVgap(10);
+        notesGrid.getStyleClass().add("app-form-grid");
+        notesGrid.add(new Label("Reason"), 0, 0);
+        notesGrid.add(reasonField, 1, 0);
+        notesGrid.add(reasonHelper, 1, 1);
+        notesGrid.add(new Label("Notes"), 0, 2);
+        notesGrid.add(notesArea, 1, 2);
 
-        dialog.getDialogPane().setContent(grid);
+        dialog.getDialogPane().setContent(
+            AppThemeSupport.createDialogContent(
+                AppThemeSupport.createFormSection(
+                    "Attendance timing",
+                    "Adjust the attendance date and the timestamps that should be kept on record.",
+                    grid
+                ),
+                AppThemeSupport.createFormSection(
+                    "Reason & notes",
+                    "Provide enough context for other admins reviewing this change later.",
+                    notesGrid
+                )
+            )
+        );
+        dialog.getDialogPane().setPrefWidth(560);
         if (dialog.showAndWait().orElse(ButtonType.CANCEL) != ButtonType.OK) {
             return null;
         }
 
         String reason = reasonField.getText() == null ? "" : reasonField.getText().trim();
         if (reason.isEmpty()) {
-            new Alert(Alert.AlertType.WARNING, "Reason is required for manual attendance actions.").showAndWait();
+            AppThemeSupport.showWarning(null, "Reason Required", "Reason is required for manual attendance actions.");
             return null;
         }
 
@@ -123,18 +151,18 @@ final class AttendanceOverrideDialogSupport {
 
         if ("EDIT_RECORD".equals(action)) {
             if (checkInText.isBlank() && checkOutText.isBlank() && notes.trim().isEmpty()) {
-                new Alert(Alert.AlertType.WARNING, "Change at least one timestamp or add notes before saving.").showAndWait();
+                AppThemeSupport.showWarning(null, "No Changes Detected", "Change at least one timestamp or add notes before saving.");
                 return null;
             }
             if (!checkOutText.isBlank() && checkInText.isBlank()) {
-                new Alert(Alert.AlertType.WARNING, "Check-out requires a check-in timestamp.").showAndWait();
+                AppThemeSupport.showWarning(null, "Missing Check-In", "Check-out requires a check-in timestamp.");
                 return null;
             }
             if (!checkInText.isBlank() && !checkOutText.isBlank()) {
                 LocalTime checkInTime = LocalTime.parse(checkInText, TIME_TEXT_FORMAT);
                 LocalTime checkOutTime = LocalTime.parse(checkOutText, TIME_TEXT_FORMAT);
                 if (checkOutTime.isBefore(checkInTime)) {
-                    new Alert(Alert.AlertType.WARNING, "Check-out time cannot be earlier than check-in time.").showAndWait();
+                    AppThemeSupport.showWarning(null, "Invalid Time Range", "Check-out time cannot be earlier than check-in time.");
                     return null;
                 }
             }
@@ -151,14 +179,15 @@ final class AttendanceOverrideDialogSupport {
 
     @SuppressWarnings("java:S1144")
     static boolean confirmSubmit(String action, AttendanceRecord record) {
-        Alert confirm = new Alert(
-            Alert.AlertType.CONFIRMATION,
+        return AppThemeSupport.showConfirm(
+            null,
+            "Confirm Attendance Action",
+            AttendanceOverrideSupport.overrideTitle(action),
             "Apply " + AttendanceOverrideSupport.overrideTitle(action) + " for " + record.getName() + "?",
-            ButtonType.OK,
-            ButtonType.CANCEL
+            AppThemeSupport.Tone.INFO,
+            "Apply",
+            "Cancel"
         );
-        confirm.setHeaderText("Confirm Attendance Action");
-        return confirm.showAndWait().orElse(ButtonType.CANCEL) == ButtonType.OK;
     }
 
     private static LocalTime parseTimeText(String timeText) {
@@ -193,6 +222,7 @@ final class AttendanceOverrideDialogSupport {
         Spinner<Integer> spinner = new Spinner<>(valueFactory);
         spinner.setEditable(true);
         spinner.setPrefWidth(84);
+        AppThemeSupport.styleControls(spinner);
         return spinner;
     }
 
@@ -232,6 +262,7 @@ final class AttendanceOverrideDialogSupport {
 
             Button nowButton = new Button("Now");
             nowButton.setOnAction(event -> applyTime(LocalTime.now().withSecond(0).withNano(0)));
+            AppThemeSupport.styleSecondaryButtons(nowButton);
 
             container = new HBox(8);
             container.setAlignment(Pos.CENTER_LEFT);
@@ -243,6 +274,7 @@ final class AttendanceOverrideDialogSupport {
             if (allowEmpty) {
                 Button clearButton = new Button("Clear");
                 clearButton.setOnAction(event -> enabledToggle.setSelected(false));
+                AppThemeSupport.styleGhostButtons(clearButton);
                 container.getChildren().add(clearButton);
             }
 

@@ -10,11 +10,13 @@ import java.util.concurrent.CompletableFuture;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
@@ -95,6 +97,10 @@ public class TeacherDialog {
 
         TextField imageUrl = new TextField();
         imageUrl.setPromptText("Image URL (Firebase Storage download URL)");
+        ImageView imagePreview = new ImageView();
+        imagePreview.setFitWidth(112);
+        imagePreview.setFitHeight(136);
+        imagePreview.setPreserveRatio(true);
 
         TextField baseSalaryTf = new TextField();
         baseSalaryTf.setPromptText("Contoh: 1800.00");
@@ -108,7 +114,7 @@ public class TeacherDialog {
         salaryActiveCb.setSelected(true);
 
         Button uploadImageBtn = new Button("Upload...");
-        uploadImageBtn.setStyle("-fx-background-color: #FFCB3C; -fx-background-radius: 16;");
+        AppThemeSupport.styleToolbarButtons(uploadImageBtn);
 
         if (data != null) {
             name.setText(safeString(data.get("name")));
@@ -116,6 +122,7 @@ public class TeacherDialog {
             email.setText(safeString(data.get("email")));
             phone.setText(safeString(data.get("phone")));
             imageUrl.setText(safeString(data.get("image")));
+            CRUDStaffImageSupport.loadExistingPreview(safeString(data.get("image")), imagePreview);
             baseSalaryTf.setText(senToMoneyText(data.get("salaryBaseSen"), ""));
             otAfter530Tf.setText(senToMoneyText(data.get("salaryOvertimeAfter530Sen"), "5.00"));
             ot8to12Tf.setText(senToMoneyText(data.get("salaryOvertime8to12Sen"), "10.00"));
@@ -162,23 +169,39 @@ public class TeacherDialog {
 
                 if (err != null) {
                     System.err.println("TeacherDialog: upload failed - " + err.getMessage());
-                    new Alert(Alert.AlertType.ERROR, "Upload failed: " + err.getMessage()).showAndWait();
+                    AppThemeSupport.showError(stage, "Upload failed", String.valueOf(err.getMessage()));
                     return;
                 }
 
                 if (url != null && !url.isBlank()) {
                     imageUrl.setText(url);
                     ImageCache.prefetch(url);
+                    CRUDStaffImageSupport.loadExistingPreview(url, imagePreview);
                 }
             }));
         });
 
         Button save = new Button("Save");
+        Button cancel = new Button("Cancel");
+        AppThemeSupport.stylePrimaryButtons(save);
+        AppThemeSupport.styleSecondaryButtons(cancel);
+        AppThemeSupport.styleControls(
+            name,
+            username,
+            email,
+            phone,
+            imageUrl,
+            baseSalaryTf,
+            otAfter530Tf,
+            ot8to12Tf,
+            ot12to7Tf
+        );
+        cancel.setOnAction(e -> stage.close());
         save.setOnAction(e -> {
             try {
                 String fullName = name.getText() == null ? "" : name.getText().trim();
                 if (fullName.isBlank()) {
-                    new Alert(Alert.AlertType.ERROR, "Full Name cannot be empty.").showAndWait();
+                    AppThemeSupport.showError(stage, "Full Name Required", "Full Name cannot be empty.");
                     return;
                 }
 
@@ -187,7 +210,7 @@ public class TeacherDialog {
 
                 String phoneLocal = PhoneUtil.toLocalMy(phone.getText());
                 if (phoneLocal == null || phoneLocal.isBlank()) {
-                    new Alert(Alert.AlertType.ERROR, "Phone cannot be empty.").showAndWait();
+                    AppThemeSupport.showError(stage, "Phone Required", "Phone cannot be empty.");
                     return;
                 }
 
@@ -227,7 +250,7 @@ public class TeacherDialog {
                         String ph = d.getString("phone");
                         String phNorm = PhoneUtil.toLocalMy(ph);
                         if (phNorm != null && !phNorm.isBlank() && phNorm.equals(phoneLocal)) {
-                            new Alert(Alert.AlertType.ERROR, "A teacher with this phone number already exists.").showAndWait();
+                            AppThemeSupport.showError(stage, "Duplicate Phone", "A teacher with this phone number already exists.");
                             return;
                         }
                     }
@@ -235,37 +258,108 @@ public class TeacherDialog {
                 } else {
                     String teacherId = safeString(editData.get("id")).trim();
                     if (teacherId.isEmpty()) {
-                        new Alert(Alert.AlertType.ERROR, "Missing teacher ID.").showAndWait();
+                        AppThemeSupport.showError(stage, "Missing Teacher ID", "Missing teacher ID.");
                         return;
                     }
                     client.patchDocumentMerge("teachers", teacherId, m);
                 }
 
                 refresh.run();
+                AppThemeSupport.showToast(stage, "Teacher Saved", fullName + " was saved successfully.", AppThemeSupport.Tone.SUCCESS);
                 stage.close();
 
             } catch (java.io.IOException | InterruptedException | RuntimeException ex) {
                 System.err.println("TeacherDialog: failed to save teacher - " + ex.getMessage());
-                new Alert(Alert.AlertType.ERROR, "Failed to save teacher: " + ex.getMessage()).showAndWait();
+                AppThemeSupport.showError(stage, "Failed to save teacher", String.valueOf(ex.getMessage()));
             }
         });
 
-        VBox root = new VBox(
-            10,
-            new Label("Full Name"), name,
-            new Label("Username"), username,
-            new Label("Email"), email,
-            new Label("Phone"), phone,
-            new Label("Image"), imageRow,
-            new Label("Base Salary (RM / month)"), baseSalaryTf,
-            new Label("Overtime Rate 5:30pm+ (RM / hour)"), otAfter530Tf,
-            new Label("Overtime Rate 8pm-12am (RM / hour)"), ot8to12Tf,
-            new Label("Overtime Rate 12am-7am (RM / hour)"), ot12to7Tf,
-            salaryActiveCb,
-            save
+        GridPane identityGrid = new GridPane();
+        identityGrid.setHgap(12);
+        identityGrid.setVgap(10);
+        identityGrid.getStyleClass().add("app-form-grid");
+        identityGrid.addRow(0, new Label("Full Name"), name);
+        identityGrid.addRow(1, new Label("Username"), username);
+
+        GridPane contactGrid = new GridPane();
+        contactGrid.setHgap(12);
+        contactGrid.setVgap(10);
+        contactGrid.getStyleClass().add("app-form-grid");
+        contactGrid.addRow(0, new Label("Email"), email);
+        contactGrid.addRow(1, new Label("Phone"), phone);
+
+        GridPane imageGrid = new GridPane();
+        imageGrid.setHgap(12);
+        imageGrid.setVgap(10);
+        imageGrid.getStyleClass().add("app-form-grid");
+        imageGrid.addRow(0, new Label("Image URL"), imageRow);
+        imageGrid.add(imagePreview, 1, 1);
+
+        GridPane salaryGrid = new GridPane();
+        salaryGrid.setHgap(12);
+        salaryGrid.setVgap(10);
+        salaryGrid.getStyleClass().add("app-form-grid");
+        salaryGrid.addRow(0, new Label("Base Salary (RM / month)"), baseSalaryTf);
+        salaryGrid.addRow(1, new Label("Overtime Rate 5:30pm+ (RM / hour)"), otAfter530Tf);
+        salaryGrid.addRow(2, new Label("Overtime Rate 8pm-12am (RM / hour)"), ot8to12Tf);
+        salaryGrid.addRow(3, new Label("Overtime Rate 12am-7am (RM / hour)"), ot12to7Tf);
+
+        VBox formContent = new VBox(16,
+            AppThemeSupport.createSectionCard(
+                "Identity",
+                "Store the teacher's main identity used throughout the admin system.",
+                identityGrid
+            ),
+            AppThemeSupport.createSectionCard(
+                "Contact",
+                "Keep email and local Malaysia phone details consistent for admin messaging and payroll follow-up.",
+                contactGrid
+            ),
+            AppThemeSupport.createSectionCard(
+                "Image & Profile",
+                "Use the upload action to push a profile photo into Firebase Storage and keep the URL synced.",
+                imageGrid
+            ),
+            AppThemeSupport.createSectionCard(
+                "Salary & Overtime",
+                "Monthly salary and overtime rates stay in RM and keep the existing payroll math untouched.",
+                salaryGrid
+            ),
+            AppThemeSupport.createSectionCard(
+                "Payroll Flags",
+                "Disable this only when the teacher should be excluded from monthly payroll runs.",
+                salaryActiveCb
+            )
         );
-        root.setPadding(new Insets(20));
-        stage.setScene(new Scene(root));
+
+        ScrollPane scrollPane = new ScrollPane(formContent);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        scrollPane.getStyleClass().add("app-dialog-scroll");
+
+        HBox footer = new HBox(10, cancel, save);
+        footer.setAlignment(javafx.geometry.Pos.CENTER_RIGHT);
+
+        VBox root = new VBox(
+            16,
+            AppThemeSupport.createPageHeader(
+                isEdit ? "Edit Teacher" : "Add Teacher",
+                "Manage teacher identity, contact, profile image, and payroll settings in one place."
+            ),
+            scrollPane,
+            footer
+        );
+        root.getStyleClass().add("app-page-root");
+        root.setPadding(new Insets(16));
+        VBox.setVgrow(scrollPane, Priority.ALWAYS);
+
+        Scene scene = new Scene(root, 680, 760);
+        AppThemeSupport.applyScene(scene);
+        stage.setTitle(isEdit ? "Edit Teacher" : "Add Teacher");
+        stage.setMinWidth(620);
+        stage.setMinHeight(720);
+        stage.setScene(scene);
         stage.show();
     }
 }
