@@ -51,7 +51,9 @@
         "-ExecutionPolicy",
         "Bypass",
         "-File",
-        "tools\\run-javafx.ps1"
+        "tools\\run-javafx.ps1",
+        "-NfcPort",
+        "auto"
       ],
       "options": {
         "cwd": "C:/Users/zafri/Downloads/Taska Attendance System"
@@ -93,7 +95,9 @@
         "-File",
         "tools\\run-javafx.ps1",
         "-MainClass",
-        "nfc.AdminDashboard"
+        "nfc.AdminDashboard",
+        "-NfcPort",
+        "auto"
       ],
       "options": {
         "cwd": "C:/Users/zafri/Downloads/Taska Attendance System"

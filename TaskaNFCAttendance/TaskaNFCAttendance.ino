@@ -71,7 +71,118 @@ String extractDocumentIdFromName(const String &documentName) {
   return cleanString(documentName.substring(slashIndex + 1));
 }
 
-bool queryChildDocumentByUid(const String &nfcUID, FirebaseJson &json, String &resolvedDocId) {
+bool isHexDigitChar(char value) {
+  return (value >= '0' && value <= '9') || (value >= 'A' && value <= 'F');
+}
+
+String stripTrailingCrLfHex(String value) {
+  value = cleanString(value);
+  value.toUpperCase();
+  if (value.endsWith("0D0A") && value.length() > 4) {
+    return value.substring(0, value.length() - 4);
+  }
+  return value;
+}
+
+String decodeAsciiHexUid(String value) {
+  value = stripTrailingCrLfHex(value);
+  if (value == "" || (value.length() % 2) != 0) {
+    return "";
+  }
+
+  String decoded = "";
+  for (int index = 0; index < value.length(); index += 2) {
+    char pair[3];
+    pair[0] = value.charAt(index);
+    pair[1] = value.charAt(index + 1);
+    pair[2] = '\0';
+    int byteValue = strtol(pair, nullptr, 16);
+
+    if (byteValue == 0x0D || byteValue == 0x0A) {
+      continue;
+    }
+
+    char decodedChar = static_cast<char>(byteValue);
+    decodedChar = static_cast<char>(toupper(decodedChar));
+    if (!isHexDigitChar(decodedChar)) {
+      return "";
+    }
+    decoded += decodedChar;
+  }
+
+  if (decoded.length() < 8 || (decoded.length() % 2) != 0) {
+    return "";
+  }
+
+  return decoded;
+}
+
+String encodeAsciiHexUid(String value) {
+  value = cleanString(value);
+  value.toUpperCase();
+  if (value == "") {
+    return "";
+  }
+
+  String encoded = "";
+  for (int index = 0; index < value.length(); index++) {
+    char buffer[3];
+    sprintf(buffer, "%02X", static_cast<unsigned char>(value.charAt(index)));
+    encoded += buffer;
+  }
+  return encoded;
+}
+
+void addUidCandidate(String *candidates, size_t capacity, size_t &count, String candidate) {
+  candidate = cleanString(candidate);
+  candidate.toUpperCase();
+  if (candidate == "") {
+    return;
+  }
+
+  for (size_t index = 0; index < count; index++) {
+    if (candidates[index] == candidate) {
+      return;
+    }
+  }
+
+  if (count < capacity) {
+    candidates[count++] = candidate;
+  }
+}
+
+size_t buildUidLookupCandidates(const String &nfcUID, String *candidates, size_t capacity) {
+  size_t count = 0;
+  String strippedUid = stripTrailingCrLfHex(nfcUID);
+  String decodedAsciiUid = decodeAsciiHexUid(strippedUid);
+  String encodedAsciiUid = encodeAsciiHexUid(strippedUid);
+
+  addUidCandidate(candidates, capacity, count, nfcUID);
+  addUidCandidate(candidates, capacity, count, strippedUid);
+  addUidCandidate(candidates, capacity, count, decodedAsciiUid);
+  addUidCandidate(candidates, capacity, count, encodedAsciiUid);
+  addUidCandidate(candidates, capacity, count, encodedAsciiUid + "0D0A");
+
+  if (decodedAsciiUid != "") {
+    String encodedDecodedUid = encodeAsciiHexUid(decodedAsciiUid);
+    addUidCandidate(candidates, capacity, count, encodedDecodedUid);
+    addUidCandidate(candidates, capacity, count, encodedDecodedUid + "0D0A");
+  }
+
+  return count;
+}
+
+String lastChildLookupError = "";
+
+bool childLookupHadError() {
+  return lastChildLookupError != "";
+}
+
+void setChildLookupError(const String &message) {
+  lastChildLookupError = cleanString(message);
+}
+
+bool queryChildDocumentByExactUid(const String &nfcUID, FirebaseJson &json, String &resolvedDocId) {
   FirebaseJson query;
   query.set("from/collectionId", "children");
   query.set("from/allDescendants", false);
@@ -81,8 +192,10 @@ bool queryChildDocumentByUid(const String &nfcUID, FirebaseJson &json, String &r
   query.set("limit", 5);
 
   if (!Firebase.Firestore.runQuery(&fbdo, FIREBASE_PROJECT_ID, FIRESTORE_DB_ID, "/", &query)) {
+    String errorReason = cleanString(fbdo.errorReason());
     Serial.println("❌ Child lookup query failed for UID: " + nfcUID);
-    Serial.println("   Reason: " + fbdo.errorReason());
+    Serial.println("   Reason: " + errorReason);
+    setChildLookupError(errorReason);
     return false;
   }
 
@@ -155,6 +268,28 @@ bool queryChildDocumentByUid(const String &nfcUID, FirebaseJson &json, String &r
     if (Firebase.Firestore.getDocument(&fbdo, FIREBASE_PROJECT_ID, FIRESTORE_DB_ID, childDocPath.c_str())) {
       json.setJsonData(fbdo.payload().c_str());
       resolvedDocId = migratedToChildId;
+      return true;
+    }
+
+    String errorReason = cleanString(fbdo.errorReason());
+    if (errorReason != "") {
+      setChildLookupError(errorReason);
+      Serial.println("❌ Failed to resolve migrated child doc: " + childDocPath);
+      Serial.println("   Reason: " + errorReason);
+    }
+  }
+
+  return false;
+}
+
+bool queryChildDocumentByUid(const String &nfcUID, FirebaseJson &json, String &resolvedDocId) {
+  lastChildLookupError = "";
+  String candidates[7];
+  size_t candidateCount = buildUidLookupCandidates(nfcUID, candidates, 7);
+
+  for (size_t index = 0; index < candidateCount; index++) {
+    if (queryChildDocumentByExactUid(candidates[index], json, resolvedDocId)) {
+      lastChildLookupError = "";
       return true;
     }
   }
@@ -328,9 +463,15 @@ void loop() {
   FirebaseJson json;
   String childId = "";
   if (!queryChildDocumentByUid(nfcUID, json, childId)) {
-    showLCD("No record", "Check card/rules");
-    Serial.println("❌ Child lookup failed for UID: " + nfcUID);
-    Serial.println("   Reason: no matching child document found for nfc_uid");
+    if (childLookupHadError()) {
+      showLCD("Lookup failed", "Check auth/rules");
+      Serial.println("❌ Child lookup failed for UID: " + nfcUID);
+      Serial.println("   Reason: " + lastChildLookupError);
+    } else {
+      showLCD("No record", "Check card/rules");
+      Serial.println("❌ Child lookup failed for UID: " + nfcUID);
+      Serial.println("   Reason: no matching child document found for nfc_uid");
+    }
     delay(2000);
     lcdSplash();
     return;

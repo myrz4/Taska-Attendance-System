@@ -1,0 +1,9 @@
+{
+  "additionalFiles": "..\\..,..\\..\\..,..\\..\\..",
+  "compiler.optimization_flags": "-Os",
+  "customBuildProperties": "",
+  "fqbn": "esp32:esp32:esp32:UploadSpeed=115200,PartitionScheme=huge_app",
+  "hardwareFolders": "C:\\Users\\zafri\\AppData\\Local\\Arduino15\\packages\\esp32\\hardware\\esp32\\3.3.7,C:\\Users\\zafri\\AppData\\Local\\Arduino15\\packages\\esp32\\hardware\\esp32\\3.3.7",
+  "otherLibrariesFolders": "C:\\Users\\zafri\\OneDrive\\Documents\\Arduino\\libraries",
+  "sketchLocation": "C:\\Users\\zafri\\Downloads\\Taska Attendance System\\TaskaNFCAttendance"
+}
