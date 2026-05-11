@@ -75,14 +75,14 @@ final class LoginViewLayoutSupport {
         AnchorPane.setLeftAnchor(decorLayer, 28.0);
 
         LabelBundle headerBundle = createHeader();
-        AnchorPane.setTopAnchor(headerBundle.header, 52.0);
+        AnchorPane.setTopAnchor(headerBundle.header, 72.0);
         AnchorPane.setLeftAnchor(headerBundle.header, 0.0);
         AnchorPane.setRightAnchor(headerBundle.header, 0.0);
 
         ImageView logoView = createLogoView(resourceAnchor);
         HBox logoBox = new HBox(logoView);
         logoBox.setAlignment(Pos.CENTER);
-        AnchorPane.setTopAnchor(logoBox, 170.0);
+        AnchorPane.setTopAnchor(logoBox, 168.0);
         AnchorPane.setLeftAnchor(logoBox, 0.0);
         AnchorPane.setRightAnchor(logoBox, 0.0);
 

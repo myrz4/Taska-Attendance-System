@@ -22,6 +22,7 @@ public class AttendanceRecord {
 
     // ─── Attendance info ───────────────────────────────────────────
     private final BooleanProperty present = new SimpleBooleanProperty(false);
+    private final BooleanProperty selected = new SimpleBooleanProperty(false);
     private final StringProperty reason = new SimpleStringProperty("Default");
     private final StringProperty customReason = new SimpleStringProperty("");
 
@@ -82,6 +83,10 @@ public class AttendanceRecord {
     public boolean isPresent() { return present.get(); }
     public void setPresent(boolean value) { present.set(value); }
     public BooleanProperty presentProperty() { return present; }
+
+    public boolean isSelected() { return selected.get(); }
+    public void setSelected(boolean value) { selected.set(value); }
+    public BooleanProperty selectedProperty() { return selected; }
 
     public String getReason() { return reason.get(); }
     public void setReason(String value) { reason.set(value); }

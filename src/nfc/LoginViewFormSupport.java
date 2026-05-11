@@ -137,7 +137,7 @@ final class LoginViewFormSupport {
 
         StackPane cardHolder = new StackPane(card);
         StackPane.setAlignment(card, Pos.TOP_CENTER);
-        StackPane.setMargin(card, new Insets(330, 0, 0, 0));
+        StackPane.setMargin(card, new Insets(350, 0, 0, 0));
         AnchorPane.setTopAnchor(cardHolder, 0.0);
         AnchorPane.setRightAnchor(cardHolder, 0.0);
         AnchorPane.setBottomAnchor(cardHolder, 0.0);

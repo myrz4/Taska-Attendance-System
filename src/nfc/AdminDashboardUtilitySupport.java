@@ -113,6 +113,7 @@ final class AdminDashboardUtilitySupport {
                     Platform.runLater(() -> showAlert("⚠ This card is not registered!", Alert.AlertType.WARNING));
                     return;
                 case CHECKED_IN:
+                    AttendanceView.markPresentFromNfcScan(result.childId(), result.childName(), result.normalizedUid());
                     Platform.runLater(() -> showAlert("✅ Check-in successful for " + result.childName(), Alert.AlertType.INFORMATION));
                     break;
                 case ALREADY_OPEN:
@@ -128,8 +129,7 @@ final class AdminDashboardUtilitySupport {
                     Platform.runLater(() -> showAlert("❌ Attendance update failed: " + result.reason(), Alert.AlertType.ERROR));
                     break;
             }
-
-            Platform.runLater(FirestoreService::safeRefresh);
+            Platform.runLater(FirestoreService::refreshAfterAttendanceMutation);
         } catch (RuntimeException | IOException | InterruptedException ex) {
             logger.log("handle NFC attendance", ex);
             String errorMessage = "❌ Firestore error: " + ex.getMessage();

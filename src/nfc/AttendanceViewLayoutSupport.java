@@ -91,15 +91,22 @@ final class AttendanceViewLayoutSupport {
         styleDropdown(auditDropdown);
 
         Button clearFilter = createActionButton("Clear");
+        Button selectAllBtn = createActionButton("Select All");
+        Button clearSelectionBtn = createActionButton("Clear Selection");
         Button manualCheckInBtn = createActionButton("Manual Check-In");
         Button manualCheckOutBtn = createActionButton("Manual Check-Out");
         Button markAbsentBtn = createActionButton("Mark Absent");
         Button editRecordBtn = createActionButton("Edit Record");
         Button reopenBtn = createActionButton("Reopen Record");
         Button viewAuditBtn = createActionButton("View Audit");
+        Label selectionCountLabel = new Label("Selected: 0");
+        selectionCountLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #224b28;");
 
         HBox header = new HBox(
             10,
+            selectAllBtn,
+            clearSelectionBtn,
+            selectionCountLabel,
             manualCheckInBtn,
             manualCheckOutBtn,
             markAbsentBtn,
@@ -118,6 +125,9 @@ final class AttendanceViewLayoutSupport {
             reasonDropdown,
             auditDropdown,
             clearFilter,
+            selectAllBtn,
+            clearSelectionBtn,
+            selectionCountLabel,
             manualCheckInBtn,
             manualCheckOutBtn,
             markAbsentBtn,
@@ -162,6 +172,9 @@ final class AttendanceViewLayoutSupport {
         final ComboBox<String> reasonDropdown;
         final ComboBox<String> auditDropdown;
         final Button clearFilter;
+        final Button selectAllBtn;
+        final Button clearSelectionBtn;
+        final Label selectionCountLabel;
         final Button manualCheckInBtn;
         final Button manualCheckOutBtn;
         final Button markAbsentBtn;
@@ -174,6 +187,9 @@ final class AttendanceViewLayoutSupport {
             ComboBox<String> reasonDropdown,
             ComboBox<String> auditDropdown,
             Button clearFilter,
+            Button selectAllBtn,
+            Button clearSelectionBtn,
+            Label selectionCountLabel,
             Button manualCheckInBtn,
             Button manualCheckOutBtn,
             Button markAbsentBtn,
@@ -185,6 +201,9 @@ final class AttendanceViewLayoutSupport {
             this.reasonDropdown = reasonDropdown;
             this.auditDropdown = auditDropdown;
             this.clearFilter = clearFilter;
+            this.selectAllBtn = selectAllBtn;
+            this.clearSelectionBtn = clearSelectionBtn;
+            this.selectionCountLabel = selectionCountLabel;
             this.manualCheckInBtn = manualCheckInBtn;
             this.manualCheckOutBtn = manualCheckOutBtn;
             this.markAbsentBtn = markAbsentBtn;

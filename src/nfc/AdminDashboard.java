@@ -4,11 +4,33 @@ import javafx.application.Platform;
 
 public class AdminDashboard extends javafx.application.Application {
     private static volatile boolean realtimeModeNoticeShown = false;
+    private static final String PAGE_DASHBOARD = "dashboard";
+    private static final String PAGE_ATTENDANCE = "attendance";
+    private static final String PAGE_GENERATE_REPORT = "generate-report";
+    private static final String PAGE_DAILY_REPORT = "daily-report";
+    private static final String PAGE_MONTHLY_REPORT = "monthly-report";
+    private static final String PAGE_CHILDREN = "children";
+    private static final String PAGE_STAFF = "staff";
+    private static final String PAGE_TEACHERS = "teachers";
+    private static final String PAGE_BILLING_LEDGER = "billing-ledger";
+    private static final String PAGE_BILLING_POLICY = "billing-policy";
+    private static final String PAGE_CASUAL_TRANSIT = "casual-transit";
 
     private static AdminDashboard instance;
     private static AdminDashboardContentSupport.DashboardWidgets dashboardWidgets;
     private static boolean dashboardReady = false;
     private javafx.scene.layout.StackPane contentPane;
+    private String activePageKey;
+    private AttendanceView attendanceView;
+    private generateReport generateReportView;
+    private dailyReport dailyReportView;
+    private monthlyReport monthlyReportView;
+    private ChildrenView childrenView;
+    private StaffManagementView staffManagementView;
+    private TeacherManagementView teacherManagementView;
+    private BillingLedgerView billingLedgerView;
+    private BillingPolicyView billingPolicyView;
+    private CasualTransitView casualTransitView;
     private static NFCReader reader;
     private static Thread nfcReaderThread;
 
@@ -26,6 +48,8 @@ public class AdminDashboard extends javafx.application.Application {
 
     public AdminDashboard() {
         instance = this;
+        dashboardWidgets = null;
+        dashboardReady = false;
     }
 
     public static boolean isDashboardReady() {
@@ -75,8 +99,10 @@ public class AdminDashboard extends javafx.application.Application {
     }
 
     private void loadDashboardContent() {
-        dashboardWidgets = AdminDashboardContentSupport.buildDashboard(newDashboardActions());
-        setMainContent(dashboardWidgets.root());
+        if (dashboardWidgets == null) {
+            dashboardWidgets = AdminDashboardContentSupport.buildDashboard(newDashboardActions());
+        }
+        setMainContent(PAGE_DASHBOARD, dashboardWidgets.root());
         dashboardReady = true;
 
         updateStatistics();
@@ -113,14 +139,12 @@ public class AdminDashboard extends javafx.application.Application {
 
             @Override
             public void showAttendance() {
-                AttendanceView view = new AttendanceView();
-                setMainContent(view.getRoot());
+                setMainContent(PAGE_ATTENDANCE, getAttendanceView().getRoot());
             }
 
             @Override
             public void showGenerateReport() {
-                generateReport reportView = new generateReport();
-                setMainContent(reportView.getRoot());
+                setMainContent(PAGE_GENERATE_REPORT, getGenerateReportView().getRoot());
             }
 
             @Override
@@ -135,32 +159,32 @@ public class AdminDashboard extends javafx.application.Application {
 
             @Override
             public void showChildren() {
-                setMainContent(new ChildrenView());
+                setMainContent(PAGE_CHILDREN, getChildrenView());
             }
 
             @Override
             public void showStaff() {
-                setMainContent(new StaffManagementView());
+                setMainContent(PAGE_STAFF, getStaffManagementView());
             }
 
             @Override
             public void showTeachers() {
-                setMainContent(new TeacherManagementView());
+                setMainContent(PAGE_TEACHERS, getTeacherManagementView());
             }
 
             @Override
             public void showBillingLedger() {
-                setMainContent(new BillingLedgerView());
+                setMainContent(PAGE_BILLING_LEDGER, getBillingLedgerView());
             }
 
             @Override
             public void showBillingPolicy() {
-                setMainContent(new BillingPolicyView());
+                setMainContent(PAGE_BILLING_POLICY, getBillingPolicyView());
             }
 
             @Override
             public void showCasualTransit() {
-                setMainContent(new CasualTransitView());
+                setMainContent(PAGE_CASUAL_TRANSIT, getCasualTransitView());
             }
 
             @Override
@@ -180,17 +204,92 @@ public class AdminDashboard extends javafx.application.Application {
     }
 
     public void showDailyReportView() {
-        dailyReport drv = new dailyReport();
-        setMainContent(drv.getRoot());
+        setMainContent(PAGE_DAILY_REPORT, getDailyReportView().getRoot());
     }
 
     public void showMonthlyReportView() {
-        monthlyReport mrv = new monthlyReport();
-        setMainContent(mrv.getRoot());
+        setMainContent(PAGE_MONTHLY_REPORT, getMonthlyReportView().getRoot());
     }
 
-    private void setMainContent(javafx.scene.Node node) {
+    private void setMainContent(String pageKey, javafx.scene.Node node) {
+        if (PAGE_ATTENDANCE.equals(activePageKey) && !PAGE_ATTENDANCE.equals(pageKey) && attendanceView != null) {
+            attendanceView.onHide();
+        }
         contentPane.getChildren().setAll(node);
+        activePageKey = pageKey;
+        if (PAGE_ATTENDANCE.equals(pageKey) && attendanceView != null) {
+            attendanceView.onShow();
+        }
+    }
+
+    private AttendanceView getAttendanceView() {
+        if (attendanceView == null) {
+            attendanceView = new AttendanceView();
+        }
+        return attendanceView;
+    }
+
+    private generateReport getGenerateReportView() {
+        if (generateReportView == null) {
+            generateReportView = new generateReport();
+        }
+        return generateReportView;
+    }
+
+    private dailyReport getDailyReportView() {
+        if (dailyReportView == null) {
+            dailyReportView = new dailyReport();
+        }
+        return dailyReportView;
+    }
+
+    private monthlyReport getMonthlyReportView() {
+        if (monthlyReportView == null) {
+            monthlyReportView = new monthlyReport();
+        }
+        return monthlyReportView;
+    }
+
+    private ChildrenView getChildrenView() {
+        if (childrenView == null) {
+            childrenView = new ChildrenView();
+        }
+        return childrenView;
+    }
+
+    private StaffManagementView getStaffManagementView() {
+        if (staffManagementView == null) {
+            staffManagementView = new StaffManagementView();
+        }
+        return staffManagementView;
+    }
+
+    private TeacherManagementView getTeacherManagementView() {
+        if (teacherManagementView == null) {
+            teacherManagementView = new TeacherManagementView();
+        }
+        return teacherManagementView;
+    }
+
+    private BillingLedgerView getBillingLedgerView() {
+        if (billingLedgerView == null) {
+            billingLedgerView = new BillingLedgerView();
+        }
+        return billingLedgerView;
+    }
+
+    private BillingPolicyView getBillingPolicyView() {
+        if (billingPolicyView == null) {
+            billingPolicyView = new BillingPolicyView();
+        }
+        return billingPolicyView;
+    }
+
+    private CasualTransitView getCasualTransitView() {
+        if (casualTransitView == null) {
+            casualTransitView = new CasualTransitView();
+        }
+        return casualTransitView;
     }
 
     private void startNFCReader() {
@@ -229,6 +328,25 @@ public class AdminDashboard extends javafx.application.Application {
         });
     }
 
+    public static void refreshAttendancePageIfVisible() {
+        AdminDashboard current = instance;
+        if (current == null) {
+            return;
+        }
+
+        Platform.runLater(() -> {
+            if (!PAGE_ATTENDANCE.equals(current.activePageKey)) {
+                return;
+            }
+
+            if (current.attendanceView != null) {
+                current.attendanceView.onHide();
+            }
+            current.attendanceView = new AttendanceView();
+            current.setMainContent(PAGE_ATTENDANCE, current.attendanceView.getRoot());
+        });
+    }
+
     private static AdminDashboardContentSupport.DashboardActions newDashboardActions() {
         return new AdminDashboardContentSupport.DashboardActions() {
             @Override
@@ -238,19 +356,21 @@ public class AdminDashboard extends javafx.application.Application {
 
             @Override
             public void openAgeReviewLedger() {
-                BillingLedgerView view = new BillingLedgerView();
-                view.showAgeReviewView();
-                if (instance != null) {
-                    instance.setMainContent(view);
+                AdminDashboard current = instance;
+                if (current != null) {
+                    BillingLedgerView view = current.getBillingLedgerView();
+                    view.showAgeReviewView();
+                    current.setMainContent(PAGE_BILLING_LEDGER, view);
                 }
             }
 
             @Override
             public void openOvertimeReviewLedger() {
-                BillingLedgerView view = new BillingLedgerView();
-                view.showOvertimeReviewView();
-                if (instance != null) {
-                    instance.setMainContent(view);
+                AdminDashboard current = instance;
+                if (current != null) {
+                    BillingLedgerView view = current.getBillingLedgerView();
+                    view.showOvertimeReviewView();
+                    current.setMainContent(PAGE_BILLING_LEDGER, view);
                 }
             }
 

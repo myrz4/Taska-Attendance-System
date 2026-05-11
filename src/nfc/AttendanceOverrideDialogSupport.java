@@ -59,11 +59,15 @@ final class AttendanceOverrideDialogSupport {
 
     @SuppressWarnings("java:S1144")
     static OverrideDialogResult promptForOverride(String action, AttendanceRecord record, LocalDate currentDate) {
+        return promptForOverride(action, record, currentDate, record == null ? String.valueOf(currentDate) : record.getName() + " on " + currentDate);
+    }
+
+    static OverrideDialogResult promptForOverride(String action, AttendanceRecord record, LocalDate currentDate, String subjectLabel) {
         Dialog<ButtonType> dialog = new Dialog<>();
         AppThemeSupport.prepareDialog(
             dialog,
             AttendanceOverrideSupport.overrideTitle(action),
-            record.getName() + " on " + currentDate,
+            subjectLabel,
             "EDIT_RECORD".equals(action) ? AppThemeSupport.Tone.WARNING : AppThemeSupport.Tone.INFO
         );
         dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
@@ -75,8 +79,8 @@ final class AttendanceOverrideDialogSupport {
         grid.getStyleClass().add("app-form-grid");
 
         DatePicker actionDatePicker = new DatePicker(currentDate);
-        String initialCheckInText = AttendanceOverrideSupport.defaultTimeText(record.getCheckInFullTimestamp());
-        String initialCheckOutText = AttendanceOverrideSupport.defaultTimeText(record.getCheckOutFullTimestamp());
+        String initialCheckInText = record == null ? "" : AttendanceOverrideSupport.defaultTimeText(record.getCheckInFullTimestamp());
+        String initialCheckOutText = record == null ? "" : AttendanceOverrideSupport.defaultTimeText(record.getCheckOutFullTimestamp());
         if ("MANUAL_CHECK_IN".equals(action) && initialCheckInText.isBlank()) {
             initialCheckInText = AttendanceOverrideSupport.currentTimeText();
         }
@@ -89,12 +93,12 @@ final class AttendanceOverrideDialogSupport {
         TextField reasonField = new TextField();
         TextArea notesArea = new TextArea();
         notesArea.setPrefRowCount(3);
-        reasonField.setPromptText("Required reason");
+        reasonField.setPromptText("Optional reason");
         notesArea.setPromptText("Optional notes");
         AppThemeSupport.styleControls(actionDatePicker, reasonField, notesArea);
 
-        Label reasonHelper = new Label("Reason is required and becomes part of the billing and attendance audit trail.");
-        reasonHelper.getStyleClass().add("app-required-text");
+        Label reasonHelper = new Label("Reason is optional. Add one when the change needs extra billing or audit context.");
+        reasonHelper.getStyleClass().add("app-helper-text");
         reasonHelper.setWrapText(true);
 
         int row = 0;
@@ -140,10 +144,6 @@ final class AttendanceOverrideDialogSupport {
         }
 
         String reason = reasonField.getText() == null ? "" : reasonField.getText().trim();
-        if (reason.isEmpty()) {
-            AppThemeSupport.showWarning(null, "Reason Required", "Reason is required for manual attendance actions.");
-            return null;
-        }
 
         String notes = notesArea.getText() == null ? "" : notesArea.getText();
         String checkInText = checkInControl.timeText();
@@ -179,11 +179,15 @@ final class AttendanceOverrideDialogSupport {
 
     @SuppressWarnings("java:S1144")
     static boolean confirmSubmit(String action, AttendanceRecord record) {
+        return confirmSubmit(action, record == null ? AttendanceOverrideSupport.overrideTitle(action) : record.getName());
+    }
+
+    static boolean confirmSubmit(String action, String subjectLabel) {
         return AppThemeSupport.showConfirm(
             null,
             "Confirm Attendance Action",
             AttendanceOverrideSupport.overrideTitle(action),
-            "Apply " + AttendanceOverrideSupport.overrideTitle(action) + " for " + record.getName() + "?",
+            "Apply " + AttendanceOverrideSupport.overrideTitle(action) + " for " + subjectLabel + "?",
             AppThemeSupport.Tone.INFO,
             "Apply",
             "Cancel"
@@ -215,7 +219,7 @@ final class AttendanceOverrideDialogSupport {
                 if (normalized.isEmpty()) {
                     return 0;
                 }
-                return Integer.parseInt(normalized);
+                return Integer.valueOf(normalized);
             }
         });
 

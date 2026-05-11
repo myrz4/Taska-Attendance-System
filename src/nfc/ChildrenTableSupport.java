@@ -79,14 +79,7 @@ final class ChildrenTableSupport {
         parentNameCol.setCellFactory(col -> copyCell(ChildrenView.Child::getPrimaryParentName, Pos.CENTER_LEFT));
         parentContactCol.setCellFactory(col -> copyCell(ChildrenView.Child::getParentPhone, Pos.CENTER_LEFT));
         billingPlanCol.setCellFactory(col -> copyCell(ChildrenView.Child::getBillingPlan, Pos.CENTER_LEFT));
-        uidCol.setCellFactory(col -> new MaskedValueTableCell<>(
-            ChildrenView.Child::getNfcUid,
-            value -> SummaryTableSupport.maskMiddle(value, 4, 4),
-            ChildrenTableSupport::rowSummary,
-            ChildrenView.Child::getRecordId,
-            child -> SummaryTableSupport.toPrettyJson(asJson(child)),
-            Pos.CENTER_LEFT
-        ));
+        uidCol.setCellFactory(col -> copyCell(ChildrenView.Child::getNfcUid, Pos.CENTER_LEFT));
         statusCol.setCellFactory(col -> copyCell(ChildrenView.Child::getStatus, Pos.CENTER));
         RECORD_ID_COL.setCellFactory(col -> copyCell(ChildrenView.Child::getRecordId, Pos.CENTER_LEFT));
         DUE_DAY_COL.setCellFactory(col -> copyCell(ChildrenView.Child::getPaymentDueDayText, Pos.CENTER));

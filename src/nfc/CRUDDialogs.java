@@ -28,6 +28,10 @@ public class CRUDDialogs {
         CRUDParentDialogSupport.showParentDialog(existing, isNew, onSave);
     }
 
+    public static void showRegistrationWizard(Runnable onSave) {
+        RegistrationWizardDialogSupport.showRegistrationWizard(onSave);
+    }
+
     // ------------------ Generic Action Buttons ------------------
     public static <T> Callback<TableColumn<T, Void>, TableCell<T, Void>> createActionCell(
             Consumer<T> onEdit,

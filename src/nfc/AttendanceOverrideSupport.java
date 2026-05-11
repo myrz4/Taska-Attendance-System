@@ -14,6 +14,7 @@ import com.google.gson.Gson;
 @SuppressWarnings("java:S1144")
 final class AttendanceOverrideSupport {
     private static final Gson GSON = new Gson();
+    private static final String DEFAULT_REASON_FALLBACK = "Admin attendance configuration";
     private static final DateTimeFormatter DB_TIMESTAMP_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("HH:mm");
     private static final DateTimeFormatter FLEX_TIME_FORMAT = DateTimeFormatter.ofPattern("H:mm");
@@ -116,10 +117,27 @@ final class AttendanceOverrideSupport {
 
     @SuppressWarnings("java:S1144")
     static FirebaseFunctionsClient.CallResult submitOverride(Map<String, Object> payload) throws IOException {
-        return FirebaseFunctionsClient.callAttendanceAdminOverride(
+        FirebaseFunctionsClient.CallResult result = FirebaseFunctionsClient.callAttendanceAdminOverride(
             FirestoreRest.projectId(),
             UserSession.getIdToken(),
             GSON.toJson(payload)
+        );
+        if (result.ok || payload == null) {
+            return result;
+        }
+
+        Object reasonValue = payload.get("reason");
+        String reasonText = reasonValue == null ? "" : String.valueOf(reasonValue).trim();
+        if (!reasonText.isEmpty() || !"missing-reason".equalsIgnoreCase(result.reason)) {
+            return result;
+        }
+
+        Map<String, Object> retryPayload = new HashMap<>(payload);
+        retryPayload.put("reason", DEFAULT_REASON_FALLBACK);
+        return FirebaseFunctionsClient.callAttendanceAdminOverride(
+            FirestoreRest.projectId(),
+            UserSession.getIdToken(),
+            GSON.toJson(retryPayload)
         );
     }
 }

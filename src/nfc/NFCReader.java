@@ -321,7 +321,8 @@ public class NFCReader implements Runnable {
 
             if (result.status() == NFCAttendanceSupport.AttendanceUpdateResult.Status.CHECKED_IN) {
                 System.out.println("✅ Attendance recorded (check-in) for: " + result.childName());
-                Platform.runLater(FirestoreService::safeRefresh);
+                AttendanceView.markPresentFromNfcScan(result.childId(), result.childName(), result.normalizedUid());
+                Platform.runLater(FirestoreService::refreshAfterAttendanceMutation);
                 return;
             }
 

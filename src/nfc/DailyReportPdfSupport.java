@@ -75,7 +75,7 @@ final class DailyReportPdfSupport {
                 java.net.URL logoResource = resourceAnchor.getResource("/nfc/logo.png");
                 if (logoResource != null) {
                     com.lowagie.text.Image logo = com.lowagie.text.Image.getInstance(logoResource);
-                    logo.scaleToFit(52, 52);
+                    logo.scaleToFit(84, 84);
                     logoCell.addElement(logo);
                 }
             } catch (BadElementException | IOException ignored) {

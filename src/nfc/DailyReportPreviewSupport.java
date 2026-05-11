@@ -45,8 +45,9 @@ final class DailyReportPreviewSupport {
         if (logoResource != null) {
             logo.setImage(new Image(logoResource.toExternalForm()));
         }
-        logo.setFitHeight(50);
-        logo.setFitWidth(50);
+        logo.setPreserveRatio(true);
+        logo.setSmooth(true);
+        logo.setFitWidth(170);
 
         Label header = new Label("TASKA ZURAH DAILY ATTENDANCE REPORT");
         header.setFont(javafx.scene.text.Font.font("Poppins", javafx.scene.text.FontWeight.BOLD, 22));

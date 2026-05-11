@@ -70,7 +70,14 @@ final class CRUDChildDialogSupport {
         }
 
         TextField nameTf = new TextField();
+        ComboBox<String> genderCb = new ComboBox<>();
+        genderCb.getItems().setAll("Female", "Male");
+        genderCb.setEditable(true);
+        genderCb.setMaxWidth(Double.MAX_VALUE);
+        genderCb.setPromptText("Female / Male");
         DatePicker dobPicker = new DatePicker();
+        TextField placeOfBirthTf = new TextField();
+        placeOfBirthTf.setPromptText("Tempat lahir / Place of birth");
         TextField uidTf = new TextField();
         uidTf.setPromptText("Scan/write NFC UID (replaceable)");
         Label uidHint = new Label(UID_HINT_TEXT);
@@ -79,9 +86,25 @@ final class CRUDChildDialogSupport {
         childIcTf.setPromptText("No. IC / MyKid");
         TextField birthCertTf = new TextField();
         birthCertTf.setPromptText("No. Sijil Lahir");
+        TextField siblingsTf = new TextField();
+        siblingsTf.setPromptText("0");
+        TextField languageTf = new TextField();
+        languageTf.setPromptText("Bahasa pertuturan");
         TextArea addressTa = new TextArea();
         addressTa.setPromptText("Alamat penuh kanak-kanak");
         addressTa.setPrefRowCount(2);
+        TextField fatherPhoneTf = new TextField();
+        fatherPhoneTf.setPromptText("No. tel bapa");
+        TextField motherPhoneTf = new TextField();
+        motherPhoneTf.setPromptText("No. tel ibu");
+
+        TextField registrationReceivedByTf = new TextField();
+        registrationReceivedByTf.setPromptText("Yuran pendaftaran diterima oleh");
+        DatePicker registrationReceivedDatePicker = new DatePicker();
+        TextField registrationReceiptNoTf = new TextField();
+        registrationReceiptNoTf.setPromptText("No. resit");
+        TextField registrationChequeNoTf = new TextField();
+        registrationChequeNoTf.setPromptText("No. cek");
 
         CheckBox staffChildCb = new CheckBox("Anak staff");
 
@@ -114,11 +137,21 @@ final class CRUDChildDialogSupport {
         billingHint.getStyleClass().add("app-helper-text");
         AppThemeSupport.styleControls(
             nameTf,
+            genderCb,
             dobPicker,
+            placeOfBirthTf,
             uidTf,
             childIcTf,
             birthCertTf,
+            siblingsTf,
+            languageTf,
             addressTa,
+            fatherPhoneTf,
+            motherPhoneTf,
+            registrationReceivedByTf,
+            registrationReceivedDatePicker,
+            registrationReceiptNoTf,
+            registrationChequeNoTf,
             feePlanCb,
             transitDurationHintCb,
             billingDueDayCb,
@@ -143,13 +176,28 @@ final class CRUDChildDialogSupport {
         }
 
         if (existingData != null) {
+            genderCb.getEditor().setText(safeStr(existingData.get("gender")).trim());
+            placeOfBirthTf.setText(safeStr(existingData.get("placeOfBirth")).trim());
             String childIc = safeStr(existingData.get("childIcNo")).trim();
             if (childIc.isEmpty()) {
                 childIc = safeStr(existingData.get("icNo")).trim();
             }
             childIcTf.setText(childIc);
             birthCertTf.setText(safeStr(existingData.get("birthCertNo")).trim());
+            Object siblingsValue = existingData.get("siblingsCount");
+            if (siblingsValue instanceof Number) {
+                siblingsTf.setText(String.valueOf(((Number) siblingsValue).intValue()));
+            } else {
+                siblingsTf.setText(safeStr(siblingsValue).trim());
+            }
+            languageTf.setText(safeStr(existingData.get("languageSpeaking")).trim());
             addressTa.setText(safeStr(existingData.get("address")).trim());
+            fatherPhoneTf.setText(safeStr(existingData.get("fatherPhone")).trim());
+            motherPhoneTf.setText(safeStr(existingData.get("motherPhone")).trim());
+            registrationReceivedByTf.setText(safeStr(existingData.get("registrationReceivedBy")).trim());
+            registrationReceivedDatePicker.setValue(parseLocalDate(existingData.get("registrationReceivedDate")));
+            registrationReceiptNoTf.setText(safeStr(existingData.get("registrationReceiptNo")).trim());
+            registrationChequeNoTf.setText(safeStr(existingData.get("registrationChequeNo")).trim());
 
             staffChildCb.setSelected(Boolean.TRUE.equals(existingData.get("staffChild")));
             feePlanCb.setValue(FeePlanType.fromChildData(existingData));
@@ -186,14 +234,26 @@ final class CRUDChildDialogSupport {
 
         GridPane basicGrid = createFormGrid();
         basicGrid.addRow(0, new Label("Child Name"), nameTf);
-        basicGrid.addRow(1, new Label("Birth Date"), dobPicker);
-        basicGrid.addRow(2, new Label("NFC UID"), uidTf);
-        basicGrid.add(uidHint, 1, 3);
+        basicGrid.addRow(1, new Label("Gender"), genderCb);
+        basicGrid.addRow(2, new Label("Birth Date"), dobPicker);
+        basicGrid.addRow(3, new Label("Place of Birth"), placeOfBirthTf);
+        basicGrid.addRow(4, new Label("NFC UID"), uidTf);
+        basicGrid.add(uidHint, 1, 5);
 
         GridPane identificationGrid = createFormGrid();
-        identificationGrid.addRow(0, new Label("Child IC / MyKid"), childIcTf);
+        identificationGrid.addRow(0, new Label("MyKid No"), childIcTf);
         identificationGrid.addRow(1, new Label("Birth Certificate No"), birthCertTf);
-        identificationGrid.addRow(2, new Label("Address"), addressTa);
+        identificationGrid.addRow(2, new Label("No. of Siblings"), siblingsTf);
+        identificationGrid.addRow(3, new Label("Language Speaking"), languageTf);
+        identificationGrid.addRow(4, new Label("Home Address"), addressTa);
+        identificationGrid.addRow(5, new Label("Father's Phone No"), fatherPhoneTf);
+        identificationGrid.addRow(6, new Label("Mother's Phone No"), motherPhoneTf);
+
+        GridPane officeUseGrid = createFormGrid();
+        officeUseGrid.addRow(0, new Label("Registration Fee Received By"), registrationReceivedByTf);
+        officeUseGrid.addRow(1, new Label("Date Received"), registrationReceivedDatePicker);
+        officeUseGrid.addRow(2, new Label("Receipt No"), registrationReceiptNoTf);
+        officeUseGrid.addRow(3, new Label("Cheque No"), registrationChequeNoTf);
 
         GridPane billingGrid = createFormGrid();
         int billingRow = 0;
@@ -219,13 +279,18 @@ final class CRUDChildDialogSupport {
         VBox content = AppThemeSupport.createDialogContent(
             AppThemeSupport.createFormSection(
                 "Basic Info",
-                "Capture the child profile and keep the NFC UID ready for attendance scanning.",
+                "Capture the child registration profile and keep the NFC UID ready for attendance scanning.",
                 basicGrid
             ),
             AppThemeSupport.createFormSection(
                 "Identification",
-                "Keep identity and address fields tidy for admin review and parent support.",
+                "Store the exact child details from the registration form for admin review and family contact.",
                 identificationGrid
+            ),
+            AppThemeSupport.createFormSection(
+                "Office Use",
+                "Track the staff receiver, received date, receipt number, and cheque reference from the paper registration form.",
+                officeUseGrid
             ),
             AppThemeSupport.createFormSection(
                 "Billing Plan",
@@ -370,9 +435,19 @@ final class CRUDChildDialogSupport {
                     childId,
                     child,
                     isNew,
+                    genderCb.getEditor().getText(),
+                    placeOfBirthTf.getText(),
                     childIcTf.getText(),
                     birthCertTf.getText(),
+                    siblingsTf.getText(),
+                    languageTf.getText(),
                     addressTa.getText(),
+                    fatherPhoneTf.getText(),
+                    motherPhoneTf.getText(),
+                    registrationReceivedByTf.getText(),
+                    registrationReceivedDatePicker.getValue(),
+                    registrationReceiptNoTf.getText(),
+                    registrationChequeNoTf.getText(),
                     staffChildCb.isSelected(),
                     feePlanCb.getValue(),
                     transitDurationHintCb.getValue(),
@@ -407,6 +482,28 @@ final class CRUDChildDialogSupport {
 
     private static String safeStr(Object value) {
         return value == null ? "" : String.valueOf(value);
+    }
+
+    private static LocalDate parseLocalDate(Object value) {
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof LocalDate) {
+            return (LocalDate) value;
+        }
+        if (value instanceof Date) {
+            return new java.sql.Date(((Date) value).getTime()).toLocalDate();
+        }
+
+        String raw = safeStr(value).trim();
+        if (raw.isEmpty()) {
+            return null;
+        }
+        try {
+            return LocalDate.parse(raw);
+        } catch (Exception ex) {
+            return null;
+        }
     }
 
     private static String latestBridgeFingerprint(FsDocument latestScan) {

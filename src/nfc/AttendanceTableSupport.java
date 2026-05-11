@@ -14,6 +14,7 @@ import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
+import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.stage.FileChooser;
 import javafx.stage.Window;
 
@@ -27,7 +28,15 @@ final class AttendanceTableSupport {
         Consumer<AttendanceRecord> showAuditAction,
         Supplier<Window> windowSupplier
     ) {
-        table.setEditable(false);
+        table.setEditable(true);
+
+        TableColumn<AttendanceRecord, Boolean> selectCol = new TableColumn<>("Select");
+        selectCol.setPrefWidth(78);
+        selectCol.setEditable(true);
+        selectCol.setSortable(false);
+        selectCol.setReorderable(false);
+        selectCol.setCellValueFactory(data -> data.getValue().selectedProperty());
+        selectCol.setCellFactory(CheckBoxTableCell.forTableColumn(selectCol));
 
         TableColumn<AttendanceRecord, String> nameCol = new TableColumn<>("Name");
         nameCol.setPrefWidth(120);
@@ -141,6 +150,7 @@ final class AttendanceTableSupport {
         });
 
         table.getColumns().setAll(Arrays.asList(
+            selectCol,
             nameCol,
             statusCol,
             inCol,
@@ -160,10 +170,12 @@ final class AttendanceTableSupport {
                 super.updateItem(item, empty);
                 if (item == null || empty) {
                     setStyle("");
+                } else if (item.hasCheckOut()) {
+                    setStyle("-fx-background-color: #cfeecb; -fx-text-fill: #1f5a25;");
+                } else if (item.hasCheckIn()) {
+                    setStyle("-fx-background-color: #e5f7df; -fx-text-fill: #2f7a33;");
                 } else if (item.isAdminCorrected()) {
                     setStyle("-fx-background-color: #fff4d6; -fx-text-fill: #7a5c00;");
-                } else if (item.hasCheckIn() || item.hasCheckOut()) {
-                    setStyle("-fx-background-color: #e8f5e9; -fx-text-fill: #2e7d32;");
                 } else {
                     setStyle("-fx-background-color: #ffebee; -fx-text-fill: #c62828;");
                 }

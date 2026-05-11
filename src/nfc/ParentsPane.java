@@ -19,6 +19,7 @@ import javafx.scene.layout.VBox;
  * Intended to be embedded inside ChildrenView (Children & Parents screen).
  */
 public class ParentsPane extends VBox {
+    private static ParentsPane currentInstance;
 
     private final TableView<ParentRecord> table = new TableView<>();
     private final ObservableList<ParentRecord> master = FXCollections.observableArrayList();
@@ -33,6 +34,7 @@ public class ParentsPane extends VBox {
     }
 
     public ParentsPane() {
+        currentInstance = this;
         setSpacing(10);
         setPadding(new Insets(10, 0, 0, 0));
 
@@ -59,6 +61,12 @@ public class ParentsPane extends VBox {
         getChildren().addAll(toolbar, table);
 
         reload();
+    }
+
+    public static void refreshOpenPane() {
+        if (currentInstance != null) {
+            currentInstance.reload();
+        }
     }
 
     private void buildTable() {

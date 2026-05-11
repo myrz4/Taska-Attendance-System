@@ -20,6 +20,16 @@ final class CRUDChildPersistenceSupport {
         "",
         "",
         "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        null,
+        "",
+        "",
         false,
         null,
         null,
@@ -87,6 +97,14 @@ final class CRUDChildPersistenceSupport {
             return false;
         }
 
+        Integer siblingsCount;
+        try {
+            siblingsCount = parseOptionalInteger(request.siblingsCountRaw());
+        } catch (IllegalArgumentException ex) {
+            new Alert(Alert.AlertType.ERROR, ex.getMessage()).showAndWait();
+            return false;
+        }
+
         CRUDChildValidationSupport.AbsenceLetterInput absenceLetter;
         try {
             absenceLetter = CRUDChildValidationSupport.parseAbsenceLetter(
@@ -101,12 +119,23 @@ final class CRUDChildPersistenceSupport {
         Map<String, Object> payload = new HashMap<>();
         payload.put("name", request.child().getName());
         payload.put("birthDate", request.child().getBirthDate() == null ? "" : request.child().getBirthDate().toString());
+        payload.put("gender", safeText(request.gender()));
+        payload.put("placeOfBirth", safeText(request.placeOfBirth()));
         payload.put("billingReviewRequired", billingAssessment.billingReviewRequired());
         payload.put("billingReviewReason", billingAssessment.billingReviewReason());
         payload.put("nfc_uid", nfcUid);
         payload.put("childIcNo", safeText(request.childIc()));
         payload.put("birthCertNo", safeText(request.birthCert()));
         payload.put("address", safeText(request.address()));
+        payload.put("homeAddress", safeText(request.address()));
+        payload.put("siblingsCount", siblingsCount == null ? "" : siblingsCount);
+        payload.put("languageSpeaking", safeText(request.languageSpeaking()));
+        payload.put("fatherPhone", normalizeOptionalPhone(request.fatherPhone()));
+        payload.put("motherPhone", normalizeOptionalPhone(request.motherPhone()));
+        payload.put("registrationReceivedBy", safeText(request.registrationReceivedBy()));
+        payload.put("registrationReceivedDate", request.registrationReceivedDate() == null ? "" : request.registrationReceivedDate().toString());
+        payload.put("registrationReceiptNo", safeText(request.registrationReceiptNo()));
+        payload.put("registrationChequeNo", safeText(request.registrationChequeNo()));
         payload.put("staffChild", request.staffChild());
         payload.put("absenceLetterApproved", request.absenceLetterApproved());
         payload.put("absenceLetterPeriod", absenceLetter.period());
@@ -178,14 +207,45 @@ final class CRUDChildPersistenceSupport {
         return value == null ? "" : value.trim();
     }
 
+    private static String normalizeOptionalPhone(String value) {
+        String cleaned = safeText(value);
+        if (cleaned.isEmpty()) {
+            return "";
+        }
+        String local = PhoneUtil.toLocalMy(cleaned);
+        return local == null || local.isBlank() ? cleaned : local;
+    }
+
+    private static Integer parseOptionalInteger(String value) {
+        String cleaned = safeText(value);
+        if (cleaned.isEmpty()) {
+            return null;
+        }
+        try {
+            return Integer.valueOf(cleaned);
+        } catch (NumberFormatException ex) {
+            throw new IllegalArgumentException("No. of siblings must be a whole number.");
+        }
+    }
+
     static final class SaveRequest {
         private final FirestoreRestClient client;
         private final String childId;
         private final ChildrenView.Child child;
         private final boolean isNew;
+        private final String gender;
+        private final String placeOfBirth;
         private final String childIc;
         private final String birthCert;
+        private final String siblingsCountRaw;
+        private final String languageSpeaking;
         private final String address;
+        private final String fatherPhone;
+        private final String motherPhone;
+        private final String registrationReceivedBy;
+        private final LocalDate registrationReceivedDate;
+        private final String registrationReceiptNo;
+        private final String registrationChequeNo;
         private final boolean staffChild;
         private final CRUDChildDialogSupport.FeePlanType feePlan;
         private final CRUDChildDialogSupport.TransitDurationHint transitDurationHint;
@@ -201,9 +261,19 @@ final class CRUDChildPersistenceSupport {
             String childId,
             ChildrenView.Child child,
             boolean isNew,
+            String gender,
+            String placeOfBirth,
             String childIc,
             String birthCert,
+            String siblingsCountRaw,
+            String languageSpeaking,
             String address,
+            String fatherPhone,
+            String motherPhone,
+            String registrationReceivedBy,
+            LocalDate registrationReceivedDate,
+            String registrationReceiptNo,
+            String registrationChequeNo,
             boolean staffChild,
             CRUDChildDialogSupport.FeePlanType feePlan,
             CRUDChildDialogSupport.TransitDurationHint transitDurationHint,
@@ -218,9 +288,19 @@ final class CRUDChildPersistenceSupport {
             this.childId = childId;
             this.child = child;
             this.isNew = isNew;
+            this.gender = gender;
+            this.placeOfBirth = placeOfBirth;
             this.childIc = childIc;
             this.birthCert = birthCert;
+            this.siblingsCountRaw = siblingsCountRaw;
+            this.languageSpeaking = languageSpeaking;
             this.address = address;
+            this.fatherPhone = fatherPhone;
+            this.motherPhone = motherPhone;
+            this.registrationReceivedBy = registrationReceivedBy;
+            this.registrationReceivedDate = registrationReceivedDate;
+            this.registrationReceiptNo = registrationReceiptNo;
+            this.registrationChequeNo = registrationChequeNo;
             this.staffChild = staffChild;
             this.feePlan = feePlan == null ? CRUDChildDialogSupport.FeePlanType.MONTHLY_FULLTIME : feePlan;
             this.transitDurationHint = transitDurationHint == null ? CRUDChildDialogSupport.TransitDurationHint.AUTO : transitDurationHint;
@@ -236,9 +316,19 @@ final class CRUDChildPersistenceSupport {
         String childId() { return childId; }
         ChildrenView.Child child() { return child; }
         boolean isNew() { return isNew; }
+        String gender() { return gender; }
+        String placeOfBirth() { return placeOfBirth; }
         String childIc() { return childIc; }
         String birthCert() { return birthCert; }
+        String siblingsCountRaw() { return siblingsCountRaw; }
+        String languageSpeaking() { return languageSpeaking; }
         String address() { return address; }
+        String fatherPhone() { return fatherPhone; }
+        String motherPhone() { return motherPhone; }
+        String registrationReceivedBy() { return registrationReceivedBy; }
+        LocalDate registrationReceivedDate() { return registrationReceivedDate; }
+        String registrationReceiptNo() { return registrationReceiptNo; }
+        String registrationChequeNo() { return registrationChequeNo; }
         boolean staffChild() { return staffChild; }
         CRUDChildDialogSupport.FeePlanType feePlan() { return feePlan; }
         CRUDChildDialogSupport.TransitDurationHint transitDurationHint() { return transitDurationHint; }

@@ -23,6 +23,7 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
@@ -42,7 +43,7 @@ final class CRUDParentDialogSupport {
         AppThemeSupport.prepareDialog(
             dialog,
             isNew ? "Add New Parent" : "Edit Parent",
-            "Link children, relationship details, and family notification settings.",
+            "Capture parent particulars, emergency contacts, and family notification settings.",
             AppThemeSupport.Tone.INFO
         );
         dialog.setResizable(true);
@@ -79,6 +80,12 @@ final class CRUDParentDialogSupport {
         TextField parentIcTf = new TextField();
         parentIcTf.setPromptText("No. IC Parent / Penjaga");
         CheckBox parentIcVerifiedCb = new CheckBox("IC parent disahkan");
+        TextField occupationTf = new TextField();
+        occupationTf.setPromptText("Pekerjaan / Occupation");
+        TextField departmentTf = new TextField();
+        departmentTf.setPromptText("Jabatan / Department");
+        TextField nationalityTf = new TextField();
+        nationalityTf.setPromptText("Warganegara / Nationality");
 
         ComboBox<RelationshipType> relationshipCb = new ComboBox<>();
         relationshipCb.getItems().setAll(RelationshipType.MOTHER, RelationshipType.FATHER, RelationshipType.GUARDIAN);
@@ -105,11 +112,36 @@ final class CRUDParentDialogSupport {
         notifEmergencyCb.setSelected(false);
         notifFeesCb.setSelected(true);
 
+        TextField emergency1NameTf = new TextField();
+        emergency1NameTf.setPromptText("Nama / Name");
+        TextArea emergency1AddressTa = new TextArea();
+        emergency1AddressTa.setPromptText("Alamat / Address");
+        emergency1AddressTa.setPrefRowCount(2);
+        TextField emergency1PhoneTf = new TextField();
+        emergency1PhoneTf.setPromptText("No tel / Contact no");
+        TextField emergency1OfficePhoneTf = new TextField();
+        emergency1OfficePhoneTf.setPromptText("No tel pejabat / Office contact no");
+
+        TextField emergency2NameTf = new TextField();
+        emergency2NameTf.setPromptText("Nama / Name");
+        TextArea emergency2AddressTa = new TextArea();
+        emergency2AddressTa.setPromptText("Alamat / Address");
+        emergency2AddressTa.setPrefRowCount(2);
+        TextField emergency2PhoneTf = new TextField();
+        emergency2PhoneTf.setPromptText("No tel / Contact no");
+        TextField emergency2OfficePhoneTf = new TextField();
+        emergency2OfficePhoneTf.setPromptText("No tel pejabat / Office contact no");
+
         if (existingData != null) {
             relationshipCb.setValue(RelationshipType.fromFirestore(existingData.get("relationshipType")));
             relationshipLabelTf.setText(safeStr(existingData.get("relationshipLabel")).trim());
             parentIcTf.setText(safeStr(existingData.get("icNo")).trim());
             parentIcVerifiedCb.setSelected(Boolean.TRUE.equals(existingData.get("icVerified")));
+            occupationTf.setText(safeStr(existingData.get("occupation")).trim());
+            departmentTf.setText(safeStr(existingData.get("department")).trim());
+            nationalityTf.setText(safeStr(existingData.get("nationality")).trim());
+            applyEmergencyContact(existingData, 0, emergency1NameTf, emergency1AddressTa, emergency1PhoneTf, emergency1OfficePhoneTf);
+            applyEmergencyContact(existingData, 1, emergency2NameTf, emergency2AddressTa, emergency2PhoneTf, emergency2OfficePhoneTf);
         }
 
         relationshipLabelTf.disableProperty().bind(
@@ -211,16 +243,30 @@ final class CRUDParentDialogSupport {
             parentNameTf,
             phoneTf,
             parentIcTf,
+            occupationTf,
+            departmentTf,
+            nationalityTf,
             relationshipCb,
             relationshipLabelTf,
-            childrenSummaryTf
+            childrenSummaryTf,
+            emergency1NameTf,
+            emergency1AddressTa,
+            emergency1PhoneTf,
+            emergency1OfficePhoneTf,
+            emergency2NameTf,
+            emergency2AddressTa,
+            emergency2PhoneTf,
+            emergency2OfficePhoneTf
         );
 
         GridPane parentInfoGrid = createFormGrid();
         parentInfoGrid.addRow(0, new Label("Parent Name"), parentNameTf);
         parentInfoGrid.addRow(1, new Label("Phone"), phoneTf);
-        parentInfoGrid.addRow(2, new Label("Parent IC"), parentIcTf);
-        parentInfoGrid.add(parentIcVerifiedCb, 1, 3);
+        parentInfoGrid.addRow(2, new Label("Occupation"), occupationTf);
+        parentInfoGrid.addRow(3, new Label("Department"), departmentTf);
+        parentInfoGrid.addRow(4, new Label("Nationality"), nationalityTf);
+        parentInfoGrid.addRow(5, new Label("Parent IC"), parentIcTf);
+        parentInfoGrid.add(parentIcVerifiedCb, 1, 6);
 
         GridPane relationshipGrid = createFormGrid();
         relationshipGrid.addRow(0, new Label("Relationship"), relationshipCb);
@@ -233,13 +279,25 @@ final class CRUDParentDialogSupport {
         childHelper.setWrapText(true);
         childrenGrid.add(childHelper, 1, 1);
 
+        GridPane emergencyOneGrid = createFormGrid();
+        emergencyOneGrid.addRow(0, new Label("Name"), emergency1NameTf);
+        emergencyOneGrid.addRow(1, new Label("Address"), emergency1AddressTa);
+        emergencyOneGrid.addRow(2, new Label("Contact No"), emergency1PhoneTf);
+        emergencyOneGrid.addRow(3, new Label("Office Contact No"), emergency1OfficePhoneTf);
+
+        GridPane emergencyTwoGrid = createFormGrid();
+        emergencyTwoGrid.addRow(0, new Label("Name"), emergency2NameTf);
+        emergencyTwoGrid.addRow(1, new Label("Address"), emergency2AddressTa);
+        emergencyTwoGrid.addRow(2, new Label("Contact No"), emergency2PhoneTf);
+        emergencyTwoGrid.addRow(3, new Label("Office Contact No"), emergency2OfficePhoneTf);
+
         HBox notificationsBox = new HBox(12, notifActivityCb, notifAttendanceCb, notifEmergencyCb, notifFeesCb);
         notificationsBox.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
 
         VBox content = AppThemeSupport.createDialogContent(
             AppThemeSupport.createFormSection(
                 "Parent Info",
-                "Keep the core parent record accurate for contact and verification workflows.",
+                "Keep the father, mother, or guardian particulars aligned with the paper registration form.",
                 parentInfoGrid
             ),
             AppThemeSupport.createFormSection(
@@ -253,6 +311,16 @@ final class CRUDParentDialogSupport {
                 childrenGrid
             ),
             AppThemeSupport.createFormSection(
+                "Emergency Contact 1",
+                "Store the first non-parent contact for urgent situations.",
+                emergencyOneGrid
+            ),
+            AppThemeSupport.createFormSection(
+                "Emergency Contact 2",
+                "Store the second non-parent contact for urgent situations.",
+                emergencyTwoGrid
+            ),
+            AppThemeSupport.createFormSection(
                 "Notifications",
                 "Choose which update categories this parent should receive.",
                 notificationsBox
@@ -261,10 +329,10 @@ final class CRUDParentDialogSupport {
 
         ScrollPane scroll = AppThemeSupport.wrapDialogContent(content);
         scroll.setPannable(true);
-        scroll.setPrefViewportWidth(520);
-        scroll.setPrefViewportHeight(650);
+        scroll.setPrefViewportWidth(600);
+        scroll.setPrefViewportHeight(760);
 
-        dialog.getDialogPane().setPrefSize(560, 720);
+        dialog.getDialogPane().setPrefSize(640, 860);
         dialog.getDialogPane().setContent(scroll);
 
         ButtonType saveType = new ButtonType("Save", ButtonBar.ButtonData.OK_DONE);
@@ -317,6 +385,9 @@ final class CRUDParentDialogSupport {
                 document.put("phoneTail", PhoneUtil.myTail(phoneLocal));
                 document.put("phoneE164", PhoneUtil.toE164My(phoneLocal));
                 document.put("icNo", parentIcTf.getText() == null ? "" : parentIcTf.getText().trim());
+                document.put("occupation", occupationTf.getText() == null ? "" : occupationTf.getText().trim());
+                document.put("department", departmentTf.getText() == null ? "" : departmentTf.getText().trim());
+                document.put("nationality", nationalityTf.getText() == null ? "" : nationalityTf.getText().trim());
                 document.put("icVerified", parentIcVerifiedCb.isSelected());
                 if (parentIcVerifiedCb.isSelected()) {
                     document.put("icVerifiedAt", new Date());
@@ -385,6 +456,26 @@ final class CRUDParentDialogSupport {
                 notif.put("attendance", notifAttendanceCb.isSelected());
                 notif.put("emergency", notifEmergencyCb.isSelected());
                 notif.put("fees", notifFeesCb.isSelected());
+                Map<String, Object> emergencyContact1 = buildEmergencyContact(emergency1NameTf, emergency1AddressTa, emergency1PhoneTf, emergency1OfficePhoneTf);
+                Map<String, Object> emergencyContact2 = buildEmergencyContact(emergency2NameTf, emergency2AddressTa, emergency2PhoneTf, emergency2OfficePhoneTf);
+                List<Map<String, Object>> emergencyContacts = new ArrayList<>();
+                if (emergencyContact1 != null) {
+                    emergencyContact1.put("slot", 1);
+                    emergencyContacts.add(emergencyContact1);
+                }
+                if (emergencyContact2 != null) {
+                    emergencyContact2.put("slot", 2);
+                    emergencyContacts.add(emergencyContact2);
+                }
+                document.put("emergencyContacts", emergencyContacts);
+                document.put("emergencyContact1Name", safeStr(emergency1NameTf.getText()).trim());
+                document.put("emergencyContact1Address", safeStr(emergency1AddressTa.getText()).trim());
+                document.put("emergencyContact1Phone", normalizeOptionalPhone(emergency1PhoneTf.getText()));
+                document.put("emergencyContact1OfficePhone", normalizeOptionalPhone(emergency1OfficePhoneTf.getText()));
+                document.put("emergencyContact2Name", safeStr(emergency2NameTf.getText()).trim());
+                document.put("emergencyContact2Address", safeStr(emergency2AddressTa.getText()).trim());
+                document.put("emergencyContact2Phone", normalizeOptionalPhone(emergency2PhoneTf.getText()));
+                document.put("emergencyContact2OfficePhone", normalizeOptionalPhone(emergency2OfficePhoneTf.getText()));
                 Map<String, Object> settings = new HashMap<>();
                 settings.put("notifications", notif);
                 document.put("settings", settings);
@@ -415,7 +506,70 @@ final class CRUDParentDialogSupport {
         return grid;
     }
 
-    private static void refreshChildParentCacheAsync(FirestoreRestClient client, List<String> childIds) {
+    private static void applyEmergencyContact(
+        Map<String, Object> existingData,
+        int index,
+        TextField nameTf,
+        TextArea addressTa,
+        TextField phoneTf,
+        TextField officePhoneTf
+    ) {
+        if (existingData == null) {
+            return;
+        }
+
+        Object rawContacts = existingData.get("emergencyContacts");
+        if (rawContacts instanceof List<?>) {
+            List<?> contacts = (List<?>) rawContacts;
+            if (index >= 0 && index < contacts.size() && contacts.get(index) instanceof Map<?, ?>) {
+                Map<?, ?> contact = (Map<?, ?>) contacts.get(index);
+                nameTf.setText(safeStr(contact.get("name")).trim());
+                addressTa.setText(safeStr(contact.get("address")).trim());
+                phoneTf.setText(safeStr(contact.get("phone")).trim());
+                officePhoneTf.setText(safeStr(contact.get("officePhone")).trim());
+                return;
+            }
+        }
+
+        int slot = index + 1;
+        nameTf.setText(safeStr(existingData.get("emergencyContact" + slot + "Name")).trim());
+        addressTa.setText(safeStr(existingData.get("emergencyContact" + slot + "Address")).trim());
+        phoneTf.setText(safeStr(existingData.get("emergencyContact" + slot + "Phone")).trim());
+        officePhoneTf.setText(safeStr(existingData.get("emergencyContact" + slot + "OfficePhone")).trim());
+    }
+
+    private static Map<String, Object> buildEmergencyContact(
+        TextField nameTf,
+        TextArea addressTa,
+        TextField phoneTf,
+        TextField officePhoneTf
+    ) {
+        String name = safeStr(nameTf.getText()).trim();
+        String address = safeStr(addressTa.getText()).trim();
+        String phone = normalizeOptionalPhone(phoneTf.getText());
+        String officePhone = normalizeOptionalPhone(officePhoneTf.getText());
+        if (name.isEmpty() && address.isEmpty() && phone.isEmpty() && officePhone.isEmpty()) {
+            return null;
+        }
+
+        Map<String, Object> contact = new HashMap<>();
+        contact.put("name", name);
+        contact.put("address", address);
+        contact.put("phone", phone);
+        contact.put("officePhone", officePhone);
+        return contact;
+    }
+
+    private static String normalizeOptionalPhone(String value) {
+        String cleaned = safeStr(value).trim();
+        if (cleaned.isEmpty()) {
+            return "";
+        }
+        String local = PhoneUtil.toLocalMy(cleaned);
+        return local == null || local.isBlank() ? cleaned : local;
+    }
+
+    static void refreshChildParentCacheAsync(FirestoreRestClient client, List<String> childIds) {
         if (client == null || childIds == null || childIds.isEmpty()) return;
 
         CompletableFuture.runAsync(() -> {

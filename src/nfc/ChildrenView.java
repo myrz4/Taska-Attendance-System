@@ -31,7 +31,10 @@ public class ChildrenView extends javafx.scene.layout.VBox {
 
         javafx.scene.control.MenuButton columnChooser = ChildrenTableSupport.createColumnChooser(table);
         javafx.scene.control.Button addChildBtn = ChildrenLayoutSupport.createAddChildButton(
-            () -> CRUDDialogs.showChildDialog(null, true, () -> reload())
+            () -> CRUDDialogs.showRegistrationWizard(() -> {
+                reload();
+                ParentsPane.refreshOpenPane();
+            })
         );
 
         javafx.scene.layout.HBox toolbar = new javafx.scene.layout.HBox(10, searchField, columnChooser, addChildBtn);
