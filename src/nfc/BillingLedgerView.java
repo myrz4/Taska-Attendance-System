@@ -48,6 +48,7 @@ public class BillingLedgerView extends VBox {
     private final TextField issuePeriodField = new TextField();
     private final Button refreshButton = new Button("Refresh");
     private final Button issueInvoicesButton = new Button("Issue Period");
+    private final Button issueNextMonthButton = new Button("Issue Next Month");
     private final Button issueVisibleInvoicesButton = new Button("Issue Visible");
     private final Button quickOverdueButton = new Button("Only Overdue");
     private final Button quickUnpaidCurrentMonthButton = new Button("Unpaid Month");
@@ -151,6 +152,7 @@ public class BillingLedgerView extends VBox {
 
         refreshButton.setOnAction(e -> reloadData());
         issueInvoicesButton.setOnAction(e -> issueInvoicesForPeriod(false));
+        issueNextMonthButton.setOnAction(e -> issueNextMonthInvoices());
         issueVisibleInvoicesButton.setOnAction(e -> issueInvoicesForPeriod(true));
         quickOverdueButton.setOnAction(e -> applyQuickFilter("Overdue", "All Dates", null));
         quickUnpaidCurrentMonthButton.setOnAction(e -> applyQuickFilter("Unpaid", "Current Month", null));
@@ -194,6 +196,7 @@ public class BillingLedgerView extends VBox {
         BillingPolicyUiSupport.configureActionButtons(152,
             refreshButton,
             issueInvoicesButton,
+            issueNextMonthButton,
             issueVisibleInvoicesButton,
             quickOverdueButton,
             quickUnpaidCurrentMonthButton,
@@ -259,6 +262,7 @@ public class BillingLedgerView extends VBox {
             new Label("Issue Billing:"),
             new Label("Period:"), issuePeriodField,
             issueInvoicesButton,
+            issueNextMonthButton,
             issueVisibleInvoicesButton
         );
 
@@ -426,6 +430,7 @@ public class BillingLedgerView extends VBox {
     private void applyToolbarTooltips() {
         refreshButton.setTooltip(new Tooltip("Reload the billing ledger from Firestore."));
         issueInvoicesButton.setTooltip(new Tooltip("Issue invoices for the period shown beside this button."));
+        issueNextMonthButton.setTooltip(new Tooltip("Set the billing period to the next month and issue invoices for that month."));
         issueVisibleInvoicesButton.setTooltip(new Tooltip("Issue invoices only for the parents currently visible in this view."));
         quickOverdueButton.setTooltip(new Tooltip("Show overdue invoices only."));
         quickUnpaidCurrentMonthButton.setTooltip(new Tooltip("Show unpaid invoices for the current month only."));
@@ -579,6 +584,24 @@ public class BillingLedgerView extends VBox {
                 showError("Failed to issue monthly invoices", new Exception(BillingLedgerMessageSupport.rootMessage(error), error));
             }
         );
+    }
+
+    private void issueNextMonthInvoices() {
+        issuePeriodField.setText(nextIssuePeriodText());
+        issueInvoicesForPeriod(false);
+    }
+
+    private String nextIssuePeriodText() {
+        LocalDate baseDate = LocalDate.now().withDayOfMonth(1);
+        String currentPeriod = BillingLedgerValueSupport.firstNonBlank(issuePeriodField.getText());
+        if (currentPeriod != null && currentPeriod.matches("\\d{4}-\\d{2}")) {
+            try {
+                baseDate = LocalDate.parse(currentPeriod + "-01", DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+            } catch (java.time.format.DateTimeParseException ignored) {
+                baseDate = LocalDate.now().withDayOfMonth(1);
+            }
+        }
+        return baseDate.plusMonths(1).format(PERIOD_FORMAT);
     }
 
     private void applyQuickFilter(String status, String dateScope, String searchText) {
@@ -1179,6 +1202,18 @@ public class BillingLedgerView extends VBox {
 
         public String getReceiptNo() {
             return receiptNo;
+        }
+
+        public String getChildCoverageKey() {
+            return BillingLedgerRowSupport.firstNonBlank(invoice.getString("childCoverageKey"));
+        }
+
+        public String getPaidPaymentId() {
+            return BillingLedgerRowSupport.firstNonBlank(
+                invoice.getString("paidPaymentId"),
+                payment == null ? null : payment.getId(),
+                payment == null ? null : payment.getString("paymentId")
+            );
         }
 
         public long getTotalSen() {

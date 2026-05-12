@@ -4,8 +4,10 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 
 @SuppressWarnings("unused")
@@ -66,13 +68,17 @@ final class BillingLedgerSummarySupport {
         int overdueCount = 0;
         int ageReviewInvoiceCount = 0;
         int overtimeReviewInvoiceCount = 0;
+        Set<String> countedPaidKeys = new LinkedHashSet<>();
         Map<String, Boolean> ageReviewParents = new LinkedHashMap<>();
         Map<String, Boolean> overtimeReviewParents = new LinkedHashMap<>();
         Map<String, Long> outstandingByPeriod = new LinkedHashMap<>();
 
         for (BillingLedgerView.LedgerRow row : rows) {
             if (row.isPaid()) {
-                paid += row.getTotalSen();
+                String paymentKey = paidMetricKey(row);
+                if (countedPaidKeys.add(paymentKey)) {
+                    paid += row.getTotalSen();
+                }
             } else {
                 outstanding += row.getTotalSen();
                 String periodKey = firstNonBlank(row.getPeriod(), "Unknown");
@@ -100,6 +106,23 @@ final class BillingLedgerSummarySupport {
             "OT Review: " + overtimeReviewParents.size() + " fam / " + overtimeReviewInvoiceCount + " inv",
             buildPeriodTotalsText(outstandingByPeriod, formatMoney)
         );
+    }
+
+    private static String paidMetricKey(BillingLedgerView.LedgerRow row) {
+        String paymentId = firstNonBlank(row.getPaidPaymentId());
+        if (paymentId != null) {
+            return "payment:" + paymentId;
+        }
+
+        String coverageKey = firstNonBlank(row.getChildCoverageKey());
+        String receiptNo = firstNonBlank(row.getReceiptNo());
+        if (coverageKey != null && receiptNo != null && !"-".equals(receiptNo)) {
+            return "coverage-receipt:" + coverageKey + "::" + receiptNo;
+        }
+        if (coverageKey != null) {
+            return "coverage:" + coverageKey;
+        }
+        return "invoice:" + firstNonBlank(row.getInvoiceId(), "-");
     }
 
     private static String buildPeriodTotalsText(Map<String, Long> outstandingByPeriod, Function<Long, String> formatMoney) {
