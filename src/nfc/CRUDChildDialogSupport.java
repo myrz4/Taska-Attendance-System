@@ -135,6 +135,13 @@ final class CRUDChildDialogSupport {
         uidHint.getStyleClass().add("app-helper-text");
         transitHint.getStyleClass().add("app-helper-text");
         billingHint.getStyleClass().add("app-helper-text");
+        Label billingModelValue = createReadOnlyValueLabel();
+        Label ageBandValue = createReadOnlyValueLabel();
+        Label monthlyFeeValue = createReadOnlyValueLabel();
+        Label registrationTotalValue = createReadOnlyValueLabel();
+        Label yearlyCoverageValue = createReadOnlyValueLabel();
+        Label invoiceScheduleValue = createReadOnlyValueLabel();
+        Label taskaZurahHint = createHelperLabel("Preview updates automatically from the date of birth and registration date. Saving this child now stores the fixed Taska Zurah age-based billing metadata.");
         AppThemeSupport.styleControls(
             nameTf,
             genderCb,
@@ -217,6 +224,31 @@ final class CRUDChildDialogSupport {
             }
         }
 
+        feePlanCb.setValue(FeePlanType.MONTHLY_FULLTIME);
+        transitDurationHintCb.setValue(TransitDurationHint.AUTO);
+        schoolHolidayTransitCb.setSelected(false);
+        transportFromTadikaCb.setSelected(false);
+        billingDueDayCb.setValue(7);
+        feePlanCb.setDisable(true);
+        transitDurationHintCb.setDisable(true);
+        schoolHolidayTransitCb.setDisable(true);
+        transportFromTadikaCb.setDisable(true);
+        billingDueDayCb.setDisable(true);
+
+        Runnable refreshTaskaZurahPreview = () -> updateTaskaZurahPreview(
+            dobPicker.getValue(),
+            registrationReceivedDatePicker.getValue(),
+            billingModelValue,
+            ageBandValue,
+            monthlyFeeValue,
+            registrationTotalValue,
+            yearlyCoverageValue,
+            invoiceScheduleValue
+        );
+        dobPicker.valueProperty().addListener((obs, oldValue, newValue) -> refreshTaskaZurahPreview.run());
+        registrationReceivedDatePicker.valueProperty().addListener((obs, oldValue, newValue) -> refreshTaskaZurahPreview.run());
+        refreshTaskaZurahPreview.run();
+
         boolean existingTransportDefault = existingData != null && Boolean.TRUE.equals(existingData.get("transportFromTadika"));
         int dueDayDefault = 7;
         if (existingData != null) {
@@ -257,13 +289,14 @@ final class CRUDChildDialogSupport {
 
         GridPane billingGrid = createFormGrid();
         int billingRow = 0;
-        billingGrid.addRow(billingRow++, new Label("Billing Plan"), feePlanCb);
-        billingGrid.addRow(billingRow++, new Label("Transit Duration Hint"), transitDurationHintCb);
-        billingGrid.add(schoolHolidayTransitCb, 1, billingRow++);
-        billingGrid.add(transitHint, 1, billingRow++);
-        billingGrid.add(billingHint, 1, billingRow++);
-        billingGrid.add(transportFromTadikaCb, 1, billingRow++);
-        billingGrid.addRow(billingRow++, new Label("Payment Due Day"), billingDueDayCb);
+        billingGrid.addRow(billingRow++, new Label("Billing Model"), billingModelValue);
+        billingGrid.addRow(billingRow++, new Label("Age Band Preview"), ageBandValue);
+        billingGrid.addRow(billingRow++, new Label("Monthly Fee Preview"), monthlyFeeValue);
+        billingGrid.addRow(billingRow++, new Label("Registration Total Preview"), registrationTotalValue);
+        billingGrid.addRow(billingRow++, new Label("Yearly Fee Covers"), yearlyCoverageValue);
+        billingGrid.addRow(billingRow++, new Label("Invoice Schedule"), invoiceScheduleValue);
+        billingGrid.add(taskaZurahHint, 1, billingRow++);
+        billingGrid.add(billingHint, 1, billingRow);
 
         GridPane optionalGrid = createFormGrid();
         int optionalRow = 0;
@@ -294,12 +327,12 @@ final class CRUDChildDialogSupport {
             ),
             AppThemeSupport.createFormSection(
                 "Billing Plan",
-                "These controls feed the existing billing and transit logic without changing the backend rules.",
+                "Preview the fixed Taska Zurah age-based policy that will be saved with this child.",
                 billingGrid
             ),
             AppThemeSupport.createFormSection(
                 "Optional Billing Controls",
-                "Use these toggles for approved absence-letter discounts, staff-child rules, and transport options.",
+                "Use these toggles for approved absence-letter discounts and staff-child notes only.",
                 optionalGrid
             )
         );
@@ -480,6 +513,20 @@ final class CRUDChildDialogSupport {
         return grid;
     }
 
+    private static Label createHelperLabel(String text) {
+        Label label = new Label(text);
+        label.getStyleClass().add("app-helper-text");
+        label.setWrapText(true);
+        return label;
+    }
+
+    private static Label createReadOnlyValueLabel() {
+        Label label = new Label("-");
+        label.setWrapText(true);
+        label.setStyle("-fx-background-color: rgba(255,255,255,0.72); -fx-background-radius: 12; -fx-padding: 10 12 10 12; -fx-text-fill: #1f2d3d;");
+        return label;
+    }
+
     private static String safeStr(Object value) {
         return value == null ? "" : String.valueOf(value);
     }
@@ -504,6 +551,63 @@ final class CRUDChildDialogSupport {
         } catch (Exception ex) {
             return null;
         }
+    }
+
+    private static void updateTaskaZurahPreview(
+        LocalDate birthDate,
+        LocalDate registrationDate,
+        Label billingModelValue,
+        Label ageBandValue,
+        Label monthlyFeeValue,
+        Label registrationTotalValue,
+        Label yearlyCoverageValue,
+        Label invoiceScheduleValue
+    ) {
+        LocalDate effectiveRegistrationDate = registrationDate == null ? LocalDate.now() : registrationDate;
+        CRUDChildValidationSupport.RegistrationPreview preview = CRUDChildValidationSupport.deriveRegistrationPreview(
+            effectiveRegistrationDate,
+            birthDate,
+            effectiveRegistrationDate
+        );
+        CRUDChildValidationSupport.BillingProfile billingProfile = preview.billingProfile();
+
+        billingModelValue.setText("Taska Zurah registered child age-based billing");
+        ageBandValue.setText(resolveAgeBandPreviewText(billingProfile));
+        monthlyFeeValue.setText(formatMoneySen(billingProfile.monthlyFeeSen()));
+        registrationTotalValue.setText(
+            formatMoneySen(preview.registrationTotalSen())
+                + " total ("
+                + formatMoneySen(preview.registrationFeeSen())
+                + " registration + "
+                + formatMoneySen(preview.insuranceTakafulSen())
+                + " insurance/takaful + "
+                + formatMoneySen(preview.yearlyMaintenanceFeeSen())
+                + " yearly maintenance + "
+                + formatMoneySen(billingProfile.monthlyFeeSen())
+                + " monthly fee)"
+        );
+        yearlyCoverageValue.setText(billingProfile.yearlyFeeCoveredYear() == null
+            ? "Follows the next generated January invoice."
+            : String.valueOf(billingProfile.yearlyFeeCoveredYear()));
+        invoiceScheduleValue.setText("Generated on " + preview.invoiceGenerationDay() + "st each month and due on the 7th.");
+    }
+
+    private static String resolveAgeBandPreviewText(CRUDChildValidationSupport.BillingProfile billingProfile) {
+        if (billingProfile == null) {
+            return "Birth date required for exact preview.";
+        }
+        if ("missing_birth_date".equals(billingProfile.agePolicyReason())) {
+            return "Birth date required for exact preview. The fallback preview uses the 4 years to below 5 years band.";
+        }
+        String base = CRUDChildValidationSupport.describeAgeBand(billingProfile.ageBand());
+        if (billingProfile.ageOutOfPolicy()) {
+            return base + " (manual review required)";
+        }
+        return base;
+    }
+
+    private static String formatMoneySen(int amountSen) {
+        return String.format("RM%,.2f", amountSen / 100.0d);
     }
 
     private static String latestBridgeFingerprint(FsDocument latestScan) {

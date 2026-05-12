@@ -77,9 +77,9 @@ final class ChildrenDataSupport {
                 ageSummary(birthDate),
                 firstLine(parentDetails.parentName()),
                 firstLine(parentDetails.parentContact()),
-                CRUDChildDialogSupport.FeePlanType.fromChildData(fields).toString(),
-                parseDueDay(childDoc.get("billingDueDay")),
-                Boolean.TRUE.equals(childDoc.get("transportFromTadika")),
+                resolveBillingPlan(fields),
+                parseDueDay(childDoc.get("invoiceDueDay") != null ? childDoc.get("invoiceDueDay") : childDoc.get("billingDueDay")),
+                resolveTransportEnabled(fields),
                 nfcUid,
                 SummaryTableSupport.resolveStatus(fields, "Active"),
                 parentDetails.parentRelationship(),
@@ -118,6 +118,30 @@ final class ChildrenDataSupport {
             return day == 5 ? 5 : 7;
         }
         return 7;
+    }
+
+    private static String resolveBillingPlan(Map<String, Object> fields) {
+        String activeBillingModel = safeStr(fields.get("activeBillingModel")).trim();
+        if ("TASKA_ZURAH_AGE_BASED".equalsIgnoreCase(activeBillingModel)) {
+            String ageBand = safeStr(fields.get("ageBand")).trim();
+            StringBuilder summary = new StringBuilder("Taska Zurah Age-Based");
+            if (!ageBand.isEmpty()) {
+                summary.append(" (").append(CRUDChildValidationSupport.describeAgeBand(ageBand)).append(")");
+            }
+            if (Boolean.TRUE.equals(fields.get("ageOutOfPolicy"))) {
+                summary.append(" - Manual Review");
+            }
+            return summary.toString();
+        }
+        return CRUDChildDialogSupport.FeePlanType.fromChildData(fields).toString();
+    }
+
+    private static boolean resolveTransportEnabled(Map<String, Object> fields) {
+        String activeBillingModel = safeStr(fields.get("activeBillingModel")).trim();
+        if ("TASKA_ZURAH_AGE_BASED".equalsIgnoreCase(activeBillingModel)) {
+            return false;
+        }
+        return Boolean.TRUE.equals(fields.get("transportFromTadika"));
     }
 
     private static String ageSummary(LocalDate birthDate) {

@@ -220,6 +220,9 @@ public class AdminDashboard extends javafx.application.Application {
         if (PAGE_ATTENDANCE.equals(pageKey) && attendanceView != null) {
             attendanceView.onShow();
         }
+        if (PAGE_BILLING_LEDGER.equals(pageKey) && billingLedgerView != null) {
+            billingLedgerView.onShow();
+        }
     }
 
     private AttendanceView getAttendanceView() {

@@ -8,6 +8,15 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 
 final class CRUDChildValidationSupport {
+    private static final String POLICY_VERSION = "TASKA_ZURAH_2026";
+    private static final String ACTIVE_BILLING_MODEL = "TASKA_ZURAH_AGE_BASED";
+    private static final int SUPPORTED_AGE_MAX_MONTHS_EXCLUSIVE = 60;
+    private static final int FIXED_INVOICE_DUE_DAY = 7;
+    private static final int INVOICE_GENERATION_DAY = 21;
+    private static final int REGISTRATION_FEE_SEN = 10_000;
+    private static final int INSURANCE_TAKAFUL_SEN = 1_500;
+    private static final int YEARLY_MAINTENANCE_FEE_SEN = 40_000;
+
     private CRUDChildValidationSupport() {
     }
 
@@ -15,6 +24,8 @@ final class CRUDChildValidationSupport {
         if (keepAnalyzerAnchors()) {
             syncTransitControls(null, null, null, null);
             assessBilling(LocalDate.now(), null, null, false);
+            deriveBillingProfile(LocalDate.now(), null, null);
+            deriveRegistrationPreview(LocalDate.now(), null, null);
             parseAbsenceLetter("", "");
             deriveTransitSettings(null, null, false);
             BillingAssessment billingProbe = new BillingAssessment(null, false, false, "");
@@ -22,6 +33,22 @@ final class CRUDChildValidationSupport {
             billingProbe.schoolHolidayAgeBlocked();
             billingProbe.billingReviewRequired();
             billingProbe.billingReviewReason();
+            BillingProfile profileProbe = new BillingProfile("", 0, false, "", "", "", 7, null);
+            profileProbe.ageBand();
+            profileProbe.monthlyFeeSen();
+            profileProbe.ageOutOfPolicy();
+            profileProbe.agePolicyReason();
+            profileProbe.feePolicyVersion();
+            profileProbe.activeBillingModel();
+            profileProbe.invoiceDueDay();
+            profileProbe.yearlyFeeCoveredYear();
+            RegistrationPreview registrationProbe = new RegistrationPreview(profileProbe, 0, 0, 0, 0, 21);
+            registrationProbe.billingProfile();
+            registrationProbe.registrationFeeSen();
+            registrationProbe.insuranceTakafulSen();
+            registrationProbe.yearlyMaintenanceFeeSen();
+            registrationProbe.registrationTotalSen();
+            registrationProbe.invoiceGenerationDay();
             AbsenceLetterInput absenceProbe = new AbsenceLetterInput("", 0);
             absenceProbe.period();
             absenceProbe.days();
@@ -63,20 +90,63 @@ final class CRUDChildValidationSupport {
         boolean schoolHolidayTransitSelected
     ) {
         Integer childAgeMonths = ageInMonths(today, birthDate);
-        CRUDChildDialogSupport.FeePlanType selectedFeePlan = feePlan == null
-            ? CRUDChildDialogSupport.FeePlanType.MONTHLY_FULLTIME
-            : feePlan;
-        boolean requestsSchoolHolidayTransit = selectedFeePlan == CRUDChildDialogSupport.FeePlanType.TRANSIT_SCHOOLHOLIDAY_MONTH
-            || (selectedFeePlan == CRUDChildDialogSupport.FeePlanType.TRANSIT_AUTO_MONTHLY && schoolHolidayTransitSelected);
-        boolean schoolHolidayAgeBlocked = requestsSchoolHolidayTransit
-            && (childAgeMonths == null || childAgeMonths < 48);
-        boolean billingReviewRequired = !selectedFeePlan.code.equals("transit")
-            && childAgeMonths != null
-            && (childAgeMonths < 3 || childAgeMonths >= 48);
-        String reviewReason = billingReviewRequired
-            ? (childAgeMonths != null && childAgeMonths < 3 ? "under_3_months" : "age_4y_or_above")
-            : "";
-        return new BillingAssessment(childAgeMonths, schoolHolidayAgeBlocked, billingReviewRequired, reviewReason);
+        boolean billingReviewRequired = childAgeMonths == null || childAgeMonths >= SUPPORTED_AGE_MAX_MONTHS_EXCLUSIVE;
+        String reviewReason = "";
+        if (childAgeMonths == null) {
+            reviewReason = "missing_birth_date";
+        } else if (childAgeMonths >= SUPPORTED_AGE_MAX_MONTHS_EXCLUSIVE) {
+            reviewReason = "age_5_or_above";
+        }
+        return new BillingAssessment(childAgeMonths, false, billingReviewRequired, reviewReason);
+    }
+
+    static BillingProfile deriveBillingProfile(LocalDate referenceDate, LocalDate birthDate, LocalDate registrationDate) {
+        Integer childAgeMonths = ageInMonths(referenceDate == null ? LocalDate.now() : referenceDate, birthDate);
+        String ageBand = determineAgeBand(childAgeMonths);
+        int monthlyFeeSen = monthlyFeeSenForBand(ageBand);
+        boolean ageOutOfPolicy = childAgeMonths == null || childAgeMonths >= SUPPORTED_AGE_MAX_MONTHS_EXCLUSIVE;
+        String agePolicyReason;
+        if (childAgeMonths == null) {
+            agePolicyReason = "missing_birth_date";
+        } else if (childAgeMonths >= SUPPORTED_AGE_MAX_MONTHS_EXCLUSIVE) {
+            agePolicyReason = "age_5_or_above";
+        } else {
+            agePolicyReason = "in_range";
+        }
+
+        return new BillingProfile(
+            ageBand,
+            monthlyFeeSen,
+            ageOutOfPolicy,
+            agePolicyReason,
+            POLICY_VERSION,
+            ACTIVE_BILLING_MODEL,
+            FIXED_INVOICE_DUE_DAY,
+            determineYearlyFeeCoveredYear(registrationDate)
+        );
+    }
+
+    static RegistrationPreview deriveRegistrationPreview(LocalDate referenceDate, LocalDate birthDate, LocalDate registrationDate) {
+        BillingProfile billingProfile = deriveBillingProfile(referenceDate, birthDate, registrationDate);
+        int totalSen = billingProfile.monthlyFeeSen() + REGISTRATION_FEE_SEN + INSURANCE_TAKAFUL_SEN + YEARLY_MAINTENANCE_FEE_SEN;
+        return new RegistrationPreview(
+            billingProfile,
+            REGISTRATION_FEE_SEN,
+            INSURANCE_TAKAFUL_SEN,
+            YEARLY_MAINTENANCE_FEE_SEN,
+            totalSen,
+            INVOICE_GENERATION_DAY
+        );
+    }
+
+    static String describeAgeBand(String ageBand) {
+        if ("BABY_TO_2".equals(ageBand)) {
+            return "Baby to below 2 years";
+        }
+        if ("AGE_2_TO_3".equals(ageBand)) {
+            return "2 years to below 4 years";
+        }
+        return "4 years to below 5 years";
     }
 
     static AbsenceLetterInput parseAbsenceLetter(String periodRaw, String daysRaw) {
@@ -147,6 +217,38 @@ final class CRUDChildValidationSupport {
         return age.getYears() * 12 + age.getMonths();
     }
 
+    private static String determineAgeBand(Integer childAgeMonths) {
+        if (childAgeMonths == null) {
+            return "AGE_4";
+        }
+        if (childAgeMonths < 24) {
+            return "BABY_TO_2";
+        }
+        if (childAgeMonths < 48) {
+            return "AGE_2_TO_3";
+        }
+        return "AGE_4";
+    }
+
+    private static int monthlyFeeSenForBand(String ageBand) {
+        if ("BABY_TO_2".equals(ageBand)) {
+            return 75_000;
+        }
+        if ("AGE_2_TO_3".equals(ageBand)) {
+            return 70_000;
+        }
+        return 65_000;
+    }
+
+    private static Integer determineYearlyFeeCoveredYear(LocalDate registrationDate) {
+        if (registrationDate == null) {
+            return null;
+        }
+        int month = registrationDate.getMonthValue();
+        int year = registrationDate.getYear();
+        return month >= 11 ? year + 1 : year;
+    }
+
     static final class BillingAssessment {
         private final Integer childAgeMonths;
         private final boolean schoolHolidayAgeBlocked;
@@ -174,6 +276,118 @@ final class CRUDChildValidationSupport {
 
         String billingReviewReason() {
             return billingReviewReason;
+        }
+    }
+
+    static final class BillingProfile {
+        private final String ageBand;
+        private final int monthlyFeeSen;
+        private final boolean ageOutOfPolicy;
+        private final String agePolicyReason;
+        private final String feePolicyVersion;
+        private final String activeBillingModel;
+        private final int invoiceDueDay;
+        private final Integer yearlyFeeCoveredYear;
+
+        BillingProfile(
+            String ageBand,
+            int monthlyFeeSen,
+            boolean ageOutOfPolicy,
+            String agePolicyReason,
+            String feePolicyVersion,
+            String activeBillingModel,
+            int invoiceDueDay,
+            Integer yearlyFeeCoveredYear
+        ) {
+            this.ageBand = ageBand == null ? "" : ageBand;
+            this.monthlyFeeSen = monthlyFeeSen;
+            this.ageOutOfPolicy = ageOutOfPolicy;
+            this.agePolicyReason = agePolicyReason == null ? "" : agePolicyReason;
+            this.feePolicyVersion = feePolicyVersion == null ? "" : feePolicyVersion;
+            this.activeBillingModel = activeBillingModel == null ? "" : activeBillingModel;
+            this.invoiceDueDay = invoiceDueDay;
+            this.yearlyFeeCoveredYear = yearlyFeeCoveredYear;
+        }
+
+        String ageBand() {
+            return ageBand;
+        }
+
+        int monthlyFeeSen() {
+            return monthlyFeeSen;
+        }
+
+        boolean ageOutOfPolicy() {
+            return ageOutOfPolicy;
+        }
+
+        String agePolicyReason() {
+            return agePolicyReason;
+        }
+
+        String feePolicyVersion() {
+            return feePolicyVersion;
+        }
+
+        String activeBillingModel() {
+            return activeBillingModel;
+        }
+
+        int invoiceDueDay() {
+            return invoiceDueDay;
+        }
+
+        Integer yearlyFeeCoveredYear() {
+            return yearlyFeeCoveredYear;
+        }
+    }
+
+    static final class RegistrationPreview {
+        private final BillingProfile billingProfile;
+        private final int registrationFeeSen;
+        private final int insuranceTakafulSen;
+        private final int yearlyMaintenanceFeeSen;
+        private final int registrationTotalSen;
+        private final int invoiceGenerationDay;
+
+        RegistrationPreview(
+            BillingProfile billingProfile,
+            int registrationFeeSen,
+            int insuranceTakafulSen,
+            int yearlyMaintenanceFeeSen,
+            int registrationTotalSen,
+            int invoiceGenerationDay
+        ) {
+            this.billingProfile = billingProfile;
+            this.registrationFeeSen = registrationFeeSen;
+            this.insuranceTakafulSen = insuranceTakafulSen;
+            this.yearlyMaintenanceFeeSen = yearlyMaintenanceFeeSen;
+            this.registrationTotalSen = registrationTotalSen;
+            this.invoiceGenerationDay = invoiceGenerationDay;
+        }
+
+        BillingProfile billingProfile() {
+            return billingProfile;
+        }
+
+        int registrationFeeSen() {
+            return registrationFeeSen;
+        }
+
+        int insuranceTakafulSen() {
+            return insuranceTakafulSen;
+        }
+
+        int yearlyMaintenanceFeeSen() {
+            return yearlyMaintenanceFeeSen;
+        }
+
+        int registrationTotalSen() {
+            return registrationTotalSen;
+        }
+
+        int invoiceGenerationDay() {
+            return invoiceGenerationDay;
         }
     }
 

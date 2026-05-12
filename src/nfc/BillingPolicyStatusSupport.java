@@ -73,7 +73,7 @@ final class BillingPolicyStatusSupport {
     private static void setLiveHealthDetails(BillingPolicyStatusUi ui, String version, String rowCount, String resolvedTransit, String missingSummary, String gatewaySummary) {
         ui.versionLabel.setText("Version: " + String.valueOf(version == null || version.isBlank() ? "-" : version));
         ui.rowCountLabel.setText("Rows: " + String.valueOf(rowCount == null || rowCount.isBlank() ? "-" : rowCount));
-        ui.transitLabel.setText("Resolved Default Transit: " + String.valueOf(resolvedTransit == null || resolvedTransit.isBlank() ? "-" : resolvedTransit));
+        ui.transitLabel.setText("Registered Billing Model: " + String.valueOf(resolvedTransit == null || resolvedTransit.isBlank() ? "-" : resolvedTransit));
         ui.missingLabel.setText("Missing Required Codes: " + String.valueOf(missingSummary == null || missingSummary.isBlank() ? "none" : missingSummary));
         ui.gatewayLabel.setText("Payment Mode: " + String.valueOf(gatewaySummary == null || gatewaySummary.isBlank() ? "-" : gatewaySummary));
     }

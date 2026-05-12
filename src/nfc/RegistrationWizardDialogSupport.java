@@ -1,6 +1,7 @@
 package nfc;
 
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -167,9 +168,16 @@ final class RegistrationWizardDialogSupport {
         Label transitHint = new Label("For generic monthly transit, backend will use school-holiday override first, then duration hint, then attendance time if no duration is saved.");
         transitHint.setWrapText(true);
         transitHint.getStyleClass().add("app-helper-text");
-        Label enrollmentHint = new Label("Keep NFC UID and billing plan ready so the child can start attendance and invoicing immediately after registration.");
+        Label enrollmentHint = new Label("Keep the NFC UID ready. Billing is now saved automatically using the fixed Taska Zurah age-based policy.");
         enrollmentHint.setWrapText(true);
         enrollmentHint.getStyleClass().add("app-helper-text");
+        Label billingModelValue = createReadOnlyValueLabel();
+        Label ageBandValue = createReadOnlyValueLabel();
+        Label monthlyFeeValue = createReadOnlyValueLabel();
+        Label registrationTotalValue = createReadOnlyValueLabel();
+        Label yearlyCoverageValue = createReadOnlyValueLabel();
+        Label invoiceScheduleValue = createReadOnlyValueLabel();
+        Label previewHint = createHelperLabel("Preview updates automatically from the date of birth and registration date. The desktop app saves the fixed Taska Zurah policy values, not a selectable transit plan.");
 
         AppThemeSupport.styleControls(
             childNameTf,
@@ -221,6 +229,30 @@ final class RegistrationWizardDialogSupport {
         );
         feePlanCb.valueProperty().addListener((obs, oldValue, newValue) -> syncTransitControls.run());
         syncTransitControls.run();
+        feePlanCb.setValue(CRUDChildDialogSupport.FeePlanType.MONTHLY_FULLTIME);
+        transitDurationHintCb.setValue(CRUDChildDialogSupport.TransitDurationHint.AUTO);
+        schoolHolidayTransitCb.setSelected(false);
+        transportFromTadikaCb.setSelected(false);
+        billingDueDayCb.setValue(7);
+        feePlanCb.setDisable(true);
+        transitDurationHintCb.setDisable(true);
+        schoolHolidayTransitCb.setDisable(true);
+        transportFromTadikaCb.setDisable(true);
+        billingDueDayCb.setDisable(true);
+
+        Runnable refreshTaskaZurahPreview = () -> updateTaskaZurahPreview(
+            dobPicker.getValue(),
+            registrationReceivedDatePicker.getValue(),
+            billingModelValue,
+            ageBandValue,
+            monthlyFeeValue,
+            registrationTotalValue,
+            yearlyCoverageValue,
+            invoiceScheduleValue
+        );
+        dobPicker.valueProperty().addListener((obs, oldValue, newValue) -> refreshTaskaZurahPreview.run());
+        registrationReceivedDatePicker.valueProperty().addListener((obs, oldValue, newValue) -> refreshTaskaZurahPreview.run());
+        refreshTaskaZurahPreview.run();
 
         fatherExistingParentCb.getItems().setAll(loadExistingParentOptions(client, CRUDParentDialogSupport.RelationshipType.FATHER));
         fatherExistingParentCb.setValue(fatherExistingParentCb.getItems().get(0));
@@ -343,13 +375,14 @@ final class RegistrationWizardDialogSupport {
         GridPane systemGrid = createFormGrid();
         systemGrid.addRow(0, new Label("NFC UID"), uidTf);
         systemGrid.add(uidHint, 1, 1);
-        systemGrid.addRow(2, new Label("Billing Plan"), feePlanCb);
-        systemGrid.addRow(3, new Label("Transit Duration Hint"), transitDurationHintCb);
-        systemGrid.add(schoolHolidayTransitCb, 1, 4);
-        systemGrid.add(transportFromTadikaCb, 1, 5);
-        systemGrid.addRow(6, new Label("Payment Due Day"), billingDueDayCb);
-        systemGrid.add(transitHint, 1, 7);
-        systemGrid.add(enrollmentHint, 1, 8);
+        systemGrid.addRow(2, new Label("Billing Model"), billingModelValue);
+        systemGrid.addRow(3, new Label("Age Band Preview"), ageBandValue);
+        systemGrid.addRow(4, new Label("Monthly Fee Preview"), monthlyFeeValue);
+        systemGrid.addRow(5, new Label("Registration Total Preview"), registrationTotalValue);
+        systemGrid.addRow(6, new Label("Yearly Fee Covers"), yearlyCoverageValue);
+        systemGrid.addRow(7, new Label("Invoice Schedule"), invoiceScheduleValue);
+        systemGrid.add(previewHint, 1, 8);
+        systemGrid.add(enrollmentHint, 1, 9);
 
         VBox page3Content = AppThemeSupport.createDialogContent(
             AppThemeSupport.createFormSection(
@@ -359,7 +392,7 @@ final class RegistrationWizardDialogSupport {
             ),
             AppThemeSupport.createFormSection(
                 "System Enrollment",
-                "Administrative fields required by the desktop system for attendance and billing.",
+                "Administrative fields required by the desktop system, with billing saved automatically from the fixed Taska Zurah policy.",
                 systemGrid
             )
         );
@@ -556,9 +589,11 @@ final class RegistrationWizardDialogSupport {
                 emergency2OfficePhoneTf
             );
 
-            saveParentIfPresent(client, childId, child.getName(), fatherDraft, emergencyContacts);
-            saveParentIfPresent(client, childId, child.getName(), motherDraft, emergencyContacts);
+            List<String> invoiceParentIds = new ArrayList<>();
+            addUniqueParentId(invoiceParentIds, saveParentIfPresent(client, childId, child.getName(), fatherDraft, emergencyContacts));
+            addUniqueParentId(invoiceParentIds, saveParentIfPresent(client, childId, child.getName(), motherDraft, emergencyContacts));
             CRUDParentDialogSupport.refreshChildParentCacheAsync(client, List.of(childId));
+            issueRegistrationInvoices(invoiceParentIds, registrationReceivedDatePicker.getValue());
 
             if (onSave != null) {
                 onSave.run();
@@ -600,6 +635,70 @@ final class RegistrationWizardDialogSupport {
         label.getStyleClass().add("app-helper-text");
         label.setWrapText(true);
         return label;
+    }
+
+    private static Label createReadOnlyValueLabel() {
+        Label label = new Label("-");
+        label.setWrapText(true);
+        label.setStyle("-fx-background-color: rgba(255,255,255,0.72); -fx-background-radius: 12; -fx-padding: 10 12 10 12; -fx-text-fill: #1f2d3d;");
+        return label;
+    }
+
+    private static void updateTaskaZurahPreview(
+        LocalDate birthDate,
+        LocalDate registrationDate,
+        Label billingModelValue,
+        Label ageBandValue,
+        Label monthlyFeeValue,
+        Label registrationTotalValue,
+        Label yearlyCoverageValue,
+        Label invoiceScheduleValue
+    ) {
+        LocalDate effectiveRegistrationDate = registrationDate == null ? LocalDate.now() : registrationDate;
+        CRUDChildValidationSupport.RegistrationPreview preview = CRUDChildValidationSupport.deriveRegistrationPreview(
+            effectiveRegistrationDate,
+            birthDate,
+            effectiveRegistrationDate
+        );
+        CRUDChildValidationSupport.BillingProfile billingProfile = preview.billingProfile();
+
+        billingModelValue.setText("Taska Zurah registered child age-based billing");
+        ageBandValue.setText(resolveAgeBandPreviewText(billingProfile));
+        monthlyFeeValue.setText(formatMoneySen(billingProfile.monthlyFeeSen()));
+        registrationTotalValue.setText(
+            formatMoneySen(preview.registrationTotalSen())
+                + " total ("
+                + formatMoneySen(preview.registrationFeeSen())
+                + " registration + "
+                + formatMoneySen(preview.insuranceTakafulSen())
+                + " insurance/takaful + "
+                + formatMoneySen(preview.yearlyMaintenanceFeeSen())
+                + " yearly maintenance + "
+                + formatMoneySen(billingProfile.monthlyFeeSen())
+                + " monthly fee)"
+        );
+        yearlyCoverageValue.setText(billingProfile.yearlyFeeCoveredYear() == null
+            ? "Follows the next generated January invoice."
+            : String.valueOf(billingProfile.yearlyFeeCoveredYear()));
+        invoiceScheduleValue.setText("Generated on " + preview.invoiceGenerationDay() + "st each month and due on the 7th.");
+    }
+
+    private static String resolveAgeBandPreviewText(CRUDChildValidationSupport.BillingProfile billingProfile) {
+        if (billingProfile == null) {
+            return "Birth date required for exact preview.";
+        }
+        if ("missing_birth_date".equals(billingProfile.agePolicyReason())) {
+            return "Birth date required for exact preview. The fallback preview uses the 4 years to below 5 years band.";
+        }
+        String base = CRUDChildValidationSupport.describeAgeBand(billingProfile.ageBand());
+        if (billingProfile.ageOutOfPolicy()) {
+            return base + " (manual review required)";
+        }
+        return base;
+    }
+
+    private static String formatMoneySen(int amountSen) {
+        return String.format("RM%,.2f", amountSen / 100.0d);
     }
 
     private static List<ExistingParentOption> loadExistingParentOptions(
@@ -696,7 +795,7 @@ final class RegistrationWizardDialogSupport {
         return grid;
     }
 
-    private static void saveParentIfPresent(
+    private static String saveParentIfPresent(
         FirestoreRestClient client,
         String childId,
         String childName,
@@ -704,15 +803,15 @@ final class RegistrationWizardDialogSupport {
         List<Map<String, Object>> emergencyContacts
     ) throws IOException, InterruptedException {
         if (draft == null) {
-            return;
+            return "";
         }
 
         if (draft.existingParentId() != null && !draft.existingParentId().isBlank()) {
-            linkExistingParentToChild(client, childId, childName, draft, emergencyContacts);
-            return;
+            return linkExistingParentToChild(client, childId, childName, draft, emergencyContacts);
         }
 
         String phoneLocal = normalizeRequiredPhone(draft.phone());
+        String parentId = newDocId();
         Map<String, Object> document = new HashMap<>();
         document.put("parentName", draft.name());
         document.put("phone", phoneLocal);
@@ -744,10 +843,11 @@ final class RegistrationWizardDialogSupport {
         document.put("settings", settings);
         document.put("timestamp", new Date());
 
-        client.createDocumentWithId("parents", newDocId(), document);
+        client.createDocumentWithId("parents", parentId, document);
+        return parentId;
     }
 
-    private static void linkExistingParentToChild(
+    private static String linkExistingParentToChild(
         FirestoreRestClient client,
         String childId,
         String childName,
@@ -791,6 +891,39 @@ final class RegistrationWizardDialogSupport {
         }
 
         client.patchDocumentMerge("parents", draft.existingParentId(), patch);
+        return draft.existingParentId();
+    }
+
+    private static void addUniqueParentId(List<String> parentIds, String parentId) {
+        if (parentIds == null) {
+            return;
+        }
+        String normalized = safeText(parentId);
+        if (normalized.isBlank() || parentIds.contains(normalized)) {
+            return;
+        }
+        parentIds.add(normalized);
+    }
+
+    private static void issueRegistrationInvoices(List<String> parentIds, LocalDate registrationDate) {
+        if (parentIds == null || parentIds.isEmpty()) {
+            return;
+        }
+
+        LocalDate effectiveDate = registrationDate == null ? LocalDate.now() : registrationDate;
+        String period = String.format("%04d-%02d", effectiveDate.getYear(), effectiveDate.getMonthValue());
+
+        try {
+            Map<?, ?> result = BillingLedgerRemoteSupport.generateInvoicesForPeriod(period, parentIds);
+            BillingLedgerRemoteSupport.assertInvoiceBatchSucceeded(result);
+        } catch (RuntimeException ex) {
+            AppThemeSupport.showWarning(
+                null,
+                "Invoice Not Generated Yet",
+                "The child and parent records were saved, but the registration invoice could not be issued immediately.\n\n"
+                    + BillingLedgerMessageSupport.rootMessage(ex)
+            );
+        }
     }
 
     private static LinkedHashMap<String, String> extractLinkedChildren(FsDocument parentDoc) {

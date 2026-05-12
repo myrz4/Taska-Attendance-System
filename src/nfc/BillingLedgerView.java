@@ -419,6 +419,10 @@ public class BillingLedgerView extends VBox {
         reloadData();
     }
 
+    public void onShow() {
+        reloadData();
+    }
+
     private void applyToolbarTooltips() {
         refreshButton.setTooltip(new Tooltip("Reload the billing ledger from Firestore."));
         issueInvoicesButton.setTooltip(new Tooltip("Issue invoices for the period shown beside this button."));

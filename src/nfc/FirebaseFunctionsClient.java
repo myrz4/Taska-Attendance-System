@@ -54,6 +54,11 @@ public final class FirebaseFunctionsClient {
         return callCallableByName(projectId, idToken, "billingAdminGenerateInvoicesForPeriod", dataJsonObject);
     }
 
+    @SuppressWarnings("unused")
+    public static CallResult callBillingAdminBackfillChildMetadata(String projectId, String idToken, String dataJsonObject) throws IOException {
+        return callCallableByName(projectId, idToken, "billingAdminBackfillChildMetadata", dataJsonObject);
+    }
+
     public static CallResult callAttendanceNfcCheckIn(String projectId, String idToken, String dataJsonObject) throws IOException {
         return callCallableByName(projectId, idToken, "attendanceNfcCheckIn", dataJsonObject);
     }

@@ -18,8 +18,8 @@ final class ChildrenTableSupport {
     private ChildrenTableSupport() {}
 
     private static final TableColumn<ChildrenView.Child, String> RECORD_ID_COL = new TableColumn<>("Record ID");
-    private static final TableColumn<ChildrenView.Child, String> DUE_DAY_COL = new TableColumn<>("Due Day");
-    private static final TableColumn<ChildrenView.Child, String> TRANSPORT_COL = new TableColumn<>("Transport");
+    private static final TableColumn<ChildrenView.Child, String> DUE_DAY_COL = new TableColumn<>("Invoice Due");
+    private static final TableColumn<ChildrenView.Child, String> TRANSPORT_COL = new TableColumn<>("Casual Transit");
 
     static void setupTable(
         TableView<ChildrenView.Child> table,
@@ -35,7 +35,7 @@ final class ChildrenTableSupport {
         TableColumn<ChildrenView.Child, String> ageCol = new TableColumn<>("Age");
         TableColumn<ChildrenView.Child, String> parentNameCol = new TableColumn<>("Primary Parent");
         TableColumn<ChildrenView.Child, String> parentContactCol = new TableColumn<>("Parent Phone");
-        TableColumn<ChildrenView.Child, String> billingPlanCol = new TableColumn<>("Billing Plan");
+        TableColumn<ChildrenView.Child, String> billingPlanCol = new TableColumn<>("Billing Model");
         TableColumn<ChildrenView.Child, String> uidCol = new TableColumn<>("NFC UID");
         TableColumn<ChildrenView.Child, String> statusCol = new TableColumn<>("Status");
         TableColumn<ChildrenView.Child, Void> actionsCol = new TableColumn<>("Actions");
@@ -175,9 +175,9 @@ final class ChildrenTableSupport {
         json.put("parentNames", child.getFullParentNames());
         json.put("parentPhones", child.getFullParentPhones());
         json.put("relationship", child.getParentRelationship());
-        json.put("billingPlan", child.getBillingPlan());
-        json.put("paymentDueDay", child.getPaymentDueDay());
-        json.put("transportEnabled", child.isTransportEnabled());
+        json.put("billingModel", child.getBillingPlan());
+        json.put("invoiceDueDay", child.getPaymentDueDay());
+        json.put("casualTransitBilling", casualTransitSummary(child));
         json.put("nfcUid", child.getNfcUid());
         json.put("status", child.getStatus());
         return json;
@@ -195,12 +195,19 @@ final class ChildrenTableSupport {
             "Age: " + SummaryTableSupport.displayText(child.getAgeSummary()),
             "Primary Parent: " + SummaryTableSupport.displayText(child.getPrimaryParentName()),
             "Parent Phone: " + SummaryTableSupport.displayText(child.getParentPhone()),
-            "Billing Plan: " + SummaryTableSupport.displayText(child.getBillingPlan()),
-            "Due Day: " + SummaryTableSupport.displayText(child.getPaymentDueDayText()),
-            "Transport: " + SummaryTableSupport.displayText(child.getTransportEnabledText()),
+            "Billing Model: " + SummaryTableSupport.displayText(child.getBillingPlan()),
+            "Invoice Due: " + SummaryTableSupport.displayText(child.getPaymentDueDayText()),
+            "Casual Transit: " + SummaryTableSupport.displayText(casualTransitSummary(child)),
             "NFC UID: " + SummaryTableSupport.displayText(child.getNfcUid()),
             "Status: " + SummaryTableSupport.displayText(child.getStatus())
         );
+    }
+
+    private static String casualTransitSummary(ChildrenView.Child child) {
+        if (child != null && child.getBillingPlan() != null && child.getBillingPlan().startsWith("Taska Zurah Age-Based")) {
+            return "Separate from monthly billing";
+        }
+        return child == null ? "-" : child.getTransportEnabledText();
     }
 
     private static void setPrefWidth(TableColumn<ChildrenView.Child, ?> column, double width) {

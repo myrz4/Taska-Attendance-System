@@ -58,6 +58,7 @@ final class BillingPolicyLayoutSupport {
         Button saveNewBtn,
         Button activateBtn,
         Button healthBtn,
+        Button backfillBtn,
         Button auditBtn,
         Button exportTxtBtn,
         Button exportJsonBtn
@@ -75,6 +76,7 @@ final class BillingPolicyLayoutSupport {
         );
         FlowPane healthRow = BillingPolicyUiSupport.createWrapRow(
             healthBtn,
+            backfillBtn,
             auditBtn,
             exportTxtBtn,
             exportJsonBtn

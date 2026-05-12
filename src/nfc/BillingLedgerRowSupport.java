@@ -100,7 +100,7 @@ final class BillingLedgerRowSupport {
             }
         }
         if (invoiceAgeOutOfPolicy(invoice)) {
-            return "Child age is outside the PDF fee range and this invoice should be reviewed manually.";
+            return "Child age is outside the supported Taska Zurah range and this invoice should be reviewed manually.";
         }
         return "Late-night overtime exceeded the policy threshold and should be reviewed by management.";
     }

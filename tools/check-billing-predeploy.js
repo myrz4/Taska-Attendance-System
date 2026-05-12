@@ -4,16 +4,17 @@ const path = require("path");
 const admin = require("firebase-admin");
 
 const BILLING_REQUIRED_CODES = [
-  "monthly_fulltime_3m_2y",
-  "monthly_fulltime_2y_4y",
-  "registration_fulltime_oneoff",
-  "registration_transit_oneoff",
-  "overtime_after_530",
-  "overtime_8pm_12am",
-  "transport_tadika_month",
-  "annual_fee_yearly",
-  "comms_book_oneoff",
-  "insurance_oneoff_age2plus",
+  "monthly_fee_baby_to_2",
+  "monthly_fee_age_2_to_3",
+  "monthly_fee_age_4",
+  "registration_fee",
+  "insurance_takaful",
+  "yearly_maintenance_fee",
+  "overtime_weekday_half_hour",
+  "overtime_saturday_half_hour",
+  "transit_1hour",
+  "transit_1day",
+  "transit_1week",
 ];
 
 function parseArgs(argv) {
@@ -101,18 +102,6 @@ function normalizeCatalogDoc(raw) {
 function pickDefaultTransitCode(table, configuredCode) {
   const rows = table && table.table ? table.table : (table || {});
   if (configuredCode && rows[configuredCode]) return configuredCode;
-  if (rows.transit_2h_month) return "transit_2h_month";
-  if (rows.transit_halfday_month) return "transit_halfday_month";
-  if (rows.transit_schoolholiday_month) return "transit_schoolholiday_month";
-
-  for (const code of Object.keys(rows)) {
-    if (String(code).startsWith("transit_") && String(code).endsWith("_month")) {
-      return code;
-    }
-  }
-  for (const code of Object.keys(rows)) {
-    if (String(code).startsWith("transit_")) return code;
-  }
   return "";
 }
 
@@ -131,12 +120,11 @@ function billingCatalogHealthSnapshot(table) {
     missingRequiredCodes,
     configuredDefaultTransitCode,
     resolvedDefaultTransitCode,
-    defaultTransitConfiguredValid: Boolean(configuredDefaultTransitCode && rows[configuredDefaultTransitCode]),
-    defaultTransitResolvedValid: Boolean(resolvedDefaultTransitCode && rows[resolvedDefaultTransitCode]),
+    defaultTransitConfiguredValid: !configuredDefaultTransitCode || Boolean(rows[configuredDefaultTransitCode]),
+    defaultTransitResolvedValid: !resolvedDefaultTransitCode || Boolean(rows[resolvedDefaultTransitCode]),
     transitMonthlyCodes,
     isValid: missingRequiredCodes.length === 0
-      && transitMonthlyCodes.length > 0
-      && Boolean(resolvedDefaultTransitCode && rows[resolvedDefaultTransitCode]),
+      && (!configuredDefaultTransitCode || Boolean(rows[configuredDefaultTransitCode])),
   };
 }
 

@@ -2,8 +2,10 @@ package nfc;
 
 import java.io.IOException;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javafx.scene.control.Alert;
@@ -79,23 +81,19 @@ final class CRUDChildPersistenceSupport {
             request.feePlan(),
             request.schoolHolidayTransitSelected()
         );
-        if (billingAssessment.schoolHolidayAgeBlocked()) {
-            new Alert(
-                Alert.AlertType.ERROR,
-                "Transit penuh cuti sekolah hanya boleh digunakan untuk kanak-kanak umur 4 tahun dan ke atas.")
-                .showAndWait();
-            return false;
-        }
-        if (request.isNew() && "under_3_months".equals(billingAssessment.billingReviewReason())) {
-            new Alert(
-                Alert.AlertType.ERROR,
-                "Taska hanya menerima kanak-kanak berumur 3 bulan dan ke atas. Child under 3 months cannot be added.")
-                .showAndWait();
-            return false;
-        }
         if (!confirmBillingReview(billingAssessment)) {
             return false;
         }
+
+        LocalDate registrationDate = request.registrationReceivedDate() != null
+            ? request.registrationReceivedDate()
+            : (request.isNew() ? LocalDate.now() : null);
+        LocalDate billingReferenceDate = registrationDate == null ? LocalDate.now() : registrationDate;
+        CRUDChildValidationSupport.BillingProfile billingProfile = CRUDChildValidationSupport.deriveBillingProfile(
+            billingReferenceDate,
+            request.child().getBirthDate(),
+            registrationDate
+        );
 
         Integer siblingsCount;
         try {
@@ -140,22 +138,29 @@ final class CRUDChildPersistenceSupport {
         payload.put("absenceLetterApproved", request.absenceLetterApproved());
         payload.put("absenceLetterPeriod", absenceLetter.period());
         payload.put("absenceLetterDays", absenceLetter.days());
-        payload.put("careType", request.feePlan().careType);
+        payload.put("careType", CRUDChildDialogSupport.FeePlanType.MONTHLY_FULLTIME.careType);
 
-        String registrationType = "monthly".equals(request.feePlan().code) ? "fulltime" : "transit";
+        String registrationType = "fulltime";
         payload.put("registrationType", registrationType);
-        payload.put("feePlan", request.feePlan().code);
-
-        CRUDChildValidationSupport.TransitSettings transitSettings = CRUDChildValidationSupport.deriveTransitSettings(
-            request.feePlan(),
-            request.transitDurationHint(),
-            request.schoolHolidayTransitSelected()
-        );
-        payload.put("schoolHolidayTransit", transitSettings.schoolHolidayTransit());
-        payload.put("transitDurationHours", transitSettings.careDurationHours());
-        payload.put("careDurationHours", transitSettings.careDurationHours());
-        payload.put("transportFromTadika", request.transportFromTadika());
-        payload.put("billingDueDay", request.billingDueDay() == 5 ? 5 : 7);
+        payload.put("feePlan", CRUDChildDialogSupport.FeePlanType.MONTHLY_FULLTIME.code);
+        payload.put("schoolHolidayTransit", false);
+        payload.put("transitDurationHours", "");
+        payload.put("careDurationHours", "");
+        payload.put("transportFromTadika", false);
+        payload.put("billingDueDay", 7);
+        payload.put("invoiceDueDay", billingProfile.invoiceDueDay());
+        payload.put("activeBillingModel", billingProfile.activeBillingModel());
+        payload.put("feePolicyVersion", billingProfile.feePolicyVersion());
+        payload.put("ageBand", billingProfile.ageBand());
+        payload.put("monthlyFeeSen", billingProfile.monthlyFeeSen());
+        payload.put("ageOutOfPolicy", billingProfile.ageOutOfPolicy());
+        payload.put("agePolicyReason", billingProfile.agePolicyReason());
+        if (registrationDate != null) {
+            payload.put("registrationDate", registrationDate.toString());
+        }
+        if (billingProfile.yearlyFeeCoveredYear() != null) {
+            payload.put("yearlyFeeCoveredYear", billingProfile.yearlyFeeCoveredYear());
+        }
 
         if (request.isNew()) {
             payload.put("registeredAt", new Date());
@@ -165,7 +170,72 @@ final class CRUDChildPersistenceSupport {
             request.client().patchDocumentMerge("children", childId, payload);
             System.out.println("✏️ Updated child: " + request.child().getName() + " (childId=" + childId + ")");
         }
+
+        issueLinkedParentInvoicesIfPresent(request.client(), childId, invoicePeriod(request));
         return true;
+    }
+
+    private static void issueLinkedParentInvoicesIfPresent(FirestoreRestClient client, String childId, String period) throws IOException, InterruptedException {
+        if (client == null || childId == null || childId.isBlank() || period == null || period.isBlank()) {
+            return;
+        }
+
+        List<String> parentIds = findLinkedParentIds(client, childId);
+        if (parentIds.isEmpty()) {
+            return;
+        }
+
+        try {
+            Map<?, ?> result = BillingLedgerRemoteSupport.generateInvoicesForPeriod(period, parentIds);
+            BillingLedgerRemoteSupport.assertInvoiceBatchSucceeded(result);
+        } catch (RuntimeException ex) {
+            new Alert(
+                Alert.AlertType.WARNING,
+                "Child details were saved, but the linked invoice could not be refreshed automatically.\n\n"
+                    + BillingLedgerMessageSupport.rootMessage(ex)
+            ).showAndWait();
+        }
+    }
+
+    private static List<String> findLinkedParentIds(FirestoreRestClient client, String childId) throws IOException, InterruptedException {
+        List<String> parentIds = new ArrayList<>();
+        for (FsDocument parentDoc : client.listDocuments("parents")) {
+            if (parentDoc == null || parentDoc.getId() == null || parentDoc.getId().isBlank()) {
+                continue;
+            }
+            if (!parentLinksChild(parentDoc, childId)) {
+                continue;
+            }
+            if (!parentIds.contains(parentDoc.getId())) {
+                parentIds.add(parentDoc.getId());
+            }
+        }
+        return parentIds;
+    }
+
+    private static boolean parentLinksChild(FsDocument parentDoc, String childId) {
+        if (childId.equals(parentDoc.getString("childId"))) {
+            return true;
+        }
+
+        Object rawChildIds = parentDoc.get("childIds");
+        if (!(rawChildIds instanceof List<?>)) {
+            return false;
+        }
+
+        for (Object rawChildId : (List<?>) rawChildIds) {
+            if (childId.equals(safeText(rawChildId == null ? null : String.valueOf(rawChildId)))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static String invoicePeriod(SaveRequest request) {
+        LocalDate anchorDate = request != null && request.registrationReceivedDate() != null
+            ? request.registrationReceivedDate()
+            : LocalDate.now();
+        return String.format("%04d-%02d", anchorDate.getYear(), anchorDate.getMonthValue());
     }
 
     private static boolean ensureUniqueNfcUid(FirestoreRestClient client, String childId, String nfcUid) throws IOException, InterruptedException {
@@ -195,7 +265,7 @@ final class CRUDChildPersistenceSupport {
         }
         Alert warning = new Alert(
             Alert.AlertType.WARNING,
-            "This child is outside the standard billing age band. The invoice will use the nearest standard band and be flagged for manual review. Continue saving?",
+            "This child is outside the supported Taska Zurah auto-billing range. The saved profile will be flagged for manual billing review. Continue saving?",
             ButtonType.OK,
             ButtonType.CANCEL
         );
@@ -248,10 +318,7 @@ final class CRUDChildPersistenceSupport {
         private final String registrationChequeNo;
         private final boolean staffChild;
         private final CRUDChildDialogSupport.FeePlanType feePlan;
-        private final CRUDChildDialogSupport.TransitDurationHint transitDurationHint;
         private final boolean schoolHolidayTransitSelected;
-        private final boolean transportFromTadika;
-        private final int billingDueDay;
         private final boolean absenceLetterApproved;
         private final String absenceLetterPeriodRaw;
         private final String absenceLetterDaysRaw;
@@ -303,10 +370,7 @@ final class CRUDChildPersistenceSupport {
             this.registrationChequeNo = registrationChequeNo;
             this.staffChild = staffChild;
             this.feePlan = feePlan == null ? CRUDChildDialogSupport.FeePlanType.MONTHLY_FULLTIME : feePlan;
-            this.transitDurationHint = transitDurationHint == null ? CRUDChildDialogSupport.TransitDurationHint.AUTO : transitDurationHint;
             this.schoolHolidayTransitSelected = schoolHolidayTransitSelected;
-            this.transportFromTadika = transportFromTadika;
-            this.billingDueDay = billingDueDay;
             this.absenceLetterApproved = absenceLetterApproved;
             this.absenceLetterPeriodRaw = absenceLetterPeriodRaw;
             this.absenceLetterDaysRaw = absenceLetterDaysRaw;
@@ -331,10 +395,7 @@ final class CRUDChildPersistenceSupport {
         String registrationChequeNo() { return registrationChequeNo; }
         boolean staffChild() { return staffChild; }
         CRUDChildDialogSupport.FeePlanType feePlan() { return feePlan; }
-        CRUDChildDialogSupport.TransitDurationHint transitDurationHint() { return transitDurationHint; }
         boolean schoolHolidayTransitSelected() { return schoolHolidayTransitSelected; }
-        boolean transportFromTadika() { return transportFromTadika; }
-        int billingDueDay() { return billingDueDay; }
         boolean absenceLetterApproved() { return absenceLetterApproved; }
         String absenceLetterPeriodRaw() { return absenceLetterPeriodRaw; }
         String absenceLetterDaysRaw() { return absenceLetterDaysRaw; }

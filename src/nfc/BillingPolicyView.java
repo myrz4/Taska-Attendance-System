@@ -39,10 +39,11 @@ public class BillingPolicyView extends javafx.scene.layout.VBox {
     private final Label liveHealthMetaLabel = new Label("Last checked: pending");
     private final javafx.scene.control.Button liveHealthRefreshBtn = new javafx.scene.control.Button("Refresh");
     private final javafx.scene.control.Button liveHealthDetailsBtn = new javafx.scene.control.Button("Show Details");
+    private final javafx.scene.control.Button backfillBtn = new javafx.scene.control.Button("Backfill Child Metadata");
     private final javafx.scene.layout.VBox liveHealthDetailsBox = new javafx.scene.layout.VBox(4);
     private final Label liveHealthVersionLabel = new Label("Version: -");
     private final Label liveHealthRowCountLabel = new Label("Rows: -");
-    private final Label liveHealthTransitLabel = new Label("Resolved Default Transit: -");
+    private final Label liveHealthTransitLabel = new Label("Registered Billing Model: -");
     private final Label liveHealthMissingLabel = new Label("Missing Required Codes: none");
     private final Label liveHealthGatewayLabel = new Label("Payment Mode: -");
     private final Timeline liveHealthTimeline;
@@ -62,11 +63,11 @@ public class BillingPolicyView extends javafx.scene.layout.VBox {
         liveHealthDetailsBtn.setOnAction(e -> toggleLiveHealthDetails());
         javafx.scene.layout.HBox titleRow = BillingPolicyLayoutSupport.createTitleRow(liveHealthBadge, liveHealthRefreshBtn, liveHealthDetailsBtn);
 
-        versionField.setPromptText("Version (e.g. pdf-2026-03-19)");
-        versionField.setText("catalog-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmm")));
+        versionField.setPromptText("Version (e.g. taska_zurah_2026)");
+        versionField.setText("taska-zurah-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmm")));
 
-        defaultTransitCodeField.setPromptText("Default transit monthly code");
-        defaultTransitCodeField.setText("transit_2h_month");
+        defaultTransitCodeField.setPromptText("Default transit code (optional)");
+        defaultTransitCodeField.setText("");
         defaultTransitCodeField.setPrefColumnCount(16);
 
         catalogSelect.setItems(catalogs);
@@ -92,6 +93,8 @@ public class BillingPolicyView extends javafx.scene.layout.VBox {
         javafx.scene.control.Button healthBtn = new javafx.scene.control.Button("Run Health Check");
         healthBtn.setOnAction(e -> runHealthCheckDialog());
 
+        backfillBtn.setOnAction(e -> backfillChildMetadata());
+
         javafx.scene.control.Button auditBtn = new javafx.scene.control.Button("View Audit Log");
         auditBtn.setOnAction(e -> showAuditLogDialog());
 
@@ -109,6 +112,7 @@ public class BillingPolicyView extends javafx.scene.layout.VBox {
             saveNewBtn,
             activateBtn,
             healthBtn,
+            backfillBtn,
             auditBtn,
             exportTxtBtn,
             exportJsonBtn
@@ -123,6 +127,7 @@ public class BillingPolicyView extends javafx.scene.layout.VBox {
             saveNewBtn,
             activateBtn,
             healthBtn,
+            backfillBtn,
             auditBtn,
             exportTxtBtn,
             exportJsonBtn
@@ -223,6 +228,60 @@ public class BillingPolicyView extends javafx.scene.layout.VBox {
             String remoteSummary = BillingPolicyRemoteSupport.fetchRemoteHealthSummary().summary;
             Platform.runLater(() -> showSimple("Catalog Health", localSummary + "\n\n" + remoteSummary));
         });
+    }
+
+    private void backfillChildMetadata() {
+        nfc.BillingPolicyBackfillDialogSupport.showDialog(getWindow()).ifPresent(request -> {
+            BillingPolicyBackfillProgressDialogSupport.ProgressHandle progressHandle = BillingPolicyBackfillProgressDialogSupport.showDialog(getWindow(), request);
+            backfillBtn.setDisable(true);
+            BillingPolicyAsyncSupport.backfillChildMetadataAsync(
+                request,
+                progressHandle::isStopRequested,
+                progressHandle::update,
+                result -> {
+                    progressHandle.close();
+                    backfillBtn.setDisable(false);
+                    showSimple("Child Billing Metadata Backfill", buildBackfillSummary(result));
+                },
+                (header, ex) -> {
+                    progressHandle.close();
+                    backfillBtn.setDisable(false);
+                    showError(header, ex);
+                }
+            );
+        });
+    }
+
+    private String buildBackfillSummary(BillingPolicyAsyncSupport.ChildMetadataBackfillRunResult result) {
+        java.util.List<String> lines = new java.util.ArrayList<>();
+        String batchLabel = result.batchCount == 1 ? "batch" : "batches";
+        String period = result.period.isBlank() ? "-" : result.period;
+
+        if (result.canceledByUser) {
+            lines.add("Stopped after " + result.batchCount + " " + batchLabel + " at operator request for period " + period + ".");
+        } else if (result.requestedChildCount > 0) {
+            String childLabel = result.requestedChildCount == 1 ? "child ID" : "child IDs";
+            lines.add("Processed " + result.requestedChildCount + " requested " + childLabel + " for period " + period + " in " + result.batchCount + " " + batchLabel + ".");
+        } else if (result.completedAllPages) {
+            lines.add("Processed all available child records for period " + period + " in " + result.batchCount + " " + batchLabel + " of up to " + result.limit + " records each.");
+        } else {
+            lines.add("Processed " + result.batchCount + " " + batchLabel + " of up to " + result.limit + " child records for period " + period + ".");
+        }
+
+        lines.add("Scanned: " + result.scannedCount);
+        lines.add("Patched: " + result.patchedCount);
+        lines.add("Unchanged: " + result.unchangedCount);
+        lines.add("Skipped migrated: " + result.skippedMigratedCount);
+        lines.add("Failed: " + result.failedCount);
+        lines.add("Force rerun: " + (result.force ? "Yes" : "No"));
+        lines.add("Active Catalog Version: " + (result.activeCatalogVersion.isBlank() ? "-" : result.activeCatalogVersion));
+        if (result.canceledByUser) {
+            lines.add("Run status: paused at operator request.");
+        }
+        if (result.hasMore) {
+            lines.add("More records remain. Resume cursor: " + (result.nextStartAfterId.isBlank() ? "-" : result.nextStartAfterId));
+        }
+        return String.join("\n", lines);
     }
 
     private void refreshLiveHealthStatus() {

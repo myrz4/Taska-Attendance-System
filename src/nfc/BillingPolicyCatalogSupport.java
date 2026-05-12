@@ -8,22 +8,17 @@ import java.util.Map;
 
 final class BillingPolicyCatalogSupport {
     static final List<String> REQUIRED_CODES = Arrays.asList(
-        "monthly_fulltime_3m_2y",
-        "monthly_fulltime_2y_4y",
-        "transit_halfday_month",
-        "transit_2h_month",
-        "transit_schoolholiday_month",
-        "transit_1day",
-        "transit_1week",
+        "monthly_fee_baby_to_2",
+        "monthly_fee_age_2_to_3",
+        "monthly_fee_age_4",
+        "registration_fee",
+        "insurance_takaful",
+        "yearly_maintenance_fee",
+        "overtime_weekday_half_hour",
+        "overtime_saturday_half_hour",
         "transit_1hour",
-        "overtime_after_530",
-        "overtime_8pm_12am",
-        "transport_tadika_month",
-        "registration_fulltime_oneoff",
-        "registration_transit_oneoff",
-        "annual_fee_yearly",
-        "comms_book_oneoff",
-        "insurance_oneoff_age2plus"
+        "transit_1day",
+        "transit_1week"
     );
 
     @SuppressWarnings("unused")
@@ -39,22 +34,17 @@ final class BillingPolicyCatalogSupport {
 
     static Map<String, Map<String, Long>> defaultTemplate() {
         Map<String, Map<String, Long>> table = new LinkedHashMap<>();
-        putRow(table, "monthly_fulltime_3m_2y", 35000, 40000);
-        putRow(table, "monthly_fulltime_2y_4y", 30000, 35000);
-        putRow(table, "transit_halfday_month", 15000, 25000);
-        putRow(table, "transit_2h_month", 10000, 18000);
-        putRow(table, "transit_schoolholiday_month", 25000, 30000);
+        putRow(table, "monthly_fee_baby_to_2", 75000, 75000);
+        putRow(table, "monthly_fee_age_2_to_3", 70000, 70000);
+        putRow(table, "monthly_fee_age_4", 65000, 65000);
+        putRow(table, "registration_fee", 10000, 10000);
+        putRow(table, "insurance_takaful", 1500, 1500);
+        putRow(table, "yearly_maintenance_fee", 40000, 40000);
+        putRow(table, "overtime_weekday_half_hour", 500, 500);
+        putRow(table, "overtime_saturday_half_hour", 600, 600);
+        putRow(table, "transit_1hour", 350, 400);
         putRow(table, "transit_1day", 1500, 2000);
         putRow(table, "transit_1week", 7000, 10000);
-        putRow(table, "transit_1hour", 350, 400);
-        putRow(table, "overtime_after_530", 500, 600);
-        putRow(table, "overtime_8pm_12am", 1000, 1300);
-        putRow(table, "transport_tadika_month", 15000, 15000);
-        putRow(table, "registration_fulltime_oneoff", 10000, 10000);
-        putRow(table, "registration_transit_oneoff", 5000, 5000);
-        putRow(table, "annual_fee_yearly", 10000, 10000);
-        putRow(table, "comms_book_oneoff", 1500, 1500);
-        putRow(table, "insurance_oneoff_age2plus", 2000, 2000);
         return table;
     }
 
@@ -118,12 +108,6 @@ final class BillingPolicyCatalogSupport {
     static String resolveDefaultTransitCodeForWorkingTable(Map<String, Map<String, Long>> workingTable, String requestedCode) {
         String fromField = normalizeCode(requestedCode);
         if (isTransitCodeValidForWorkingTable(workingTable, fromField)) return fromField;
-        if (workingTable.containsKey("transit_2h_month")) return "transit_2h_month";
-        if (workingTable.containsKey("transit_halfday_month")) return "transit_halfday_month";
-        if (workingTable.containsKey("transit_schoolholiday_month")) return "transit_schoolholiday_month";
-        for (String code : workingTable.keySet()) {
-            if (code != null && code.startsWith("transit_")) return code;
-        }
         return "";
     }
 

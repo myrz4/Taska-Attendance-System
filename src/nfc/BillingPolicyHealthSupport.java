@@ -38,7 +38,10 @@ final class BillingPolicyHealthSupport {
         boolean valid = validObj instanceof Boolean && (Boolean) validObj;
 
         String version = String.valueOf(health.get("version") == null ? "" : health.get("version"));
-        String resolvedTransit = String.valueOf(health.get("resolvedDefaultTransitCode") == null ? "" : health.get("resolvedDefaultTransitCode"));
+        String activeBillingModel = String.valueOf(health.get("activeBillingModel") == null ? "" : health.get("activeBillingModel"));
+        String resolvedTransit = activeBillingModel.isBlank()
+            ? String.valueOf(health.get("resolvedDefaultTransitCode") == null ? "" : health.get("resolvedDefaultTransitCode"))
+            : describeBillingModel(activeBillingModel);
         String rowCount = String.valueOf(health.get("rowCount") == null ? "0" : health.get("rowCount"));
         String gatewaySummary = describePaymentGateway(health.get("paymentGateway"));
 
@@ -55,7 +58,7 @@ final class BillingPolicyHealthSupport {
         sb.append("\n");
         sb.append("Version: ").append(version).append("\n");
         sb.append("Rows: ").append(rowCount).append("\n");
-        sb.append("Resolved Default Transit: ").append(resolvedTransit).append("\n");
+        sb.append("Registered Billing Model: ").append(resolvedTransit).append("\n");
         sb.append("Payment Mode: ").append(gatewaySummary).append("\n");
         sb.append("Catalog Valid: ").append(valid ? "YES" : "NO");
 
@@ -73,6 +76,14 @@ final class BillingPolicyHealthSupport {
             missingSummary,
             gatewaySummary
         );
+    }
+
+    private static String describeBillingModel(String rawModel) {
+        String normalized = String.valueOf(rawModel == null ? "" : rawModel).trim();
+        if ("TASKA_ZURAH_AGE_BASED".equalsIgnoreCase(normalized)) {
+            return "Taska Zurah age-based registered-child billing";
+        }
+        return normalized.isBlank() ? "-" : normalized;
     }
 
     private static String describePaymentGateway(Object rawGateway) {

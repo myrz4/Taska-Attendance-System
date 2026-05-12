@@ -55,10 +55,11 @@ final class BillingPolicyWorkflowSupport {
         }
 
         String defaultTransitCode = BillingPolicyCatalogSupport.resolveDefaultTransitCodeForWorkingTable(workingTable, defaultTransitInput);
-        if (!BillingPolicyCatalogSupport.isTransitCodeValidForWorkingTable(workingTable, defaultTransitCode)) {
+        String normalizedTransitInput = BillingPolicyCatalogSupport.normalizeCode(defaultTransitInput);
+        if (!normalizedTransitInput.isEmpty() && !BillingPolicyCatalogSupport.isTransitCodeValidForWorkingTable(workingTable, normalizedTransitInput)) {
             return PreparedCatalogSave.error(
-                "Default transit code required",
-                "Please set a valid transit code (e.g. transit_2h_month, transit_halfday_month, transit_schoolholiday_month)."
+                "Default transit code invalid",
+                "Default transit code is optional. If provided, it must match a transit_* row in the Taska Zurah catalog."
             );
         }
 
@@ -83,10 +84,11 @@ final class BillingPolicyWorkflowSupport {
         }
 
         String defaultTransitCode = BillingPolicyCatalogSupport.resolveDefaultTransitCodeForWorkingTable(workingTable, defaultTransitInput);
-        if (!BillingPolicyCatalogSupport.isTransitCodeValidForWorkingTable(workingTable, defaultTransitCode)) {
+        String normalizedTransitInput = BillingPolicyCatalogSupport.normalizeCode(defaultTransitInput);
+        if (!normalizedTransitInput.isEmpty() && !BillingPolicyCatalogSupport.isTransitCodeValidForWorkingTable(workingTable, normalizedTransitInput)) {
             return PreparedCatalogActivation.error(
-                "Default transit code required",
-                "Please set a valid transit code before activation."
+                "Default transit code invalid",
+                "Default transit code is optional. If provided, it must match a transit_* row before activation."
             );
         }
 
