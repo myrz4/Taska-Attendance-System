@@ -54,6 +54,14 @@ final class BillingLedgerInvoiceDocumentSupport {
             payment == null ? null : payment.getString("bank")
         });
         String provider = paymentProvider.apply(row);
+        String paymentIntentId = firstNonBlank.apply(new String[] {
+            invoice.getString("stripePaymentIntentId"),
+            payment == null ? null : payment.getString("stripePaymentIntentId")
+        });
+        String cardDetails = firstNonBlank.apply(new String[] {
+            paymentCardLabel(invoice.getString("paidCardBrand"), invoice.getString("paidCardLast4")),
+            payment == null ? null : paymentCardLabel(payment.getString("cardBrand"), payment.getString("cardLast4"))
+        });
 
         cards.addCell(BillingLedgerExportSupport.buildInfoCard(row.isPaid() ? "Payment" : "Billing", new String[][] {
             {"Period", nullSafe.apply(row.getPeriod())},
@@ -61,7 +69,9 @@ final class BillingLedgerInvoiceDocumentSupport {
             {"Paid At", formatDateTime.apply(row.getPaidAt())},
             {"Receipt No", nullSafe.apply(row.getReceiptNo())},
             {"Method", method == null ? "-" : formatPaymentMethod.apply(method)},
-            {"Bank", bank == null ? "-" : bank}
+            {"Provider", provider == null ? "-" : formatProviderLabel.apply(provider)},
+            {cardDetails == null ? "Bank" : "Card", cardDetails == null ? (bank == null ? "-" : bank) : cardDetails},
+            {"PaymentIntent ID", paymentIntentId == null ? "-" : paymentIntentId}
         }, ink, muted, border));
 
         document.add(cards);
@@ -170,12 +180,15 @@ final class BillingLedgerInvoiceDocumentSupport {
             section.addCell(noteCard);
         }
 
+        FsDocument invoice = row.getInvoiceDocument();
         FsDocument payment = row.getPaymentDocument();
         if (payment != null) {
             PdfPCell paymentCard = BillingLedgerExportSupport.buildInfoCard("Payment Record", new String[][] {
                 {"Status", nullSafe.apply(firstNonBlank.apply(new String[] {payment.getString("status"), row.getStatus()}))},
                 {"Amount", payment.getLong("amountSen") == null ? "-" : formatMoney.apply(payment.getLong("amountSen"))},
                 {"Provider", nullSafe.apply(formatProviderLabel.apply(payment.getString("provider")))},
+                {"PaymentIntent ID", nullSafe.apply(firstNonBlank.apply(new String[] {payment.getString("stripePaymentIntentId"), invoice.getString("stripePaymentIntentId"), "-"}))},
+                {"Card", nullSafe.apply(firstNonBlank.apply(new String[] {paymentCardLabel(payment.getString("cardBrand"), payment.getString("cardLast4")), paymentCardLabel(invoice.getString("paidCardBrand"), invoice.getString("paidCardLast4")), "-"}))},
                 {"Gateway Summary", nullSafe.apply(firstNonBlank.apply(new String[] {payment.getString("gatewaySummary"), "-"}))}
             }, ink, muted, border);
             paymentCard.setColspan(2);
@@ -184,5 +197,20 @@ final class BillingLedgerInvoiceDocumentSupport {
         }
 
         document.add(section);
+    }
+
+    private static String paymentCardLabel(String rawBrand, String rawLast4) {
+        String brand = BillingLedgerValueSupport.firstNonBlank(rawBrand);
+        String last4 = BillingLedgerValueSupport.firstNonBlank(rawLast4);
+        if (brand == null && last4 == null) {
+            return null;
+        }
+        if (brand == null) {
+            return "Card ending in " + last4;
+        }
+        if (last4 == null) {
+            return brand.toUpperCase();
+        }
+        return brand.toUpperCase() + " ending in " + last4;
     }
 }

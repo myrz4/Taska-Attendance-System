@@ -16,10 +16,14 @@ $postDeploySmokeScript = Join-Path $repoRoot "tools/smoke-billing-postdeploy.js"
 $firebaseInvoker = $null
 $firebaseArgsPrefix = @()
 if (Get-Command firebase -ErrorAction SilentlyContinue) {
-  $firebaseInvoker = 'firebase'
+  $firebaseInvoker = (Get-Command firebase -ErrorAction Stop).Source
+}
+elseif (Get-Command 'npx.cmd' -ErrorAction SilentlyContinue) {
+  $firebaseInvoker = (Get-Command 'npx.cmd' -ErrorAction Stop).Source
+  $firebaseArgsPrefix = @('firebase-tools')
 }
 elseif (Get-Command npx -ErrorAction SilentlyContinue) {
-  $firebaseInvoker = 'npx'
+  $firebaseInvoker = (Get-Command npx -ErrorAction Stop).Source
   $firebaseArgsPrefix = @('firebase-tools')
 }
 else {
@@ -38,9 +42,9 @@ function Invoke-FirebaseCli {
   }
   $commandArgs += $Arguments
 
-  & $firebaseInvoker @commandArgs
-  if ($LASTEXITCODE -ne 0) {
-    throw "Firebase CLI command failed with exit code ${LASTEXITCODE}: $($Arguments -join ' ')"
+  $process = Start-Process -FilePath $firebaseInvoker -ArgumentList $commandArgs -NoNewWindow -Wait -PassThru
+  if ($process.ExitCode -ne 0) {
+    throw "Firebase CLI command failed with exit code $($process.ExitCode): $($Arguments -join ' ')"
   }
 }
 
@@ -60,6 +64,7 @@ try {
   if ($SetSecrets) {
     Invoke-FirebaseCli -Arguments @('functions:secrets:set', 'BILLPLZ_API_KEY')
     Invoke-FirebaseCli -Arguments @('functions:secrets:set', 'BILLPLZ_X_SIGNATURE_KEY')
+    Invoke-FirebaseCli -Arguments @('functions:secrets:set', 'STRIPE_SECRET_KEY')
   }
 
   if (-not $SkipPreDeployCheck) {

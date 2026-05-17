@@ -127,7 +127,7 @@ Current billing stance:
 
 - Billing logic is fixed and validated for the current scope.
 - Parent app Android, web, wasm web, and Windows builds are green.
-- Payment remains intentionally in dummy mode.
+- Parent app card payments now run through Stripe test mode only.
 - The only platform still requiring external completion is iOS on a Mac.
 - The canonical Cloud Functions deploy target for this repo is `teacher_app_taskazurah/functions`; `parent_app_taskazurah/functions` is a legacy parity mirror and is not used by the repo-level deploy helpers.
 
@@ -170,6 +170,7 @@ cd "C:\Users\zafri\Downloads\Taska Attendance System\teacher_app_taskazurah\func
 
 firebase functions:secrets:set BILLPLZ_API_KEY
 firebase functions:secrets:set BILLPLZ_X_SIGNATURE_KEY
+firebase functions:secrets:set STRIPE_SECRET_KEY
 npm run deploy
 ```
 
@@ -184,7 +185,7 @@ Manual QA checklist for the current billing, family invoice, JavaFX admin, and d
 
 - `doc/billing-manual-qa-checklist.md`
 
-If you want the helper to prompt for both Billplz secrets first:
+If you want the helper to prompt for Billplz and Stripe secrets first:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File tools\deploy-billing-functions.ps1 -SetSecrets
@@ -193,8 +194,29 @@ powershell -NoProfile -ExecutionPolicy Bypass -File tools\deploy-billing-functio
 Notes:
 - `BILLPLZ_API_KEY` is used for bill creation and sync requests.
 - `BILLPLZ_X_SIGNATURE_KEY` is required for verifying the signed Billplz callback payload.
+- `STRIPE_SECRET_KEY` must be a Stripe test secret (`sk_test_...`) for the parent app PaymentSheet flow.
 - The backend binds these through Firebase Functions v2 secret definitions.
 - Local emulator and direct test runs can still use temporary `process.env` values when needed.
+
+## Parent App Stripe Test Mode
+
+The parent app reads the Stripe publishable key from a Dart define at launch time.
+
+Recommended local VS Code launch configuration:
+
+- `Run Parent App (Stripe Test Mode)`
+
+Equivalent manual command:
+
+```powershell
+cd "C:\Users\zafri\Downloads\Taska Attendance System\parent_app_taskazurah"
+flutter run --dart-define=STRIPE_PUBLISHABLE_KEY=pk_test_...
+```
+
+Notes:
+- Use Stripe test keys only.
+- Do not place `sk_test_...` inside Flutter code or Dart defines.
+- The backend stores only safe Stripe metadata such as `stripePaymentIntentId`, card brand, and card last four digits.
 
 ### Post-deploy rollout verification
 

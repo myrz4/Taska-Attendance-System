@@ -81,8 +81,24 @@ final class BillingLedgerDetailSupport {
             sb.append("Payment Record ID: ").append(paymentId).append('\n');
         }
 
+        String paymentIntentId = firstNonBlank.apply(new String[] {
+            invoice.getString("stripePaymentIntentId"),
+            payment == null ? null : payment.getString("stripePaymentIntentId")
+        });
+        if (paymentIntentId != null) {
+            sb.append("PaymentIntent ID: ").append(paymentIntentId).append('\n');
+        }
+
         if (provider != null) {
             sb.append("Provider: ").append(formatProviderLabel.apply(provider)).append('\n');
+        }
+
+        String cardDetails = firstNonBlank.apply(new String[] {
+            paymentCardLabel(invoice.getString("paidCardBrand"), invoice.getString("paidCardLast4")),
+            payment == null ? null : paymentCardLabel(payment.getString("cardBrand"), payment.getString("cardLast4"))
+        });
+        if (cardDetails != null) {
+            sb.append("Card: ").append(cardDetails).append('\n');
         }
 
         sb.append('\n').append("Invoice Items").append('\n');
@@ -107,6 +123,14 @@ final class BillingLedgerDetailSupport {
             Long amountSen = payment.getLong("amountSen");
             if (amountSen != null) {
                 sb.append("Amount: ").append(formatMoney.apply(amountSen)).append('\n');
+            }
+            String paymentRecordIntentId = payment.getString("stripePaymentIntentId");
+            if (paymentRecordIntentId != null && !paymentRecordIntentId.isBlank()) {
+                sb.append("PaymentIntent ID: ").append(paymentRecordIntentId).append('\n');
+            }
+            String paymentCardDetails = paymentCardLabel(payment.getString("cardBrand"), payment.getString("cardLast4"));
+            if (paymentCardDetails != null) {
+                sb.append("Card: ").append(paymentCardDetails).append('\n');
             }
             String gatewaySummary = payment.getString("gatewaySummary");
             if (gatewaySummary != null && !gatewaySummary.isBlank()) {
@@ -179,6 +203,21 @@ final class BillingLedgerDetailSupport {
             }
         }
         return parentRows;
+    }
+
+    private static String paymentCardLabel(String rawBrand, String rawLast4) {
+        String brand = stringValue(rawBrand);
+        String last4 = stringValue(rawLast4);
+        if (brand == null && last4 == null) {
+            return null;
+        }
+        if (brand == null) {
+            return "Card ending in " + last4;
+        }
+        if (last4 == null) {
+            return brand.toUpperCase();
+        }
+        return brand.toUpperCase() + " ending in " + last4;
     }
 
     static List<String> invoicePolicyNotes(FsDocument invoice) {

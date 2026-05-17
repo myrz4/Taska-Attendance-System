@@ -966,7 +966,13 @@ public class BillingLedgerView extends VBox {
         if (value == null) {
             return null;
         }
-        return "dummy".equalsIgnoreCase(value) ? "in-app payment" : value;
+        if ("dummy".equalsIgnoreCase(value)) {
+            return "In-App Demo Payment";
+        }
+        if ("stripe".equalsIgnoreCase(value)) {
+            return "Stripe Test Mode";
+        }
+        return value;
     }
 
     private String formatPaymentMethod(String method) {

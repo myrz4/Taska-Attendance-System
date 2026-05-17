@@ -2,6 +2,16 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "Run Parent App (Stripe Test Mode)",
+      "request": "launch",
+      "type": "dart",
+      "program": "parent_app_taskazurah/lib/main.dart",
+      "cwd": "parent_app_taskazurah",
+      "toolArgs": [
+        "--dart-define=STRIPE_PUBLISHABLE_KEY=pk_test_51TY3hRQwTQk7bQARq6BVlbL3Vnk7N8Qwkvzf8ep7Vq1oo3n7MmV6yyJUiGu50EHRtO010g0xz7Hge2IgsEm9GaYM007a29Iltq"
+      ]
+    },
+    {
       "type": "java",
       "name": "Run LoginView (JavaFX + Firestore)",
       "request": "launch",
