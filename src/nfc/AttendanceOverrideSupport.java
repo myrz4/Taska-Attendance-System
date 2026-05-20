@@ -14,7 +14,6 @@ import com.google.gson.Gson;
 @SuppressWarnings("java:S1144")
 final class AttendanceOverrideSupport {
     private static final Gson GSON = new Gson();
-    private static final String DEFAULT_REASON_FALLBACK = "Admin attendance configuration";
     private static final DateTimeFormatter DB_TIMESTAMP_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("HH:mm");
     private static final DateTimeFormatter FLEX_TIME_FORMAT = DateTimeFormatter.ofPattern("H:mm");
@@ -27,7 +26,7 @@ final class AttendanceOverrideSupport {
         java.util.function.Supplier<String> keepCurrentTime = AttendanceOverrideSupport::currentTimeText;
         java.util.function.BiFunction<LocalDate, String, String> keepIsoTimestamp = AttendanceOverrideSupport::buildIsoTimestamp;
         java.util.function.Function<AttendanceRecord, Map<String, Object>> keepPayload =
-            record -> buildPayload("", record, LocalDate.now(), "", "", "", "", "");
+            record -> buildPayload("", record, LocalDate.now(), "", "", "", "", "", "", "", "");
         java.util.function.Function<Map<String, Object>, FirebaseFunctionsClient.CallResult> keepSubmit = payload -> {
             try {
                 return submitOverride(payload);
@@ -96,7 +95,10 @@ final class AttendanceOverrideSupport {
         String notes,
         String adminName,
         String checkInText,
-        String checkOutText
+        String checkOutText,
+        String checkoutTeacherId,
+        String checkoutTeacherName,
+        String checkoutTeacherEmail
     ) {
         Map<String, Object> payload = new HashMap<>();
         payload.put("action", action);
@@ -112,32 +114,24 @@ final class AttendanceOverrideSupport {
         if (("MANUAL_CHECK_OUT".equals(action) || "EDIT_RECORD".equals(action)) && checkOutText != null && !checkOutText.trim().isEmpty()) {
             payload.put("checkOutAt", buildIsoTimestamp(attendanceDate, checkOutText.trim()));
         }
+        if (("MANUAL_CHECK_OUT".equals(action) || "EDIT_RECORD".equals(action)) && checkoutTeacherId != null && !checkoutTeacherId.trim().isEmpty()) {
+            payload.put("checkedOutByTeacherId", checkoutTeacherId.trim());
+        }
+        if (("MANUAL_CHECK_OUT".equals(action) || "EDIT_RECORD".equals(action)) && checkoutTeacherName != null && !checkoutTeacherName.trim().isEmpty()) {
+            payload.put("checkedOutByTeacherName", checkoutTeacherName.trim());
+        }
+        if (("MANUAL_CHECK_OUT".equals(action) || "EDIT_RECORD".equals(action)) && checkoutTeacherEmail != null && !checkoutTeacherEmail.trim().isEmpty()) {
+            payload.put("checkedOutByTeacherEmail", checkoutTeacherEmail.trim());
+        }
         return payload;
     }
 
     @SuppressWarnings("java:S1144")
     static FirebaseFunctionsClient.CallResult submitOverride(Map<String, Object> payload) throws IOException {
-        FirebaseFunctionsClient.CallResult result = FirebaseFunctionsClient.callAttendanceAdminOverride(
-            FirestoreRest.projectId(),
-            UserSession.getIdToken(),
-            GSON.toJson(payload)
-        );
-        if (result.ok || payload == null) {
-            return result;
-        }
-
-        Object reasonValue = payload.get("reason");
-        String reasonText = reasonValue == null ? "" : String.valueOf(reasonValue).trim();
-        if (!reasonText.isEmpty() || !"missing-reason".equalsIgnoreCase(result.reason)) {
-            return result;
-        }
-
-        Map<String, Object> retryPayload = new HashMap<>(payload);
-        retryPayload.put("reason", DEFAULT_REASON_FALLBACK);
         return FirebaseFunctionsClient.callAttendanceAdminOverride(
             FirestoreRest.projectId(),
             UserSession.getIdToken(),
-            GSON.toJson(retryPayload)
+            GSON.toJson(payload)
         );
     }
 }

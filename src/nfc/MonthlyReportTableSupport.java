@@ -6,6 +6,7 @@ import java.util.function.IntSupplier;
 import java.util.function.Supplier;
 
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableRow;
@@ -54,26 +55,38 @@ public final class MonthlyReportTableSupport {
     ) {
         TableColumn<StudentMonthlyAttendance, String> idCol = new TableColumn<>("Child ID");
         idCol.setCellValueFactory(data -> data.getValue().childIdProperty());
-        idCol.setPrefWidth(120);
+        idCol.setPrefWidth(180);
+        idCol.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #253041;");
 
         TableColumn<StudentMonthlyAttendance, String> nameCol = new TableColumn<>("Name");
         nameCol.setCellValueFactory(data -> data.getValue().nameProperty());
-        nameCol.setPrefWidth(150);
+        nameCol.setPrefWidth(220);
+        nameCol.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #253041;");
 
-        TableColumn<StudentMonthlyAttendance, String> percentCol = new TableColumn<>("Attendance ");
+        TableColumn<StudentMonthlyAttendance, String> percentCol = new TableColumn<>("Attendance");
         percentCol.setCellValueFactory(data -> data.getValue().attendancePercentProperty());
-        percentCol.setPrefWidth(150);
+        percentCol.setPrefWidth(170);
+        percentCol.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #253041;");
 
         TableColumn<StudentMonthlyAttendance, String> performanceCol = new TableColumn<>("Performance");
         performanceCol.setCellValueFactory(data -> data.getValue().performanceProperty());
-        performanceCol.setPrefWidth(150);
+        performanceCol.setPrefWidth(170);
+        performanceCol.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #253041;");
 
-        TableColumn<StudentMonthlyAttendance, Void> downloadCol = new TableColumn<>("Download");
-        downloadCol.setPrefWidth(100);
+        TableColumn<StudentMonthlyAttendance, Void> downloadCol = new TableColumn<>("Preview");
+        downloadCol.setPrefWidth(120);
         downloadCol.setCellFactory(col -> new TableCell<StudentMonthlyAttendance, Void>() {
-            private final Button btn = new Button("⬇");
+            private final Button btn = new Button("Open");
 
             {
+                btn.setStyle(
+                    "-fx-background-color: linear-gradient(to right, #ffcb3c 0%, #f2b72a 100%);"
+                        + "-fx-text-fill: #2b1f00;"
+                        + "-fx-font-size: 12px;"
+                        + "-fx-font-weight: bold;"
+                        + "-fx-padding: 8 14 8 14;"
+                        + "-fx-background-radius: 12;"
+                );
                 btn.setOnAction(e -> {
                     StudentMonthlyAttendance row = getTableView().getItems().get(getIndex());
                     StudentInfo info = new StudentInfo(
@@ -116,17 +129,26 @@ public final class MonthlyReportTableSupport {
             performanceCol,
             downloadCol
         ));
+        table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
+        table.setPlaceholder(new Label("No monthly attendance summaries found for the selected period."));
+        table.setFixedCellSize(44);
+        table.setStyle(
+            "-fx-background-color: transparent;"
+                + "-fx-border-color: transparent;"
+                + "-fx-selection-bar: #ffe4a8;"
+                + "-fx-selection-bar-non-focused: #ffeec7;"
+        );
 
         table.setRowFactory(tv -> new TableRow<StudentMonthlyAttendance>() {
             @Override
             protected void updateItem(StudentMonthlyAttendance item, boolean empty) {
                 super.updateItem(item, empty);
                 if (item == null || empty) {
-                    setStyle("");
+                    setStyle("-fx-background-color: transparent;");
                 } else if ("Good".equalsIgnoreCase(item.getPerformance())) {
-                    setStyle("-fx-background-color: #e7ffe9;");
+                    setStyle("-fx-background-color: #f8fffa; -fx-border-color: transparent transparent #e6f0ea transparent;");
                 } else {
-                    setStyle("-fx-background-color: #ffe7e7;");
+                    setStyle("-fx-background-color: #fff7f5; -fx-border-color: transparent transparent #f0dfdc transparent;");
                 }
             }
         });

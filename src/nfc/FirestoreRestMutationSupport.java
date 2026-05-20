@@ -22,22 +22,27 @@ final class FirestoreRestMutationSupport {
 
     @SuppressWarnings("unused")
     static String appendUpdateMask(String url, Map<String, Object> fields) {
-        if (fields == null || fields.isEmpty()) {
+        return appendUpdateMask(url, fields == null ? null : fields.keySet());
+    }
+
+    @SuppressWarnings("unused")
+    static String appendUpdateMask(String url, Iterable<String> fieldPaths) {
+        if (fieldPaths == null) {
             return url;
         }
 
         StringBuilder sb = new StringBuilder(url);
-        sb.append("?");
         boolean first = true;
-        for (String key : fields.keySet()) {
-            if (!first) {
-                sb.append("&");
+        for (String key : fieldPaths) {
+            if (key == null || key.isBlank()) {
+                continue;
             }
+            sb.append(first ? "?" : "&");
             first = false;
             sb.append("updateMask.fieldPaths=")
                 .append(URLEncoder.encode(key, StandardCharsets.UTF_8));
         }
-        return sb.toString();
+        return first ? url : sb.toString();
     }
 
     @SuppressWarnings("unused")

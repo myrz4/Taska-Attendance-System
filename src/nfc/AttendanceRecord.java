@@ -34,7 +34,11 @@ public class AttendanceRecord {
     private final StringProperty checkOutMethod = new SimpleStringProperty("");
     private final StringProperty manualEditReason = new SimpleStringProperty("");
     private final StringProperty updatedBy = new SimpleStringProperty("");
+    private final StringProperty checkedOutByTeacherId = new SimpleStringProperty("");
+    private final StringProperty checkedOutByTeacherName = new SimpleStringProperty("");
+    private final StringProperty checkedOutByTeacherEmail = new SimpleStringProperty("");
 
+    private final BooleanProperty manualCheckIn = new SimpleBooleanProperty(false);
     private final BooleanProperty manualCheckOut = new SimpleBooleanProperty(false);
     private final ObjectProperty<File> reasonLetterFile = new SimpleObjectProperty<>();
 
@@ -60,15 +64,6 @@ public class AttendanceRecord {
             }
         });
 
-        this.manualCheckOut.addListener((obs, oldVal, newVal) -> {
-            if (newVal) {
-                if (getCheckOutFullTimestamp() == null || getCheckOutFullTimestamp().isBlank()) {
-                    setCheckOutFullTimestamp(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-                }
-            } else {
-                setCheckOutFullTimestamp("");
-            }
-        });
     }
 
     // ─── Getters/Properties ────────────────────────────────────────
@@ -142,9 +137,51 @@ public class AttendanceRecord {
     public void setUpdatedBy(String value) { updatedBy.set(value == null ? "" : value); }
     public StringProperty updatedByProperty() { return updatedBy; }
 
+    public String getCheckedOutByTeacherId() { return checkedOutByTeacherId.get(); }
+    public void setCheckedOutByTeacherId(String value) { checkedOutByTeacherId.set(value == null ? "" : value); }
+    public StringProperty checkedOutByTeacherIdProperty() { return checkedOutByTeacherId; }
+
+    public String getCheckedOutByTeacherName() { return checkedOutByTeacherName.get(); }
+    public void setCheckedOutByTeacherName(String value) { checkedOutByTeacherName.set(value == null ? "" : value); }
+    public StringProperty checkedOutByTeacherNameProperty() { return checkedOutByTeacherName; }
+
+    public String getCheckedOutByTeacherEmail() { return checkedOutByTeacherEmail.get(); }
+    public void setCheckedOutByTeacherEmail(String value) { checkedOutByTeacherEmail.set(value == null ? "" : value); }
+    public StringProperty checkedOutByTeacherEmailProperty() { return checkedOutByTeacherEmail; }
+
+    public boolean isManualCheckIn() { return manualCheckIn.get(); }
+    public void setManualCheckIn(boolean value) { manualCheckIn.set(value); }
+    public BooleanProperty manualCheckInProperty() { return manualCheckIn; }
+
     public boolean isManualCheckOut() { return manualCheckOut.get(); }
     public void setManualCheckOut(boolean value) { manualCheckOut.set(value); }
     public BooleanProperty manualCheckOutProperty() { return manualCheckOut; }
+
+    public String getManualCheckInLabel() {
+        return hasCheckIn() ? yesNo(isManualCheckIn()) : "-";
+    }
+
+    public String getManualCheckOutLabel() {
+        return hasCheckOut() ? yesNo(isManualCheckOut()) : "-";
+    }
+
+    public String getCheckoutHandledByLabel() {
+        String teacherName = getCheckedOutByTeacherName();
+        if (teacherName != null && !teacherName.isBlank()) {
+            return teacherName;
+        }
+
+        String teacherEmail = getCheckedOutByTeacherEmail();
+        if (teacherEmail != null && !teacherEmail.isBlank()) {
+            return teacherEmail;
+        }
+
+        String actor = getUpdatedBy();
+        if (actor != null && !actor.isBlank()) {
+            return actor;
+        }
+        return "-";
+    }
 
     public boolean hasCheckIn() {
         return getCheckInFullTimestamp() != null && !getCheckInFullTimestamp().isBlank();
@@ -190,6 +227,10 @@ public class AttendanceRecord {
             default:
                 return "";
         }
+    }
+
+    private String yesNo(boolean value) {
+        return value ? "Yes" : "No";
     }
 
     public String getStatusLabel() {

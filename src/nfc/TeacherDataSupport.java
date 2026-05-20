@@ -59,9 +59,15 @@ final class TeacherDataSupport {
             if (compare != 0) {
                 return compare;
             }
-            String leftUsername = Objects.toString(left.get("username"), "").trim().toLowerCase(Locale.ROOT);
-            String rightUsername = Objects.toString(right.get("username"), "").trim().toLowerCase(Locale.ROOT);
-            return leftUsername.compareTo(rightUsername);
+            String leftEmail = Objects.toString(left.get("email"), "").trim().toLowerCase(Locale.ROOT);
+            String rightEmail = Objects.toString(right.get("email"), "").trim().toLowerCase(Locale.ROOT);
+            compare = leftEmail.compareTo(rightEmail);
+            if (compare != 0) {
+                return compare;
+            }
+            String leftPhone = Objects.toString(left.get("phone"), "").trim().toLowerCase(Locale.ROOT);
+            String rightPhone = Objects.toString(right.get("phone"), "").trim().toLowerCase(Locale.ROOT);
+            return leftPhone.compareTo(rightPhone);
         });
 
         return rows;

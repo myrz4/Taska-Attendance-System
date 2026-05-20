@@ -50,10 +50,11 @@ public class TeacherManagementView extends javafx.scene.layout.VBox {
         mainBody.setPadding(new Insets(20));
         mainBody.setAlignment(Pos.TOP_LEFT);
 
-        TextField searchTf = SummaryTableSupport.createSearchField("Search name / username / email / phone...");
+        TextField searchTf = SummaryTableSupport.createSearchField("Search name / IC no. / phone / status...");
 
         TeacherManagementTableSupport.TableBundle tableBundle = TeacherManagementTableSupport.setupTable(
             table,
+            this::showTeacherDetails,
             this::showTeacherDialog,
             this::confirmDeleteTeacher
         );
@@ -102,6 +103,10 @@ public class TeacherManagementView extends javafx.scene.layout.VBox {
 
     private void showTeacherDialog(java.util.Map<String, Object> data) {
         TeacherDialog.open(data, this::loadTeachers);
+    }
+
+    private void showTeacherDetails(java.util.Map<String, Object> data) {
+        FamilyRecordViewDialogSupport.showTeacherDetails(data);
     }
 
     private void confirmDeleteTeacher(java.util.Map<String, Object> data) {

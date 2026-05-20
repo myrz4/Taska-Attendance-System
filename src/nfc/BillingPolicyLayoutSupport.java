@@ -1,11 +1,13 @@
 package nfc;
 
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.FlowPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 
@@ -63,18 +65,17 @@ final class BillingPolicyLayoutSupport {
         Button exportTxtBtn,
         Button exportJsonBtn
     ) {
-        FlowPane catalogRow = BillingPolicyUiSupport.createWrapRow(
-            new Label("Catalog:"), catalogSelect,
+        FlowPane primaryRow = BillingPolicyUiSupport.createWrapRow(12, 10,
+            createInlineField("Catalog", catalogSelect),
             refreshBtn,
-            seedDefaultBtn
-        );
-        FlowPane versionRow = BillingPolicyUiSupport.createWrapRow(
-            new Label("Version:"), versionField,
-            new Label("Default Transit:"), defaultTransitCodeField,
+            seedDefaultBtn,
+            createInlineField("Version", versionField),
+            createInlineField("Default Transit", defaultTransitCodeField),
             saveNewBtn,
             activateBtn
         );
-        FlowPane healthRow = BillingPolicyUiSupport.createWrapRow(
+
+        FlowPane secondaryRow = BillingPolicyUiSupport.createWrapRow(10, 10,
             healthBtn,
             backfillBtn,
             auditBtn,
@@ -85,12 +86,21 @@ final class BillingPolicyLayoutSupport {
         VBox controlsCard = AppThemeSupport.createSectionCard(
             "Catalog Controls",
             "Keep versioning and export actions compact so the policy table stays dominant.",
-            catalogRow,
-            versionRow,
-            healthRow
+            primaryRow,
+            secondaryRow
         );
         controlsCard.getStyleClass().add("app-toolbar-card");
         return controlsCard;
+    }
+
+    private static HBox createInlineField(String labelText, javafx.scene.Node field) {
+        Label label = new Label(labelText + ":");
+        label.getStyleClass().add("app-helper-text");
+
+        HBox group = new HBox(8, label, field);
+        group.setAlignment(Pos.CENTER_LEFT);
+        group.setMinWidth(HBox.USE_PREF_SIZE);
+        return group;
     }
 
     @SuppressWarnings("unused")

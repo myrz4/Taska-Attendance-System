@@ -63,15 +63,20 @@ final class AttendanceTableSupport {
         outCol.setStyle("-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #222;");
         outCol.setCellValueFactory(data -> data.getValue().checkOutTimeProperty());
 
-        TableColumn<AttendanceRecord, String> sourceCol = new TableColumn<>("Source");
-        sourceCol.setMinWidth(200);
-        sourceCol.setStyle("-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #222;");
-        sourceCol.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getSourceSummary()));
+        TableColumn<AttendanceRecord, String> manualInCol = new TableColumn<>("Manual In");
+        manualInCol.setMinWidth(96);
+        manualInCol.setStyle("-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #222;");
+        manualInCol.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getManualCheckInLabel()));
 
-        TableColumn<AttendanceRecord, String> updatedByCol = new TableColumn<>("Updated By");
-        updatedByCol.setMinWidth(130);
-        updatedByCol.setStyle("-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #222;");
-        updatedByCol.setCellValueFactory(data -> data.getValue().updatedByProperty());
+        TableColumn<AttendanceRecord, String> manualOutCol = new TableColumn<>("Manual Out");
+        manualOutCol.setMinWidth(102);
+        manualOutCol.setStyle("-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #222;");
+        manualOutCol.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getManualCheckOutLabel()));
+
+        TableColumn<AttendanceRecord, String> checkoutByCol = new TableColumn<>("Check-Out By");
+        checkoutByCol.setMinWidth(150);
+        checkoutByCol.setStyle("-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #222;");
+        checkoutByCol.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getCheckoutHandledByLabel()));
 
         TableColumn<AttendanceRecord, String> correctionCol = new TableColumn<>("Correction Reason");
         correctionCol.setMinWidth(180);
@@ -155,8 +160,9 @@ final class AttendanceTableSupport {
             statusCol,
             inCol,
             outCol,
-            sourceCol,
-            updatedByCol,
+            manualInCol,
+            manualOutCol,
+            checkoutByCol,
             correctionCol,
             auditCol,
             reasonCol,

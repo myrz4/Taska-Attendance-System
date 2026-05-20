@@ -13,8 +13,8 @@
 #include "addons/RTDBHelper.h"
 
 // ---------------- Wi-Fi ----------------
-#define WIFI_SSID "Redmi Note 13 Pro 5G"
-#define WIFI_PASSWORD "88888888"
+#define WIFI_SSID "AnakAnakSyurga"
+#define WIFI_PASSWORD "Roundabout29"
 
 // ---------------- Firebase --------------
 #define API_KEY "AIzaSyBiuQTwMUfk-rpgp3I6GZ2-AZ6viNjaZq0"

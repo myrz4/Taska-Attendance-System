@@ -1,13 +1,18 @@
 package nfc;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.CheckBox;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
@@ -31,7 +36,7 @@ final class AttendanceOverrideDialogSupport {
         java.util.function.Function<AttendanceRecord, OverrideDialogResult> keepPrompt =
             record -> promptForOverride("", record, LocalDate.now());
         java.util.function.BiFunction<String, AttendanceRecord, Boolean> keepConfirmSubmit = AttendanceOverrideDialogSupport::confirmSubmit;
-        OverrideDialogResult probe = new OverrideDialogResult(null, null, null, null, null);
+        OverrideDialogResult probe = new OverrideDialogResult(null, null, null, null, null, null, null, null);
         java.util.Objects.requireNonNull(keepConfirmCompleted);
         java.util.Objects.requireNonNull(keepPrompt);
         java.util.Objects.requireNonNull(keepConfirmSubmit);
@@ -40,7 +45,10 @@ final class AttendanceOverrideDialogSupport {
             probe.reason,
             probe.notes,
             probe.checkInText,
-            probe.checkOutText
+            probe.checkOutText,
+            probe.checkoutTeacherId,
+            probe.checkoutTeacherName,
+            probe.checkoutTeacherEmail
         );
     }
 
@@ -50,7 +58,7 @@ final class AttendanceOverrideDialogSupport {
             null,
             "Completed Record Warning",
             "This record already has a completed check-out.",
-            "Editing it can affect billing and pickup history. Continue?",
+            "Editing it can affect billing, pickup history, and teacher overtime payroll. Continue?",
             AppThemeSupport.Tone.WARNING,
             "Continue",
             "Cancel"
@@ -89,6 +97,8 @@ final class AttendanceOverrideDialogSupport {
         }
         TimeFieldControl checkInControl = new TimeFieldControl(initialCheckInText, "EDIT_RECORD".equals(action));
         TimeFieldControl checkOutControl = new TimeFieldControl(initialCheckOutText, "EDIT_RECORD".equals(action));
+        ComboBox<TeacherChoice> checkoutTeacherCombo = new ComboBox<>();
+        checkoutTeacherCombo.setMaxWidth(Double.MAX_VALUE);
 
         TextField reasonField = new TextField();
         TextArea notesArea = new TextArea();
@@ -101,6 +111,16 @@ final class AttendanceOverrideDialogSupport {
         reasonHelper.getStyleClass().add("app-helper-text");
         reasonHelper.setWrapText(true);
 
+        TeacherChoice initialTeacherChoice = null;
+        if ("MANUAL_CHECK_OUT".equals(action) || "EDIT_RECORD".equals(action)) {
+            List<TeacherChoice> teacherChoices = loadTeacherChoices(record);
+            checkoutTeacherCombo.getItems().setAll(teacherChoices);
+            initialTeacherChoice = selectInitialTeacherChoice(teacherChoices, record);
+            checkoutTeacherCombo.setValue(initialTeacherChoice);
+            checkoutTeacherCombo.setPromptText("Select teacher");
+            AppThemeSupport.styleControls(checkoutTeacherCombo);
+        }
+
         int row = 0;
         grid.add(new Label("Attendance Date"), 0, row);
         grid.add(actionDatePicker, 1, row++);
@@ -112,6 +132,8 @@ final class AttendanceOverrideDialogSupport {
         if ("MANUAL_CHECK_OUT".equals(action) || "EDIT_RECORD".equals(action)) {
             grid.add(new Label("Check-Out Time"), 0, row);
             grid.add(checkOutControl.node(), 1, row++);
+            grid.add(new Label("Checkout handled by"), 0, row);
+            grid.add(checkoutTeacherCombo, 1, row++);
         }
 
         GridPane notesGrid = new GridPane();
@@ -144,10 +166,17 @@ final class AttendanceOverrideDialogSupport {
         }
 
         String reason = reasonField.getText() == null ? "" : reasonField.getText().trim();
-
         String notes = notesArea.getText() == null ? "" : notesArea.getText();
         String checkInText = checkInControl.timeText();
         String checkOutText = checkOutControl.timeText();
+        TeacherChoice selectedTeacher = checkoutTeacherCombo.getValue();
+
+        if ("MANUAL_CHECK_OUT".equals(action)) {
+            if (selectedTeacher == null || selectedTeacher.teacherId().isBlank()) {
+                AppThemeSupport.showWarning(null, "Teacher Required", "Select the teacher who handled this checkout.");
+                return null;
+            }
+        }
 
         if ("EDIT_RECORD".equals(action)) {
             if (checkInText.isBlank() && checkOutText.isBlank() && notes.trim().isEmpty()) {
@@ -166,6 +195,13 @@ final class AttendanceOverrideDialogSupport {
                     return null;
                 }
             }
+
+            boolean checkoutTeacherChanged = selectedTeacherChanged(initialTeacherChoice, selectedTeacher);
+            boolean checkoutEditRequiresAudit = !checkOutText.isBlank() || checkoutTeacherChanged;
+            if (checkoutEditRequiresAudit && (selectedTeacher == null || selectedTeacher.teacherId().isBlank())) {
+                AppThemeSupport.showWarning(null, "Teacher Required", "Select the teacher who handled this checkout before saving the correction.");
+                return null;
+            }
         }
 
         return new OverrideDialogResult(
@@ -173,8 +209,72 @@ final class AttendanceOverrideDialogSupport {
             reason,
             notes,
             checkInText,
-            checkOutText
+            checkOutText,
+            selectedTeacher == null ? "" : selectedTeacher.teacherId(),
+            selectedTeacher == null ? "" : selectedTeacher.teacherName(),
+            selectedTeacher == null ? "" : selectedTeacher.teacherEmail()
         );
+    }
+
+    private static List<TeacherChoice> loadTeacherChoices(AttendanceRecord record) {
+        List<TeacherChoice> choices = new ArrayList<>();
+        try {
+            for (Map<String, Object> row : TeacherDataSupport.loadTeachers()) {
+                if (row == null) {
+                    continue;
+                }
+                String teacherId = row.get("id") == null ? "" : String.valueOf(row.get("id")).trim();
+                if (teacherId.isBlank()) {
+                    continue;
+                }
+                String teacherName = row.get("name") == null ? "" : String.valueOf(row.get("name")).trim();
+                String teacherEmail = row.get("email") == null ? "" : String.valueOf(row.get("email")).trim().toLowerCase();
+                choices.add(new TeacherChoice(teacherId, teacherName, teacherEmail));
+            }
+        } catch (IOException | InterruptedException ex) {
+            AppThemeSupport.showError(null, "Unable to Load Teachers", String.valueOf(ex.getMessage()));
+        }
+
+        if (record != null) {
+            TeacherChoice snapshotChoice = new TeacherChoice(
+                record.getCheckedOutByTeacherId(),
+                record.getCheckedOutByTeacherName(),
+                record.getCheckedOutByTeacherEmail()
+            );
+            if (!snapshotChoice.teacherId().isBlank() && choices.stream().noneMatch(choice -> choice.teacherId().equals(snapshotChoice.teacherId()))) {
+                choices.add(0, snapshotChoice);
+            }
+        }
+        return choices;
+    }
+
+    private static TeacherChoice selectInitialTeacherChoice(List<TeacherChoice> choices, AttendanceRecord record) {
+        if (record == null || choices == null || choices.isEmpty()) {
+            return null;
+        }
+        String teacherId = record.getCheckedOutByTeacherId();
+        String teacherEmail = record.getCheckedOutByTeacherEmail();
+        for (TeacherChoice choice : choices) {
+            if (choice == null) {
+                continue;
+            }
+            if (!teacherId.isBlank() && teacherId.equals(choice.teacherId())) {
+                return choice;
+            }
+            if (!teacherEmail.isBlank() && teacherEmail.equalsIgnoreCase(choice.teacherEmail())) {
+                return choice;
+            }
+        }
+        return null;
+    }
+
+    private static boolean selectedTeacherChanged(TeacherChoice initialTeacherChoice, TeacherChoice selectedTeacher) {
+        String initialTeacherId = initialTeacherChoice == null ? "" : initialTeacherChoice.teacherId();
+        String selectedTeacherId = selectedTeacher == null ? "" : selectedTeacher.teacherId();
+        String initialTeacherEmail = initialTeacherChoice == null ? "" : initialTeacherChoice.teacherEmail();
+        String selectedTeacherEmail = selectedTeacher == null ? "" : selectedTeacher.teacherEmail();
+        return !initialTeacherId.equals(selectedTeacherId)
+            || !initialTeacherEmail.equalsIgnoreCase(selectedTeacherEmail);
     }
 
     @SuppressWarnings("java:S1144")
@@ -327,13 +427,62 @@ final class AttendanceOverrideDialogSupport {
         final String notes;
         final String checkInText;
         final String checkOutText;
+        final String checkoutTeacherId;
+        final String checkoutTeacherName;
+        final String checkoutTeacherEmail;
 
-        OverrideDialogResult(LocalDate attendanceDate, String reason, String notes, String checkInText, String checkOutText) {
+        OverrideDialogResult(
+            LocalDate attendanceDate,
+            String reason,
+            String notes,
+            String checkInText,
+            String checkOutText,
+            String checkoutTeacherId,
+            String checkoutTeacherName,
+            String checkoutTeacherEmail
+        ) {
             this.attendanceDate = attendanceDate;
             this.reason = reason == null ? "" : reason;
             this.notes = notes == null ? "" : notes;
             this.checkInText = checkInText == null ? "" : checkInText;
             this.checkOutText = checkOutText == null ? "" : checkOutText;
+            this.checkoutTeacherId = checkoutTeacherId == null ? "" : checkoutTeacherId;
+            this.checkoutTeacherName = checkoutTeacherName == null ? "" : checkoutTeacherName;
+            this.checkoutTeacherEmail = checkoutTeacherEmail == null ? "" : checkoutTeacherEmail;
+        }
+    }
+
+    private static final class TeacherChoice {
+        private final String teacherId;
+        private final String teacherName;
+        private final String teacherEmail;
+
+        private TeacherChoice(String teacherId, String teacherName, String teacherEmail) {
+            this.teacherId = teacherId == null ? "" : teacherId;
+            this.teacherName = teacherName == null ? "" : teacherName;
+            this.teacherEmail = teacherEmail == null ? "" : teacherEmail;
+        }
+
+        private String teacherId() {
+            return teacherId;
+        }
+
+        private String teacherName() {
+            return teacherName;
+        }
+
+        private String teacherEmail() {
+            return teacherEmail;
+        }
+
+        @Override
+        public String toString() {
+            if (teacherName != null && !teacherName.isBlank()) {
+                return teacherEmail == null || teacherEmail.isBlank()
+                    ? teacherName
+                    : teacherName + " (" + teacherEmail + ")";
+            }
+            return teacherEmail == null ? "" : teacherEmail;
         }
     }
 }

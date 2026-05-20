@@ -12,6 +12,7 @@ public class AdminDashboard extends javafx.application.Application {
     private static final String PAGE_CHILDREN = "children";
     private static final String PAGE_STAFF = "staff";
     private static final String PAGE_TEACHERS = "teachers";
+    private static final String PAGE_TEACHER_PAYROLL = "teacher-payroll";
     private static final String PAGE_BILLING_LEDGER = "billing-ledger";
     private static final String PAGE_BILLING_POLICY = "billing-policy";
     private static final String PAGE_CASUAL_TRANSIT = "casual-transit";
@@ -28,6 +29,7 @@ public class AdminDashboard extends javafx.application.Application {
     private ChildrenView childrenView;
     private StaffManagementView staffManagementView;
     private TeacherManagementView teacherManagementView;
+    private TeacherPayrollView teacherPayrollView;
     private BillingLedgerView billingLedgerView;
     private BillingPolicyView billingPolicyView;
     private CasualTransitView casualTransitView;
@@ -173,6 +175,11 @@ public class AdminDashboard extends javafx.application.Application {
             }
 
             @Override
+            public void showTeacherPayroll() {
+                setMainContent(PAGE_TEACHER_PAYROLL, getTeacherPayrollView());
+            }
+
+            @Override
             public void showBillingLedger() {
                 setMainContent(PAGE_BILLING_LEDGER, getBillingLedgerView());
             }
@@ -219,6 +226,9 @@ public class AdminDashboard extends javafx.application.Application {
         activePageKey = pageKey;
         if (PAGE_ATTENDANCE.equals(pageKey) && attendanceView != null) {
             attendanceView.onShow();
+        }
+        if (PAGE_TEACHER_PAYROLL.equals(pageKey) && teacherPayrollView != null) {
+            teacherPayrollView.onShow();
         }
         if (PAGE_BILLING_LEDGER.equals(pageKey) && billingLedgerView != null) {
             billingLedgerView.onShow();
@@ -272,6 +282,13 @@ public class AdminDashboard extends javafx.application.Application {
             teacherManagementView = new TeacherManagementView();
         }
         return teacherManagementView;
+    }
+
+    private TeacherPayrollView getTeacherPayrollView() {
+        if (teacherPayrollView == null) {
+            teacherPayrollView = new TeacherPayrollView();
+        }
+        return teacherPayrollView;
     }
 
     private BillingLedgerView getBillingLedgerView() {

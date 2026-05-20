@@ -22,7 +22,7 @@ public class ChildrenView extends javafx.scene.layout.VBox {
     public ChildrenView() {
         buildTable();
         javafx.scene.control.TextField searchField = SummaryTableSupport.createSearchField(
-            "Search child / MyKid / parent / phone / billing..."
+            "Search child / MyKid / parent / phone / NFC..."
         );
         searchField.textProperty().addListener((obs, oldValue, newValue) -> {
             String query = newValue == null ? "" : newValue.trim().toLowerCase(java.util.Locale.ROOT);
@@ -57,6 +57,7 @@ public class ChildrenView extends javafx.scene.layout.VBox {
         table.setItems(sorted);
         ChildrenTableSupport.setupTable(
             table,
+            this::showDetails,
             child -> showEdit(child),
             child -> {
                 deleteChild(child);
@@ -73,6 +74,10 @@ public class ChildrenView extends javafx.scene.layout.VBox {
 
     private void showEdit(Child c) {
         CRUDDialogs.showChildDialog(c, false, () -> reload());
+    }
+
+    private void showDetails(Child child) {
+        FamilyRecordViewDialogSupport.showChildDetails(child);
     }
 
     private void deleteChild(Child c) {

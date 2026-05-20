@@ -140,7 +140,6 @@ final class AttendanceRecordDataSupport {
 
         if (checkOut != null) {
             record.setCheckOutFullTimestamp(LocalDateTime.ofInstant(checkOut.toInstant(), ZoneId.systemDefault()).format(DB_TIMESTAMP_FORMAT));
-            record.setManualCheckOut(true);
         }
 
         String reason = attendanceDoc.getString("reason");
@@ -148,11 +147,56 @@ final class AttendanceRecordDataSupport {
         record.setCheckInMethod(firstNonBlank(attendanceDoc.getString("checkInMethod"), attendanceDoc.getString("checkin_method")));
         record.setCheckOutMethod(firstNonBlank(attendanceDoc.getString("checkOutMethod"), attendanceDoc.getString("checkout_method")));
         record.setManualEditReason(firstNonBlank(attendanceDoc.getString("manualEditReason"), attendanceDoc.getString("manual_edit_reason")));
+        record.setManualCheckIn(Boolean.TRUE.equals(firstBoolean(
+            attendanceDoc.getBoolean("manual_in"),
+            manualMethod(record.getCheckInMethod()) ? Boolean.TRUE : null
+        )));
+        record.setManualCheckOut(Boolean.TRUE.equals(firstBoolean(
+            attendanceDoc.getBoolean("manual_out"),
+            attendanceDoc.getBoolean("manualCheckout"),
+            manualMethod(record.getCheckOutMethod()) ? Boolean.TRUE : null
+        )));
+        record.setCheckedOutByTeacherId(firstNonBlank(
+            attendanceDoc.getString("checkedOutByTeacherId"),
+            attendanceDoc.getString("pickupVerifiedByTeacherId"),
+            attendanceDoc.getString("checkedOutByUid")
+        ));
+        record.setCheckedOutByTeacherName(firstNonBlank(
+            attendanceDoc.getString("checkedOutByTeacherName"),
+            attendanceDoc.getString("pickupVerifiedByTeacherName"),
+            attendanceDoc.getString("checkedOutByName")
+        ));
+        record.setCheckedOutByTeacherEmail(firstNonBlank(
+            attendanceDoc.getString("checkedOutByTeacherEmail"),
+            attendanceDoc.getString("pickupVerifiedByTeacherEmail"),
+            attendanceDoc.getString("checkedOutByEmail")
+        ));
         record.setUpdatedBy(firstNonBlank(
             extractNestedString(attendanceDoc.fields(), "auditMetadata", "lastActorName"),
+            attendanceDoc.getString("checkedOutByEmail"),
             attendanceDoc.getString("checkedOutByName"),
             attendanceDoc.getString("checkedInByName")
         ));
+    }
+
+    private static Boolean firstBoolean(Boolean... values) {
+        if (values == null) {
+            return null;
+        }
+        for (Boolean value : values) {
+            if (value != null) {
+                return value;
+            }
+        }
+        return null;
+    }
+
+    private static boolean manualMethod(String value) {
+        if (value == null || value.isBlank()) {
+            return false;
+        }
+        String normalized = value.trim().toUpperCase(Locale.ROOT);
+        return "MANUAL".equals(normalized) || "ADMIN_MANUAL".equals(normalized);
     }
 
     private static boolean shouldPreferAttendanceDocument(FsDocument current, FsDocument candidate) {

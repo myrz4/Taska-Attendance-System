@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 
+import javafx.scene.control.Label;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableRow;
@@ -29,22 +30,22 @@ final class DailyReportTableSupport {
         colId.setPrefWidth(110);
 
         TableColumn<AttendanceRow, String> colName = new TableColumn<>("Name");
-        colName.setStyle("-fx-background-color: #FFCB3C;-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #222;");
+        colName.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #222;");
         colName.setCellValueFactory(data -> data.getValue().nameProperty());
         colName.setPrefWidth(120);
 
         TableColumn<AttendanceRow, String> colStatus = new TableColumn<>("Status");
-        colStatus.setStyle("-fx-background-color: #FFCB3C;-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #222;");
+        colStatus.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #222;");
         colStatus.setCellValueFactory(data -> data.getValue().statusProperty());
         colStatus.setPrefWidth(90);
 
         TableColumn<AttendanceRow, String> colReason = new TableColumn<>("Reason");
-        colReason.setStyle("-fx-background-color: #FFCB3C;-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #222;");
+        colReason.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #222;");
         colReason.setCellValueFactory(data -> data.getValue().reasonProperty());
         colReason.setPrefWidth(148);
 
         TableColumn<AttendanceRow, String> checkInCol = new TableColumn<>("Check-In");
-        checkInCol.setStyle("-fx-background-color: #FFCB3C;-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #222;");
+        checkInCol.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #222;");
         checkInCol.setCellValueFactory(cellData -> cellData.getValue().checkInTimeProperty());
         checkInCol.setPrefWidth(135);
         checkInCol.setCellFactory(col -> new TableCell<AttendanceRow, String>() {
@@ -68,7 +69,7 @@ final class DailyReportTableSupport {
         });
 
         TableColumn<AttendanceRow, String> colCheckOut = new TableColumn<>("Check-out");
-        colCheckOut.setStyle("-fx-background-color: #FFCB3C;-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #222;");
+    colCheckOut.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #222;");
         colCheckOut.setPrefWidth(135);
         colCheckOut.setCellValueFactory(data -> data.getValue().checkOutTimeProperty());
         colCheckOut.setCellFactory(col -> new TableCell<AttendanceRow, String>() {
@@ -107,14 +108,22 @@ final class DailyReportTableSupport {
                 }
             };
 
+        colId.setCellFactory(coloredCellFactory);
         colName.setCellFactory(coloredCellFactory);
         colStatus.setCellFactory(coloredCellFactory);
         colReason.setCellFactory(coloredCellFactory);
 
         table.getColumns().clear();
         table.getColumns().addAll(Arrays.asList(colId, colName, colStatus, colReason, checkInCol, colCheckOut));
-        table.setPrefHeight(320);
+        table.setPlaceholder(new Label("No attendance records found for the selected date."));
+        table.setFixedCellSize(44);
         table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
+        table.setStyle(
+            "-fx-background-color: transparent;"
+                + "-fx-border-color: transparent;"
+                + "-fx-selection-bar: #ffe4a8;"
+                + "-fx-selection-bar-non-focused: #ffeec7;"
+        );
     }
 
     private static void setStyleForStatus(TableCell<AttendanceRow, String> cell, String status) {

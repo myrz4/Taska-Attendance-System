@@ -66,7 +66,9 @@ final class AttendanceViewLayoutSupport {
     static DateControls createDateControls(LocalDate initialDate) {
         DatePicker datePicker = new DatePicker(initialDate == null ? LocalDate.now() : initialDate);
         Button loadButton = createActionButton("Load Date");
+        Button closedDayButton = createActionButton("Set Closed Day");
         loadButton.setPrefHeight(50);
+        closedDayButton.setPrefHeight(50);
 
         Region dateSpacer = new Region();
         HBox.setHgrow(dateSpacer, Priority.ALWAYS);
@@ -74,9 +76,9 @@ final class AttendanceViewLayoutSupport {
         Label selectDateLabel = new Label("Select Date:");
         selectDateLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
 
-        HBox dateBar = new HBox(10, selectDateLabel, datePicker, loadButton, dateSpacer);
+        HBox dateBar = new HBox(10, selectDateLabel, datePicker, loadButton, closedDayButton, dateSpacer);
         dateBar.setAlignment(Pos.CENTER_LEFT);
-        return new DateControls(dateBar, datePicker, loadButton);
+        return new DateControls(dateBar, datePicker, loadButton, closedDayButton);
     }
 
     static FilterToolbar createFilterToolbar() {
@@ -97,7 +99,6 @@ final class AttendanceViewLayoutSupport {
         Button manualCheckOutBtn = createActionButton("Manual Check-Out");
         Button markAbsentBtn = createActionButton("Mark Absent");
         Button editRecordBtn = createActionButton("Edit Record");
-        Button reopenBtn = createActionButton("Reopen Record");
         Button viewAuditBtn = createActionButton("View Audit");
         Label selectionCountLabel = new Label("Selected: 0");
         selectionCountLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #224b28;");
@@ -111,7 +112,6 @@ final class AttendanceViewLayoutSupport {
             manualCheckOutBtn,
             markAbsentBtn,
             editRecordBtn,
-            reopenBtn,
             viewAuditBtn,
             reasonDropdown,
             auditDropdown,
@@ -132,7 +132,6 @@ final class AttendanceViewLayoutSupport {
             manualCheckOutBtn,
             markAbsentBtn,
             editRecordBtn,
-            reopenBtn,
             viewAuditBtn
         );
     }
@@ -159,11 +158,13 @@ final class AttendanceViewLayoutSupport {
         final HBox bar;
         final DatePicker datePicker;
         final Button loadButton;
+        final Button closedDayButton;
 
-        DateControls(HBox bar, DatePicker datePicker, Button loadButton) {
+        DateControls(HBox bar, DatePicker datePicker, Button loadButton, Button closedDayButton) {
             this.bar = bar;
             this.datePicker = datePicker;
             this.loadButton = loadButton;
+            this.closedDayButton = closedDayButton;
         }
     }
 
@@ -179,7 +180,6 @@ final class AttendanceViewLayoutSupport {
         final Button manualCheckOutBtn;
         final Button markAbsentBtn;
         final Button editRecordBtn;
-        final Button reopenBtn;
         final Button viewAuditBtn;
 
         FilterToolbar(
@@ -194,7 +194,6 @@ final class AttendanceViewLayoutSupport {
             Button manualCheckOutBtn,
             Button markAbsentBtn,
             Button editRecordBtn,
-            Button reopenBtn,
             Button viewAuditBtn
         ) {
             this.header = header;
@@ -208,7 +207,6 @@ final class AttendanceViewLayoutSupport {
             this.manualCheckOutBtn = manualCheckOutBtn;
             this.markAbsentBtn = markAbsentBtn;
             this.editRecordBtn = editRecordBtn;
-            this.reopenBtn = reopenBtn;
             this.viewAuditBtn = viewAuditBtn;
         }
     }

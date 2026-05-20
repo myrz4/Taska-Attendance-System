@@ -40,6 +40,13 @@ public class AttendanceView {
     private final java.util.concurrent.atomic.AtomicLong attendanceLoadVersion = new java.util.concurrent.atomic.AtomicLong();
     private final Label selectionCountLabel;
     private final Timeline realtimeRefreshTimeline;
+    private final java.util.List<javafx.scene.control.Control> attendanceActionControls = new java.util.ArrayList<>();
+    private final Label tablePlaceholderLabel = new Label("No attendance records for this date.");
+    private Button manageClosedDayButton;
+    private Button refreshChartButton;
+    private Label chartTitleLabel;
+    private Label closedDayBanner;
+    private AttendanceClosedDaySupport.DayStatus selectedDayStatus = AttendanceClosedDaySupport.DayStatus.open(java.time.LocalDate.now());
 
     public AttendanceView() {
         currentInstance = this;
@@ -54,12 +61,22 @@ public class AttendanceView {
         AttendanceViewLayoutSupport.DateControls dateControls = AttendanceViewLayoutSupport.createDateControls(java.time.LocalDate.now());
         datePicker = dateControls.datePicker;
         Button loadBtn = dateControls.loadButton;
+        manageClosedDayButton = dateControls.closedDayButton;
         loadBtn.setOnAction(e -> {
             java.time.LocalDate selectedDate = datePicker.getValue();
             loadStudents(selectedDate);
         });
+        manageClosedDayButton.setDisable(!UserSession.isAdmin());
+        manageClosedDayButton.setOnAction(e -> handleClosedDayToggle());
 
         root.getChildren().add(dateControls.bar);
+
+        closedDayBanner = new Label();
+        closedDayBanner.setWrapText(true);
+        closedDayBanner.setVisible(false);
+        closedDayBanner.setManaged(false);
+        closedDayBanner.setStyle("-fx-background-color: rgba(255, 248, 214, 0.95); -fx-text-fill: #6b4f00; -fx-font-size: 14px; -fx-font-weight: bold; -fx-padding: 10 14 10 14; -fx-background-radius: 16px; -fx-border-color: rgba(161, 117, 0, 0.25); -fx-border-radius: 16px;");
+        root.getChildren().add(closedDayBanner);
 
         AttendanceViewLayoutSupport.FilterToolbar filterToolbar = AttendanceViewLayoutSupport.createFilterToolbar();
         javafx.scene.layout.HBox header = filterToolbar.header;
@@ -100,11 +117,19 @@ public class AttendanceView {
         Button editRecordBtn = filterToolbar.editRecordBtn;
         editRecordBtn.setOnAction(e -> openOverrideDialog("EDIT_RECORD"));
 
-        Button reopenBtn = filterToolbar.reopenBtn;
-        reopenBtn.setOnAction(e -> openOverrideDialog("REOPEN_RECORD"));
-
         Button viewAuditBtn = filterToolbar.viewAuditBtn;
         viewAuditBtn.setOnAction(e -> showAttendanceAuditDialog());
+
+        attendanceActionControls.add(filterToolbar.selectAllBtn);
+        attendanceActionControls.add(filterToolbar.clearSelectionBtn);
+        attendanceActionControls.add(filterToolbar.manualCheckInBtn);
+        attendanceActionControls.add(filterToolbar.manualCheckOutBtn);
+        attendanceActionControls.add(filterToolbar.markAbsentBtn);
+        attendanceActionControls.add(filterToolbar.editRecordBtn);
+        attendanceActionControls.add(filterToolbar.viewAuditBtn);
+        attendanceActionControls.add(filterToolbar.reasonDropdown);
+        attendanceActionControls.add(filterToolbar.auditDropdown);
+        attendanceActionControls.add(filterToolbar.clearFilter);
 
         table = new javafx.scene.control.TableView<>();
         AttendanceTableSupport.configureTable(
@@ -113,9 +138,12 @@ public class AttendanceView {
             () -> root == null || root.getScene() == null ? null : root.getScene().getWindow()
         );
         table.setItems(filteredRecords);
+        tablePlaceholderLabel.setWrapText(true);
+        tablePlaceholderLabel.setStyle("-fx-text-fill: #6b4f00; -fx-font-size: 14px; -fx-font-weight: bold; -fx-padding: 16 12 16 12;");
+        table.setPlaceholder(tablePlaceholderLabel);
 
-        Label chartTitle = new Label("Today's Attendance");
-        chartTitle.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
+        chartTitleLabel = new Label("Today's Attendance");
+        chartTitleLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
 
         chart = new javafx.scene.chart.PieChart();
         chart.setAnimated(true);
@@ -124,13 +152,13 @@ public class AttendanceView {
         chart.setPrefHeight(320);
         chart.setMinHeight(320);
         javafx.scene.layout.VBox.setMargin(chart, new Insets(12, 0, 4, 0));
-        javafx.scene.layout.VBox.setMargin(chartTitle, new Insets(8, 0, 0, 0));
+        javafx.scene.layout.VBox.setMargin(chartTitleLabel, new Insets(8, 0, 0, 0));
 
-        Button refreshChart = AttendanceViewLayoutSupport.createActionButton("Refresh Chart");
-        refreshChart.setOnAction(e -> updateChart(chart));
-        javafx.scene.layout.VBox.setMargin(refreshChart, new Insets(0, 0, 8, 0));
+        refreshChartButton = AttendanceViewLayoutSupport.createActionButton("Refresh Chart");
+        refreshChartButton.setOnAction(e -> updateChart(chart));
+        javafx.scene.layout.VBox.setMargin(refreshChartButton, new Insets(0, 0, 8, 0));
 
-        root.getChildren().addAll(header, table, chartTitle, chart, refreshChart);
+        root.getChildren().addAll(header, table, chartTitleLabel, chart, refreshChartButton);
 
         javafx.scene.layout.BorderPane mainLayout = new javafx.scene.layout.BorderPane();
         mainLayout.setTop(dashboardHeader);
@@ -153,6 +181,8 @@ public class AttendanceView {
         }));
         realtimeRefreshTimeline.setCycleCount(Timeline.INDEFINITE);
 
+        applyDayStatusUi(selectedDayStatus);
+
         Platform.runLater(() -> loadStudents(datePicker.getValue()));
 
         datePicker.valueProperty().addListener((obs, oldDate, newDate) -> {
@@ -170,6 +200,8 @@ public class AttendanceView {
     private void loadStudents(java.time.LocalDate date) {
         if (!UserSession.isLoggedIn() || date == null) {
             masterRecords.clear();
+            selectedDayStatus = AttendanceClosedDaySupport.DayStatus.open(date == null ? java.time.LocalDate.now() : date);
+            applyDayStatusUi(selectedDayStatus);
             lastAttendanceFingerprint = EMPTY_ATTENDANCE_FINGERPRINT;
             updateSelectionCountLabel();
             table.refresh();
@@ -190,8 +222,15 @@ public class AttendanceView {
 
         java.util.concurrent.CompletableFuture
             .supplyAsync(() -> {
+                AttendanceClosedDaySupport.DayStatus dayStatus = AttendanceClosedDaySupport.safeFetchDayStatus(date);
+                if (dayStatus.closed()) {
+                    AttendanceDataSupport.AttendanceDataCache clearedCache = cacheSnapshot == null
+                        ? AttendanceDataSupport.AttendanceDataCache.empty()
+                        : cacheSnapshot.clearAttendance();
+                    return AttendanceLoadSnapshot.closed(dayStatus, clearedCache);
+                }
                 try {
-                    return AttendanceDataSupport.loadRecords(date, cacheSnapshot);
+                    return AttendanceLoadSnapshot.open(dayStatus, AttendanceDataSupport.loadRecords(date, cacheSnapshot));
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
@@ -210,6 +249,8 @@ public class AttendanceView {
                     return;
                 }
 
+                selectedDayStatus = result.dayStatus;
+                applyDayStatusUi(result.dayStatus);
                 attendanceDataCache = result.cache;
                 String nextFingerprint = fingerprintRecords(result.records);
                 if (nextFingerprint.equals(lastAttendanceFingerprint)) {
@@ -232,6 +273,120 @@ public class AttendanceView {
                 if (pendingRefresh) {
                     requestAttendanceRefresh(date);
                 }
+            }));
+    }
+
+    private void applyDayStatusUi(AttendanceClosedDaySupport.DayStatus dayStatus) {
+        AttendanceClosedDaySupport.DayStatus resolvedStatus = dayStatus == null
+            ? AttendanceClosedDaySupport.DayStatus.open(datePicker == null ? java.time.LocalDate.now() : datePicker.getValue())
+            : dayStatus;
+        selectedDayStatus = resolvedStatus;
+
+        boolean closed = resolvedStatus.closed();
+        if (closed) {
+            clearSelectedRecords();
+        }
+        setAttendanceActionsDisabled(closed);
+
+        tablePlaceholderLabel.setText(closed
+            ? resolvedStatus.message()
+            : "No attendance records for this date.");
+
+        if (closedDayBanner != null) {
+            closedDayBanner.setText(closed ? resolvedStatus.message() : "");
+            closedDayBanner.setVisible(closed);
+            closedDayBanner.setManaged(closed);
+        }
+
+        if (chartTitleLabel != null) {
+            chartTitleLabel.setText(closed ? "Attendance Unavailable" : "Today's Attendance");
+        }
+
+        if (chart != null) {
+            chart.setVisible(!closed);
+            chart.setManaged(!closed);
+            if (closed) {
+                chart.setData(javafx.collections.FXCollections.observableArrayList());
+            }
+        }
+
+        if (refreshChartButton != null) {
+            refreshChartButton.setDisable(closed);
+            refreshChartButton.setVisible(!closed);
+            refreshChartButton.setManaged(!closed);
+        }
+
+        if (manageClosedDayButton != null) {
+            manageClosedDayButton.setText(resolvedStatus.actionButtonText());
+            manageClosedDayButton.setDisable(!UserSession.isAdmin());
+        }
+    }
+
+    private void setAttendanceActionsDisabled(boolean disabled) {
+        for (javafx.scene.control.Control control : attendanceActionControls) {
+            if (control != null) {
+                control.setDisable(disabled);
+            }
+        }
+    }
+
+    private void handleClosedDayToggle() {
+        if (datePicker == null || !UserSession.isAdmin()) {
+            return;
+        }
+
+        java.time.LocalDate selectedDate = datePicker.getValue();
+        if (selectedDate == null) {
+            return;
+        }
+
+        AttendanceClosedDaySupport.DayStatus currentStatus = selectedDayStatus == null
+            ? AttendanceClosedDaySupport.safeFetchDayStatus(selectedDate)
+            : selectedDayStatus;
+        boolean closeDay = !currentStatus.customClosed();
+        javafx.stage.Window owner = root == null || root.getScene() == null ? null : root.getScene().getWindow();
+        String title = closeDay ? "Set Closed Day" : "Reopen Day";
+        String message = closeDay
+            ? "Close attendance for " + selectedDate + "? The attendance list will be blank and check-in will be blocked for this date."
+            : "Reopen attendance for " + selectedDate + "? The attendance list will load normally for this date again.";
+
+        if (!AppThemeSupport.showConfirm(owner, title, null, message, AppThemeSupport.Tone.WARNING, title, "Cancel")) {
+            return;
+        }
+
+        manageClosedDayButton.setDisable(true);
+        java.util.concurrent.CompletableFuture
+            .supplyAsync(() -> {
+                try {
+                    return AttendanceClosedDaySupport.setDayClosed(selectedDate, closeDay);
+                } catch (java.io.IOException ex) {
+                    throw new java.io.UncheckedIOException(ex);
+                }
+            })
+            .whenComplete((status, error) -> Platform.runLater(() -> {
+                if (error != null) {
+                    Throwable failure = error;
+                    if (failure instanceof java.util.concurrent.CompletionException && failure.getCause() != null) {
+                        failure = failure.getCause();
+                    }
+                    if (failure instanceof java.io.UncheckedIOException && failure.getCause() != null) {
+                        failure = failure.getCause();
+                    }
+                    manageClosedDayButton.setDisable(!UserSession.isAdmin());
+                    AppThemeSupport.showError(owner, title, String.valueOf(failure.getMessage()));
+                    return;
+                }
+
+                selectedDayStatus = status;
+                loadStudents(selectedDate);
+                AppThemeSupport.showToast(
+                    owner,
+                    closeDay ? "Closed Day Saved" : "Day Reopened",
+                    closeDay
+                        ? selectedDate + " is now closed for attendance."
+                        : selectedDate + " is available for attendance again.",
+                    AppThemeSupport.Tone.SUCCESS
+                );
             }));
     }
 
@@ -324,6 +479,15 @@ public class AttendanceView {
     }
 
     private java.util.List<AttendanceRecord> selectedRecordsOrAlert() {
+        if (selectedDayStatus != null && selectedDayStatus.closed()) {
+            AppThemeSupport.showWarning(
+                root == null || root.getScene() == null ? null : root.getScene().getWindow(),
+                "Closed Day",
+                selectedDayStatus.message()
+            );
+            return java.util.List.of();
+        }
+
         java.util.List<AttendanceRecord> selected = checkedRecords();
         if (!selected.isEmpty()) {
             return selected;
@@ -394,8 +558,7 @@ public class AttendanceView {
     private boolean supportsBulkOverride(String action) {
         return "MANUAL_CHECK_IN".equals(action)
             || "MANUAL_CHECK_OUT".equals(action)
-            || "MARK_ABSENT".equals(action)
-            || "REOPEN_RECORD".equals(action);
+            || "MARK_ABSENT".equals(action);
     }
 
     private void openOverrideDialog(String action) {
@@ -506,7 +669,10 @@ public class AttendanceView {
                 dialogResult.notes,
                 UserSession.getName(),
                 dialogResult.checkInText,
-                dialogResult.checkOutText
+                dialogResult.checkOutText,
+                dialogResult.checkoutTeacherId,
+                dialogResult.checkoutTeacherName,
+                dialogResult.checkoutTeacherEmail
             );
             FirebaseFunctionsClient.CallResult result = AttendanceOverrideSupport.submitOverride(payload);
             if (result.ok) {
@@ -532,6 +698,30 @@ public class AttendanceView {
             return;
         }
         AttendanceAuditDialogSupport.showAuditDialog(root == null || root.getScene() == null ? null : root.getScene().getWindow(), datePicker.getValue(), record);
+    }
+
+    private static final class AttendanceLoadSnapshot {
+        final AttendanceClosedDaySupport.DayStatus dayStatus;
+        final AttendanceDataSupport.AttendanceDataCache cache;
+        final java.util.List<AttendanceRecord> records;
+
+        private AttendanceLoadSnapshot(
+            AttendanceClosedDaySupport.DayStatus dayStatus,
+            AttendanceDataSupport.AttendanceDataCache cache,
+            java.util.List<AttendanceRecord> records
+        ) {
+            this.dayStatus = dayStatus;
+            this.cache = cache == null ? AttendanceDataSupport.AttendanceDataCache.empty() : cache;
+            this.records = records == null ? java.util.List.of() : records;
+        }
+
+        static AttendanceLoadSnapshot open(AttendanceClosedDaySupport.DayStatus dayStatus, AttendanceDataSupport.AttendanceLoadResult result) {
+            return new AttendanceLoadSnapshot(dayStatus, result == null ? null : result.cache, result == null ? java.util.List.of() : result.records);
+        }
+
+        static AttendanceLoadSnapshot closed(AttendanceClosedDaySupport.DayStatus dayStatus, AttendanceDataSupport.AttendanceDataCache cache) {
+            return new AttendanceLoadSnapshot(dayStatus, cache, java.util.List.of());
+        }
     }
 
     private static final class BulkOverrideResult {
@@ -619,6 +809,10 @@ public class AttendanceView {
         lastChartUpdate = now;
         try {
             Platform.runLater(() -> {
+                if (selectedDayStatus != null && selectedDayStatus.closed()) {
+                    chart.setData(javafx.collections.FXCollections.observableArrayList());
+                    return;
+                }
                 AttendanceSummarySupport.AttendanceChartSnapshot snapshot = AttendanceSummarySupport.summarize(masterRecords);
                 AttendanceSummarySupport.renderChart(chart, snapshot);
             });

@@ -15,10 +15,67 @@ final class BillingPolicyCallableSupport {
     }
 
     static Map<?, ?> parseCallableResultMap(String rawBody) {
-        Map<?, ?> top = GSON.fromJson(rawBody, Map.class);
-        Object resultObj = (top instanceof Map) ? top.get("result") : null;
-        if (resultObj instanceof Map) {
-            return (Map<?, ?>) resultObj;
+        Object parsed = parseJsonValue(rawBody);
+        if (parsed instanceof Map<?, ?>) {
+            return unwrapCallableEnvelope((Map<?, ?>) parsed);
+        }
+        if (parsed instanceof String) {
+            String text = String.valueOf(parsed).trim();
+            if (!text.isEmpty()) {
+                return Collections.singletonMap("message", text);
+            }
+        }
+        return Collections.emptyMap();
+    }
+
+    private static Object parseJsonValue(String rawBody) {
+        String text = rawBody == null ? "" : rawBody.trim();
+        if (text.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        try {
+            return GSON.fromJson(text, Object.class);
+        } catch (RuntimeException ex) {
+            return text;
+        }
+    }
+
+    private static Map<?, ?> unwrapCallableEnvelope(Map<?, ?> top) {
+        if (top == null || top.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        Map<?, ?> nested = nestedMap(top.get("result"));
+        if (!nested.isEmpty()) {
+            return nested;
+        }
+
+        nested = nestedMap(top.get("data"));
+        if (!nested.isEmpty()) {
+            return nested;
+        }
+
+        nested = nestedMap(top.get("error"));
+        if (!nested.isEmpty()) {
+            return nested;
+        }
+
+        return top;
+    }
+
+    private static Map<?, ?> nestedMap(Object value) {
+        if (value instanceof Map<?, ?>) {
+            return (Map<?, ?>) value;
+        }
+        if (value instanceof String) {
+            Object parsed = parseJsonValue(String.valueOf(value));
+            if (parsed instanceof Map<?, ?>) {
+                return unwrapCallableEnvelope((Map<?, ?>) parsed);
+            }
+            String text = String.valueOf(value).trim();
+            if (!text.isEmpty()) {
+                return Collections.singletonMap("message", text);
+            }
         }
         return Collections.emptyMap();
     }
@@ -61,6 +118,9 @@ final class BillingPolicyCallableSupport {
         }
         if ("http-403".equalsIgnoreCase(reason) || "permission-denied".equalsIgnoreCase(reason)) {
             return "permission denied for this account";
+        }
+        if ("http-404".equalsIgnoreCase(reason)) {
+            return "callable endpoint not found; deploy the latest backend functions";
         }
         return reason.isBlank() ? "unknown backend error" : reason;
     }

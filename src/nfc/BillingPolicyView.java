@@ -65,13 +65,15 @@ public class BillingPolicyView extends javafx.scene.layout.VBox {
 
         versionField.setPromptText("Version (e.g. taska_zurah_2026)");
         versionField.setText("taska-zurah-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmm")));
+        versionField.setPrefWidth(200);
 
         defaultTransitCodeField.setPromptText("Default transit code (optional)");
         defaultTransitCodeField.setText("");
         defaultTransitCodeField.setPrefColumnCount(16);
+        defaultTransitCodeField.setPrefWidth(160);
 
         catalogSelect.setItems(catalogs);
-        catalogSelect.setPrefWidth(340);
+        catalogSelect.setPrefWidth(260);
         catalogSelect.setOnAction(e -> onCatalogSelected());
         AppThemeSupport.styleControls(catalogSelect, versionField, defaultTransitCodeField, selectedCode, selectedStaff, selectedNonStaff);
 
@@ -105,8 +107,14 @@ public class BillingPolicyView extends javafx.scene.layout.VBox {
         exportJsonBtn.setOnAction(e -> exportHealthReportJson());
 
         BillingPolicyUiSupport.configureActionButtons(
+            128,
             liveHealthRefreshBtn,
-            liveHealthDetailsBtn,
+            liveHealthDetailsBtn
+        );
+
+        BillingPolicyUiSupport.configureUniformActionButtons(
+            150,
+            46,
             refreshBtn,
             seedDefaultBtn,
             saveNewBtn,

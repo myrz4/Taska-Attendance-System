@@ -53,6 +53,7 @@ final class AdminDashboardSidebarSupport {
         void showChildren();
         void showStaff();
         void showTeachers();
+        void showTeacherPayroll();
         void showBillingLedger();
         void showBillingPolicy();
         void showCasualTransit();
@@ -87,6 +88,7 @@ final class AdminDashboardSidebarSupport {
         Button btnChildren = createMainNavButton("Children & Parents", SidebarIconKind.CHILDREN);
         Button btnStaff = createMainNavButton("Admins", SidebarIconKind.ADMINS);
         Button btnTeachers = createMainNavButton("Teachers", SidebarIconKind.TEACHERS);
+        Button btnTeacherPayroll = createMainNavButton("Salary & Overtime", SidebarIconKind.BILLING_LEDGER);
         Button btnBillingLedger = createMainNavButton("Billing Ledger", SidebarIconKind.BILLING_LEDGER);
         Button btnBillingPolicy = createMainNavButton("Billing Policy", SidebarIconKind.BILLING_POLICY);
         Button btnCasualTransit = createMainNavButton("Casual Transit", SidebarIconKind.CASUAL_TRANSIT);
@@ -104,6 +106,7 @@ final class AdminDashboardSidebarSupport {
         btnChildren.setOnAction(e -> actions.showChildren());
         btnStaff.setOnAction(e -> actions.showStaff());
         btnTeachers.setOnAction(e -> actions.showTeachers());
+        btnTeacherPayroll.setOnAction(e -> actions.showTeacherPayroll());
         btnBillingLedger.setOnAction(e -> actions.showBillingLedger());
         btnBillingPolicy.setOnAction(e -> actions.showBillingPolicy());
         btnCasualTransit.setOnAction(e -> actions.showCasualTransit());
@@ -113,6 +116,7 @@ final class AdminDashboardSidebarSupport {
             hide(btnChildren);
             hide(btnStaff);
             hide(btnTeachers);
+            hide(btnTeacherPayroll);
             hide(btnBillingPolicy);
             hide(btnBillingLedger);
             hide(btnCasualTransit);
@@ -130,6 +134,7 @@ final class AdminDashboardSidebarSupport {
             new SidebarButtonState(btnChildren, "Children & Parents", SidebarIconKind.CHILDREN, SidebarButtonVariant.MAIN),
             new SidebarButtonState(btnStaff, "Admins", SidebarIconKind.ADMINS, SidebarButtonVariant.MAIN),
             new SidebarButtonState(btnTeachers, "Teachers", SidebarIconKind.TEACHERS, SidebarButtonVariant.MAIN),
+            new SidebarButtonState(btnTeacherPayroll, "Salary & Overtime", SidebarIconKind.BILLING_LEDGER, SidebarButtonVariant.MAIN),
             new SidebarButtonState(btnBillingLedger, "Billing Ledger", SidebarIconKind.BILLING_LEDGER, SidebarButtonVariant.MAIN),
             new SidebarButtonState(btnBillingPolicy, "Billing Policy", SidebarIconKind.BILLING_POLICY, SidebarButtonVariant.MAIN),
             new SidebarButtonState(btnCasualTransit, "Casual Transit", SidebarIconKind.CASUAL_TRANSIT, SidebarButtonVariant.MAIN),
@@ -147,6 +152,7 @@ final class AdminDashboardSidebarSupport {
             btnChildren,
             btnStaff,
             btnTeachers,
+            btnTeacherPayroll,
             btnBillingLedger,
             btnBillingPolicy,
             btnCasualTransit,

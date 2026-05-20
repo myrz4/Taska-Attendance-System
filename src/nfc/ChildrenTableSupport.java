@@ -23,6 +23,7 @@ final class ChildrenTableSupport {
 
     static void setupTable(
         TableView<ChildrenView.Child> table,
+        Consumer<ChildrenView.Child> onView,
         Consumer<ChildrenView.Child> onEdit,
         Consumer<ChildrenView.Child> onDeleteConfirmed
     ) {
@@ -86,6 +87,7 @@ final class ChildrenTableSupport {
         TRANSPORT_COL.setCellFactory(col -> copyCell(ChildrenView.Child::getTransportEnabledText, Pos.CENTER));
 
         actionsCol.setCellFactory(col -> new ActionButtonsTableCell<>(
+            ActionButtonsTableCell.ActionSpec.normal("View", onView),
             ActionButtonsTableCell.ActionSpec.normal("Edit", onEdit),
             ActionButtonsTableCell.ActionSpec.destructive("Delete", current -> {
                 Alert alert = new Alert(
@@ -113,7 +115,7 @@ final class ChildrenTableSupport {
         setPrefWidth(billingPlanCol, 186);
         setPrefWidth(uidCol, 140);
         setPrefWidth(statusCol, 96);
-        setPrefWidth(actionsCol, 148);
+        setPrefWidth(actionsCol, 212);
         setPrefWidth(RECORD_ID_COL, 180);
         setPrefWidth(DUE_DAY_COL, 90);
         setPrefWidth(TRANSPORT_COL, 104);
@@ -127,7 +129,6 @@ final class ChildrenTableSupport {
             ageCol,
             parentNameCol,
             parentContactCol,
-            billingPlanCol,
             uidCol,
             statusCol,
             RECORD_ID_COL,
@@ -142,7 +143,7 @@ final class ChildrenTableSupport {
             ChildrenTableSupport::rowSummary,
             ChildrenView.Child::getRecordId,
             child -> asJson(child),
-            onEdit
+            onView
         );
     }
 

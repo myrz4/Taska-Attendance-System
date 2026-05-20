@@ -54,6 +54,30 @@ public final class FirebaseFunctionsClient {
         return callCallableByName(projectId, idToken, "billingAdminGenerateInvoicesForPeriod", dataJsonObject);
     }
 
+    public static CallResult callCalculateTeacherDailyOvertime(String projectId, String idToken, String dataJsonObject) throws IOException {
+        return callCallableByName(projectId, idToken, "calculateTeacherDailyOvertime", dataJsonObject);
+    }
+
+    public static CallResult callGenerateTeacherMonthlyPayroll(String projectId, String idToken, String dataJsonObject) throws IOException {
+        return callCallableByName(projectId, idToken, "generateTeacherMonthlyPayroll", dataJsonObject);
+    }
+
+    public static CallResult callGetTeacherPayrollSummary(String projectId, String idToken, String dataJsonObject) throws IOException {
+        return callCallableByName(projectId, idToken, "getTeacherPayrollSummary", dataJsonObject);
+    }
+
+    public static CallResult callGetTeacherPayrollForTeacher(String projectId, String idToken, String dataJsonObject) throws IOException {
+        return callCallableByName(projectId, idToken, "getTeacherPayrollForTeacher", dataJsonObject);
+    }
+
+    public static CallResult callMarkTeacherPayrollReviewed(String projectId, String idToken, String dataJsonObject) throws IOException {
+        return callCallableByName(projectId, idToken, "markTeacherPayrollReviewed", dataJsonObject);
+    }
+
+    public static CallResult callMarkTeacherPayrollPaid(String projectId, String idToken, String dataJsonObject) throws IOException {
+        return callCallableByName(projectId, idToken, "markTeacherPayrollPaid", dataJsonObject);
+    }
+
     @SuppressWarnings("unused")
     public static CallResult callBillingAdminBackfillChildMetadata(String projectId, String idToken, String dataJsonObject) throws IOException {
         return callCallableByName(projectId, idToken, "billingAdminBackfillChildMetadata", dataJsonObject);
@@ -65,6 +89,14 @@ public final class FirebaseFunctionsClient {
 
     public static CallResult callAttendanceCheckoutWithParentQr(String projectId, String idToken, String dataJsonObject) throws IOException {
         return callCallableByName(projectId, idToken, "attendanceCheckoutWithParentQr", dataJsonObject);
+    }
+
+    public static CallResult callAttendanceGetDayStatus(String projectId, String idToken, String dataJsonObject) throws IOException {
+        return callCallableByName(projectId, idToken, "attendanceGetDayStatus", dataJsonObject);
+    }
+
+    public static CallResult callAttendanceAdminSetDayClosure(String projectId, String idToken, String dataJsonObject) throws IOException {
+        return callCallableByName(projectId, idToken, "attendanceAdminSetDayClosure", dataJsonObject);
     }
 
     public static CallResult callAttendanceAdminOverride(String projectId, String idToken, String dataJsonObject) throws IOException {

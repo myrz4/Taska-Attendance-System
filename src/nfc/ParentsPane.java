@@ -41,7 +41,7 @@ public class ParentsPane extends VBox {
         buildTable();
 
         javafx.scene.control.TextField searchField = SummaryTableSupport.createSearchField(
-            "Search parent / phone / child / notifications..."
+            "Search parent / phone / child / relationship..."
         );
         searchField.textProperty().addListener((obs, oldValue, newValue) -> {
             String query = newValue == null ? "" : newValue.trim().toLowerCase(java.util.Locale.ROOT);
@@ -74,6 +74,7 @@ public class ParentsPane extends VBox {
         table.setItems(sorted);
         ParentsTableSupport.setupTable(
             table,
+            this::showDetails,
             current -> CRUDDialogs.showParentDialog(current, false, ParentsPane.this::reload),
             this::deleteParent
         );
@@ -81,6 +82,10 @@ public class ParentsPane extends VBox {
 
     public final void reload() {
         FamilyManagementLoadSupport.reloadParents(master, ParentsPane::logError);
+    }
+
+    private void showDetails(ParentRecord parent) {
+        FamilyRecordViewDialogSupport.showParentDetails(parent);
     }
 
     private javafx.scene.control.MenuButton createColumnChooser() {

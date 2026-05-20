@@ -23,6 +23,7 @@ final class ParentsTableSupport {
 
     static void setupTable(
         TableView<ParentsPane.ParentRecord> table,
+        Consumer<ParentsPane.ParentRecord> onView,
         Consumer<ParentsPane.ParentRecord> onEdit,
         Consumer<ParentsPane.ParentRecord> onDeleteConfirmed
     ) {
@@ -86,6 +87,7 @@ final class ParentsTableSupport {
         CUSTOM_REL_COL.setCellFactory(tc -> copyCell(ParentsPane.ParentRecord::getCustomRelationship, Pos.CENTER_LEFT));
 
         actionsCol.setCellFactory(tc -> new ActionButtonsTableCell<>(
+            ActionButtonsTableCell.ActionSpec.normal("View", onView),
             ActionButtonsTableCell.ActionSpec.normal("Edit", onEdit),
             ActionButtonsTableCell.ActionSpec.destructive("Delete", current -> {
                 Alert alert = new Alert(
@@ -112,7 +114,7 @@ final class ParentsTableSupport {
         setPrefWidth(notificationsCol, 180);
         setPrefWidth(icVerifiedCol, 104);
         setPrefWidth(statusCol, 96);
-        setPrefWidth(actionsCol, 148);
+        setPrefWidth(actionsCol, 212);
         setPrefWidth(RECORD_ID_COL, 180);
         setPrefWidth(MASKED_IC_COL, 140);
         setPrefWidth(CUSTOM_REL_COL, 180);
@@ -124,8 +126,6 @@ final class ParentsTableSupport {
             relationshipCol,
             phoneCol,
             childCountCol,
-            childNameCol,
-            notificationsCol,
             icVerifiedCol,
             statusCol,
             RECORD_ID_COL,
@@ -140,7 +140,7 @@ final class ParentsTableSupport {
             ParentsTableSupport::rowSummary,
             ParentsPane.ParentRecord::getRecordId,
             row -> asJson(row),
-            onEdit
+            onView
         );
     }
 

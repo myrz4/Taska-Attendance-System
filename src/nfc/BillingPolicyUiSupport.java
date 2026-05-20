@@ -43,6 +43,20 @@ final class BillingPolicyUiSupport {
         }
     }
 
+    static void configureUniformActionButtons(double width, double height, Button... buttons) {
+        for (Button button : buttons) {
+            AppThemeSupport.styleToolbarButtons(button);
+            button.setWrapText(true);
+            button.setAlignment(Pos.CENTER);
+            button.setMinWidth(width);
+            button.setPrefWidth(width);
+            button.setMaxWidth(width);
+            button.setMinHeight(height);
+            button.setPrefHeight(height);
+            button.setMaxHeight(height);
+        }
+    }
+
     static File chooseSaveFile(Window owner, String title, String extensionLabel, String extensionPattern, String initialFileName) {
         FileChooser chooser = new FileChooser();
         chooser.setTitle(title);

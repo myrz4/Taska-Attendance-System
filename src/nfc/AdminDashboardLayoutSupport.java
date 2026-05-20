@@ -17,6 +17,7 @@ import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.CornerRadii;
+import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
@@ -111,17 +112,26 @@ final class AdminDashboardLayoutSupport {
         ScrollPane checkOutPane = new ScrollPane(checkOutList);
         checkInPane.setFitToWidth(true);
         checkOutPane.setFitToWidth(true);
-        checkInPane.setPrefSize(300, 180);
-        checkOutPane.setPrefSize(300, 180);
+        checkInPane.setPrefSize(460, 320);
+        checkOutPane.setPrefSize(460, 320);
+        checkInPane.setMinHeight(320);
+        checkOutPane.setMinHeight(320);
 
         VBox checkInBox = new VBox(8, checkInTitle, checkInPane);
         VBox checkOutBox = new VBox(8, checkOutTitle, checkOutPane);
+        checkInBox.setPrefWidth(500);
+        checkOutBox.setPrefWidth(500);
+        checkInBox.setMaxWidth(Double.MAX_VALUE);
+        checkOutBox.setMaxWidth(Double.MAX_VALUE);
         checkInBox.setStyle("-fx-background-color: #FFC72C; -fx-background-radius: 18; -fx-padding: 18;");
         checkOutBox.setStyle("-fx-background-color: #FFC72C; -fx-background-radius: 18; -fx-padding: 18;");
+        HBox.setHgrow(checkInBox, Priority.ALWAYS);
+        HBox.setHgrow(checkOutBox, Priority.ALWAYS);
 
-        HBox livePane = new HBox(50, checkInBox, checkOutBox);
+        FlowPane livePane = new FlowPane(32, 20, checkInBox, checkOutBox);
         livePane.setAlignment(Pos.CENTER);
         livePane.setMaxWidth(Double.MAX_VALUE);
+        livePane.setPrefWrapLength(1080);
 
         Label announcementTitle = new Label("Announcements");
         announcementTitle.setFont(Font.font("Impact", FontWeight.EXTRA_BOLD, 20));

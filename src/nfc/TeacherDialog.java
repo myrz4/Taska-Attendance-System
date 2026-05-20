@@ -3,6 +3,8 @@ package nfc;
 import java.io.File;
 import java.nio.file.Files;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -12,6 +14,8 @@ import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
@@ -77,6 +81,69 @@ public class TeacherDialog {
         return n.substring(idx + 1).toLowerCase();
     }
 
+    private static LocalDate safeLocalDate(Object value) {
+        String text = safeString(value).trim();
+        if (text.isEmpty()) return null;
+        try {
+            return LocalDate.parse(text);
+        } catch (DateTimeParseException ignored) {
+            return null;
+        }
+    }
+
+    private static String teacherAddressText(Map<String, Object> data) {
+        if (data == null || data.isEmpty()) {
+            return "";
+        }
+        String homeAddress = safeString(data.get("homeAddress")).trim();
+        if (!homeAddress.isEmpty()) {
+            return homeAddress;
+        }
+        String streetAddress = safeString(data.get("streetAddress")).trim();
+        String city = safeString(data.get("city")).trim();
+        String state = safeString(data.get("state")).trim();
+        String postcode = safeString(data.get("postcode")).trim();
+        StringBuilder sb = new StringBuilder();
+        if (!streetAddress.isEmpty()) {
+            sb.append(streetAddress);
+        }
+        if (!city.isEmpty()) {
+            if (sb.length() > 0) sb.append(", ");
+            sb.append(city);
+        }
+        if (!state.isEmpty()) {
+            if (sb.length() > 0) sb.append(", ");
+            sb.append(state);
+        }
+        if (!postcode.isEmpty()) {
+            if (sb.length() > 0) sb.append(" ");
+            sb.append(postcode);
+        }
+        return sb.toString();
+    }
+
+    private static String teacherGenderChoice(Object value) {
+        String text = safeString(value).trim();
+        if (text.equalsIgnoreCase("female")) {
+            return "Female";
+        }
+        if (text.equalsIgnoreCase("male")) {
+            return "Male";
+        }
+        return "";
+    }
+
+    private static String comboValue(ComboBox<String> comboBox) {
+        if (comboBox == null) return "";
+        if (comboBox.isEditable() && comboBox.getEditor() != null) {
+            String editorText = comboBox.getEditor().getText();
+            if (editorText != null && !editorText.trim().isEmpty()) {
+                return editorText.trim();
+            }
+        }
+        Object value = comboBox.getValue();
+        return value == null ? "" : String.valueOf(value).trim();
+    }
 
     public TeacherDialog(Map<String, Object> data, Runnable refresh) {
         Map<String, Object> editData = data == null ? java.util.Collections.<String, Object>emptyMap() : data;
@@ -86,14 +153,32 @@ public class TeacherDialog {
         TextField name = new TextField();
         name.setPromptText("Full Name");
 
-        TextField username = new TextField();
-        username.setPromptText("Username");
+        TextField phone = new TextField();
+        phone.setPromptText("Phone Number");
 
         TextField email = new TextField();
         email.setPromptText("Email");
 
-        TextField phone = new TextField();
-        phone.setPromptText("Phone Number");
+        TextField personalIdentification = new TextField();
+        personalIdentification.setPromptText("IC No.");
+        personalIdentification.setMaxWidth(Double.MAX_VALUE);
+
+        ComboBox<String> gender = new ComboBox<>();
+        gender.getItems().setAll("Female", "Male");
+        gender.setPromptText("Select Gender");
+        gender.setMaxWidth(Double.MAX_VALUE);
+
+        DatePicker dateOfBirth = new DatePicker();
+        dateOfBirth.setPromptText("YYYY-MM-DD");
+        dateOfBirth.setEditable(false);
+        dateOfBirth.setMaxWidth(Double.MAX_VALUE);
+
+        TextField homeAddress = new TextField();
+        homeAddress.setPromptText("Alamat Rumah / Home Address");
+
+        TextField nationality = new TextField();
+        nationality.setPromptText("Nationality");
+        nationality.setMaxWidth(Double.MAX_VALUE);
 
         TextField imageUrl = new TextField();
         imageUrl.setPromptText("Image URL (Firebase Storage download URL)");
@@ -104,12 +189,6 @@ public class TeacherDialog {
 
         TextField baseSalaryTf = new TextField();
         baseSalaryTf.setPromptText("Contoh: 1800.00");
-        TextField otAfter530Tf = new TextField();
-        otAfter530Tf.setPromptText("Contoh: 5.00 / jam");
-        TextField ot8to12Tf = new TextField();
-        ot8to12Tf.setPromptText("Contoh: 10.00 / jam");
-        TextField ot12to7Tf = new TextField();
-        ot12to7Tf.setPromptText("Contoh: 7.00 / jam");
         CheckBox salaryActiveCb = new CheckBox("Aktif untuk kiraan gaji bulanan");
         salaryActiveCb.setSelected(true);
 
@@ -118,15 +197,16 @@ public class TeacherDialog {
 
         if (data != null) {
             name.setText(safeString(data.get("name")));
-            username.setText(safeString(data.get("username")));
-            email.setText(safeString(data.get("email")));
             phone.setText(safeString(data.get("phone")));
+            email.setText(safeString(data.get("email")));
+            personalIdentification.setText(safeString(data.get("personalIdentification")));
+            gender.setValue(teacherGenderChoice(data.get("gender")));
+            dateOfBirth.setValue(safeLocalDate(data.get("dateOfBirth")));
+            homeAddress.setText(teacherAddressText(data));
+            nationality.setText(safeString(data.get("nationality")).trim());
             imageUrl.setText(safeString(data.get("image")));
             CRUDStaffImageSupport.loadExistingPreview(safeString(data.get("image")), imagePreview);
             baseSalaryTf.setText(senToMoneyText(data.get("salaryBaseSen"), ""));
-            otAfter530Tf.setText(senToMoneyText(data.get("salaryOvertimeAfter530Sen"), "5.00"));
-            ot8to12Tf.setText(senToMoneyText(data.get("salaryOvertime8to12Sen"), "10.00"));
-            ot12to7Tf.setText(senToMoneyText(data.get("salaryOvertime12to7Sen"), "7.00"));
             if (data.get("salaryActive") instanceof Boolean) {
                 salaryActiveCb.setSelected(Boolean.TRUE.equals(data.get("salaryActive")));
             }
@@ -187,14 +267,15 @@ public class TeacherDialog {
         AppThemeSupport.styleSecondaryButtons(cancel);
         AppThemeSupport.styleControls(
             name,
-            username,
-            email,
             phone,
+            email,
+            personalIdentification,
+            gender,
+            dateOfBirth,
+            homeAddress,
+            nationality,
             imageUrl,
-            baseSalaryTf,
-            otAfter530Tf,
-            ot8to12Tf,
-            ot12to7Tf
+            baseSalaryTf
         );
         cancel.setOnAction(e -> stage.close());
         save.setOnAction(e -> {
@@ -205,8 +286,14 @@ public class TeacherDialog {
                     return;
                 }
 
-                String usernameVal = username.getText() == null ? "" : username.getText().trim().toLowerCase();
                 String emailVal = email.getText() == null ? "" : email.getText().trim().toLowerCase();
+                String personalIdentificationVal = personalIdentification.getText() == null
+                    ? ""
+                    : personalIdentification.getText().trim();
+                String genderVal = comboValue(gender);
+                String dateOfBirthVal = dateOfBirth.getValue() == null ? "" : dateOfBirth.getValue().toString();
+                String homeAddressVal = homeAddress.getText() == null ? "" : homeAddress.getText().trim();
+                String nationalityVal = nationality.getText() == null ? "" : nationality.getText().trim();
 
                 String phoneLocal = PhoneUtil.toLocalMy(phone.getText());
                 if (phoneLocal == null || phoneLocal.isBlank()) {
@@ -216,35 +303,43 @@ public class TeacherDialog {
 
                 Map<String, Object> m = new HashMap<>();
                 m.put("name", fullName);
-                // Always persist these so edits (including clearing) are reflected in Firestore.
-                m.put("username", usernameVal);
                 m.put("email", emailVal);
                 m.put("phone", phoneLocal);
                 m.put("phoneTail", PhoneUtil.myTail(phoneLocal));
                 m.put("phoneE164", PhoneUtil.toE164My(phoneLocal));
+                m.put("personalIdentification", personalIdentificationVal);
+                m.put("gender", genderVal);
+                m.put("dateOfBirth", dateOfBirthVal);
+                m.put("homeAddress", homeAddressVal);
+                m.put("nationality", nationalityVal);
 
-                int salaryBaseSen = parseMoneyToSen(baseSalaryTf.getText(), 0);
-                int salaryOt530Sen = parseMoneyToSen(otAfter530Tf.getText(), 500);
-                int salaryOt8to12Sen = parseMoneyToSen(ot8to12Tf.getText(), 1000);
-                int salaryOt12to7Sen = parseMoneyToSen(ot12to7Tf.getText(), 700);
+                String baseSalaryText = baseSalaryTf.getText() == null ? "" : baseSalaryTf.getText().trim();
+                int salaryBaseSen = parseMoneyToSen(baseSalaryText, -1);
+                if (salaryBaseSen <= 0) {
+                    AppThemeSupport.showError(stage, "Base Salary Required", "Base Salary (RM / month) must be a number greater than 0.");
+                    return;
+                }
                 m.put("salaryBaseSen", salaryBaseSen);
-                m.put("salaryOvertimeAfter530Sen", salaryOt530Sen);
-                m.put("salaryOvertime8to12Sen", salaryOt8to12Sen);
-                m.put("salaryOvertime12to7Sen", salaryOt12to7Sen);
                 m.put("salaryCurrency", "MYR");
                 m.put("salaryActive", salaryActiveCb.isSelected());
+                m.put("status", salaryActiveCb.isSelected() ? "Active" : "Inactive");
+                m.put("joinedDate", safeString(editData.get("joinedDate")).trim().isEmpty()
+                    ? LocalDate.now().toString()
+                    : safeString(editData.get("joinedDate")).trim());
+                m.put("updatedAt", Instant.now().toString());
+                if (safeString(editData.get("createdAt")).trim().isEmpty()) {
+                    m.put("createdAt", Instant.now().toString());
+                }
 
                 String imageUrlText = imageUrl.getText() == null ? "" : imageUrl.getText().trim();
                 if (!imageUrlText.isEmpty()) {
                     m.put("image", imageUrlText);
-                    // Cache to disk to make subsequent loads faster.
                     ImageCache.prefetch(imageUrlText);
                 }
 
                 FirestoreRestClient client = FirestoreRest.forCurrentUser();
 
                 if (!isEdit) {
-                    // Best-effort duplicate check by phone.
                     for (FsDocument d : client.listDocuments("teachers")) {
                         if (d == null) continue;
                         String ph = d.getString("phone");
@@ -261,7 +356,22 @@ public class TeacherDialog {
                         AppThemeSupport.showError(stage, "Missing Teacher ID", "Missing teacher ID.");
                         return;
                     }
-                    client.patchDocumentMerge("teachers", teacherId, m);
+                    client.patchDocumentMergeDeletingFields(
+                        "teachers",
+                        teacherId,
+                        m,
+                        java.util.List.of(
+                            "username",
+                            "personalIdentificationType",
+                            "streetAddress",
+                            "city",
+                            "state",
+                            "postcode",
+                            "salaryOvertimeAfter530Sen",
+                            "salaryOvertime8to12Sen",
+                            "salaryOvertime12to7Sen"
+                        )
+                    );
                 }
 
                 refresh.run();
@@ -274,19 +384,18 @@ public class TeacherDialog {
             }
         });
 
-        GridPane identityGrid = new GridPane();
-        identityGrid.setHgap(12);
-        identityGrid.setVgap(10);
-        identityGrid.getStyleClass().add("app-form-grid");
-        identityGrid.addRow(0, new Label("Full Name"), name);
-        identityGrid.addRow(1, new Label("Username"), username);
-
-        GridPane contactGrid = new GridPane();
-        contactGrid.setHgap(12);
-        contactGrid.setVgap(10);
-        contactGrid.getStyleClass().add("app-form-grid");
-        contactGrid.addRow(0, new Label("Email"), email);
-        contactGrid.addRow(1, new Label("Phone"), phone);
+        GridPane registrationGrid = new GridPane();
+        registrationGrid.setHgap(12);
+        registrationGrid.setVgap(10);
+        registrationGrid.getStyleClass().add("app-form-grid");
+        registrationGrid.addRow(0, new Label("Full Name"), name);
+        registrationGrid.addRow(1, new Label("Phone"), phone);
+        registrationGrid.addRow(2, new Label("Email"), email);
+        registrationGrid.addRow(3, new Label("IC No."), personalIdentification);
+        registrationGrid.addRow(4, new Label("Gender"), gender);
+        registrationGrid.addRow(5, new Label("Date of Birth"), dateOfBirth);
+        registrationGrid.addRow(6, new Label("Alamat Rumah / Home Address"), homeAddress);
+        registrationGrid.addRow(7, new Label("Nationality"), nationality);
 
         GridPane imageGrid = new GridPane();
         imageGrid.setHgap(12);
@@ -300,20 +409,12 @@ public class TeacherDialog {
         salaryGrid.setVgap(10);
         salaryGrid.getStyleClass().add("app-form-grid");
         salaryGrid.addRow(0, new Label("Base Salary (RM / month)"), baseSalaryTf);
-        salaryGrid.addRow(1, new Label("Overtime Rate 5:30pm+ (RM / hour)"), otAfter530Tf);
-        salaryGrid.addRow(2, new Label("Overtime Rate 8pm-12am (RM / hour)"), ot8to12Tf);
-        salaryGrid.addRow(3, new Label("Overtime Rate 12am-7am (RM / hour)"), ot12to7Tf);
 
         VBox formContent = new VBox(16,
             AppThemeSupport.createSectionCard(
-                "Identity",
-                "Store the teacher's main identity used throughout the admin system.",
-                identityGrid
-            ),
-            AppThemeSupport.createSectionCard(
-                "Contact",
-                "Keep email and local Malaysia phone details consistent for admin messaging and payroll follow-up.",
-                contactGrid
+                "Teacher Registration",
+                "Capture the stakeholder-required teacher identity, home address, and contact details used during registration.",
+                registrationGrid
             ),
             AppThemeSupport.createSectionCard(
                 "Image & Profile",
@@ -321,8 +422,8 @@ public class TeacherDialog {
                 imageGrid
             ),
             AppThemeSupport.createSectionCard(
-                "Salary & Overtime",
-                "Monthly salary and overtime rates stay in RM and keep the existing payroll math untouched.",
+                "Salary",
+                "Monthly salary stays here. Teacher overtime pay now follows the shared Taska operating-hours policy instead of per-teacher rate overrides.",
                 salaryGrid
             ),
             AppThemeSupport.createSectionCard(
@@ -345,7 +446,7 @@ public class TeacherDialog {
             16,
             AppThemeSupport.createPageHeader(
                 isEdit ? "Edit Teacher" : "Add Teacher",
-                "Manage teacher identity, contact, profile image, and payroll settings in one place."
+                "Manage teacher registration, profile image, and payroll settings in one place."
             ),
             scrollPane,
             footer
@@ -358,7 +459,7 @@ public class TeacherDialog {
         AppThemeSupport.applyScene(scene);
         stage.setTitle(isEdit ? "Edit Teacher" : "Add Teacher");
         stage.setMinWidth(620);
-        stage.setMinHeight(720);
+        stage.setMinHeight(800);
         stage.setScene(scene);
         stage.show();
     }

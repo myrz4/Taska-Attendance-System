@@ -25,19 +25,18 @@ final class TeacherManagementTableSupport {
 
     static TableBundle setupTable(
         TableView<Map<String, Object>> table,
+        Consumer<Map<String, Object>> onView,
         Consumer<Map<String, Object>> onEdit,
         Consumer<Map<String, Object>> onDelete
     ) {
         TableColumn<Map<String, Object>, Integer> noCol = new TableColumn<>("No");
         TableColumn<Map<String, Object>, String> avatarCol = imageCol("Avatar", "image");
         TableColumn<Map<String, Object>, String> nameCol = textCol("Full Name", row -> Objects.toString(row.get("name"), ""));
-        TableColumn<Map<String, Object>, String> usernameCol = textCol("Username", row -> Objects.toString(row.get("username"), ""));
-        TableColumn<Map<String, Object>, String> emailCol = textCol("Email", row -> Objects.toString(row.get("email"), ""));
+        TableColumn<Map<String, Object>, String> personalIdentificationCol = textCol("IC No.", TeacherManagementTableSupport::personalIdentificationSummary);
         TableColumn<Map<String, Object>, String> phoneCol = textCol("Phone", row -> Objects.toString(row.get("phone"), ""));
         TableColumn<Map<String, Object>, String> salaryCol = textCol("Base Salary (RM)", row -> formatMoney(row.get("salaryBaseSen")));
-        TableColumn<Map<String, Object>, String> overtimeCol = textCol("Overtime Rates", TeacherManagementTableSupport::overtimeSummary);
         TableColumn<Map<String, Object>, String> statusCol = textCol("Status", TeacherManagementTableSupport::statusText);
-        TableColumn<Map<String, Object>, Void> actionCol = actionCol(onEdit, onDelete);
+        TableColumn<Map<String, Object>, Void> actionCol = actionCol(onView, onEdit, onDelete);
 
         noCol.setCellFactory(col -> new TableCell<Map<String, Object>, Integer>() {
             @Override
@@ -60,25 +59,21 @@ final class TeacherManagementTableSupport {
         noCol.setPrefWidth(56);
         avatarCol.setPrefWidth(84);
         nameCol.setPrefWidth(220);
-        usernameCol.setPrefWidth(160);
-        emailCol.setPrefWidth(210);
+        personalIdentificationCol.setPrefWidth(180);
         phoneCol.setPrefWidth(150);
         salaryCol.setPrefWidth(130);
-        overtimeCol.setPrefWidth(220);
         statusCol.setPrefWidth(94);
         RECORD_ID_COL.setPrefWidth(180);
-        actionCol.setPrefWidth(148);
+        actionCol.setPrefWidth(212);
 
         table.getColumns().clear();
         table.getColumns().setAll(Arrays.<TableColumn<Map<String, Object>, ?>>asList(
             noCol,
             avatarCol,
             nameCol,
-            usernameCol,
-            emailCol,
+            personalIdentificationCol,
             phoneCol,
             salaryCol,
-            overtimeCol,
             statusCol,
             RECORD_ID_COL,
             actionCol
@@ -91,18 +86,20 @@ final class TeacherManagementTableSupport {
             TeacherManagementTableSupport::rowSummary,
             row -> Objects.toString(row.get("id"), ""),
             TeacherManagementTableSupport::asJson,
-            onEdit
+            onView
         );
 
         return new TableBundle(nameCol, List.of(RECORD_ID_COL));
     }
 
     private static TableColumn<Map<String, Object>, Void> actionCol(
+        Consumer<Map<String, Object>> onView,
         Consumer<Map<String, Object>> onEdit,
         Consumer<Map<String, Object>> onDelete
     ) {
         TableColumn<Map<String, Object>, Void> actionCol = new TableColumn<>("Actions");
         actionCol.setCellFactory(col -> new ActionButtonsTableCell<>(
+            ActionButtonsTableCell.ActionSpec.normal("View", onView),
             ActionButtonsTableCell.ActionSpec.normal("Edit", onEdit),
             ActionButtonsTableCell.ActionSpec.destructive("Delete", onDelete)
         ));
@@ -172,26 +169,9 @@ final class TeacherManagementTableSupport {
         );
     }
 
-    private static String overtimeSummary(Map<String, Object> row) {
-        return "5:30=" + shortMoney(row.get("salaryOvertimeAfter530Sen"))
-            + " | 8pm=" + shortMoney(row.get("salaryOvertime8to12Sen"))
-            + " | 12am=" + shortMoney(row.get("salaryOvertime12to7Sen"));
-    }
-
     private static String statusText(Map<String, Object> row) {
         String fallback = Boolean.TRUE.equals(row.get("salaryActive")) ? "Active" : "Inactive";
         return SummaryTableSupport.resolveStatus(row, fallback);
-    }
-
-    private static String shortMoney(Object rawSen) {
-        if (!(rawSen instanceof Number)) {
-            return "-";
-        }
-        double rm = ((Number) rawSen).doubleValue() / 100.0;
-        if (Math.floor(rm) == rm) {
-            return String.valueOf((int) rm);
-        }
-        return String.format(Locale.US, "%.2f", rm);
     }
 
     private static String formatMoney(Object rawSen) {
@@ -202,15 +182,54 @@ final class TeacherManagementTableSupport {
         return String.format(Locale.US, "RM %.2f", rm);
     }
 
+    private static String personalIdentificationSummary(Map<String, Object> row) {
+        String value = Objects.toString(row.get("personalIdentification"), "").trim();
+        return value;
+    }
+
+    private static String addressSummary(Map<String, Object> row) {
+        String homeAddress = Objects.toString(row.get("homeAddress"), "").trim();
+        if (!homeAddress.isEmpty()) {
+            return homeAddress;
+        }
+        String streetAddress = Objects.toString(row.get("streetAddress"), "").trim();
+        String city = Objects.toString(row.get("city"), "").trim();
+        String state = Objects.toString(row.get("state"), "").trim();
+        String postcode = Objects.toString(row.get("postcode"), "").trim();
+        StringBuilder sb = new StringBuilder();
+        if (!streetAddress.isEmpty()) {
+            sb.append(streetAddress);
+        }
+        if (!city.isEmpty()) {
+            if (sb.length() > 0) sb.append(", ");
+            sb.append(city);
+        }
+        if (!state.isEmpty()) {
+            if (sb.length() > 0) sb.append(", ");
+            sb.append(state);
+        }
+        if (!postcode.isEmpty()) {
+            if (sb.length() > 0) sb.append(" ");
+            sb.append(postcode);
+        }
+        return sb.toString();
+    }
+
     private static LinkedHashMap<String, Object> asJson(Map<String, Object> row) {
         LinkedHashMap<String, Object> json = new LinkedHashMap<>();
         json.put("recordId", Objects.toString(row.get("id"), ""));
         json.put("name", Objects.toString(row.get("name"), ""));
-        json.put("username", Objects.toString(row.get("username"), ""));
         json.put("email", Objects.toString(row.get("email"), ""));
         json.put("phone", Objects.toString(row.get("phone"), ""));
+        json.put("icNo", personalIdentificationSummary(row));
+        json.put("personalIdentification", personalIdentificationSummary(row));
+        json.put("gender", Objects.toString(row.get("gender"), ""));
+        json.put("dateOfBirth", Objects.toString(row.get("dateOfBirth"), ""));
+        json.put("nationality", Objects.toString(row.get("nationality"), ""));
+        json.put("homeAddress", addressSummary(row));
+        json.put("address", addressSummary(row));
         json.put("baseSalary", formatMoney(row.get("salaryBaseSen")));
-        json.put("overtimeRates", overtimeSummary(row));
+        json.put("overtimePolicy", "Shared Taska policy");
         json.put("status", statusText(row));
         json.put("image", Objects.toString(row.get("image"), ""));
         return json;
@@ -223,11 +242,15 @@ final class TeacherManagementTableSupport {
         return String.join("\n",
             "Teacher: " + SummaryTableSupport.displayText(Objects.toString(row.get("name"), "")),
             "Record ID: " + SummaryTableSupport.displayText(Objects.toString(row.get("id"), "")),
-            "Username: " + SummaryTableSupport.displayText(Objects.toString(row.get("username"), "")),
             "Email: " + SummaryTableSupport.displayText(Objects.toString(row.get("email"), "")),
             "Phone: " + SummaryTableSupport.displayText(Objects.toString(row.get("phone"), "")),
+            "IC No.: " + SummaryTableSupport.displayText(personalIdentificationSummary(row)),
+            "Gender: " + SummaryTableSupport.displayText(Objects.toString(row.get("gender"), "")),
+            "Date of Birth: " + SummaryTableSupport.displayText(Objects.toString(row.get("dateOfBirth"), "")),
+            "Home Address: " + SummaryTableSupport.displayText(addressSummary(row)),
+            "Nationality: " + SummaryTableSupport.displayText(Objects.toString(row.get("nationality"), "")),
             "Base Salary: " + SummaryTableSupport.displayText(formatMoney(row.get("salaryBaseSen"))),
-            "Overtime Rates: " + SummaryTableSupport.displayText(overtimeSummary(row)),
+            "Overtime Policy: Shared Taska policy",
             "Status: " + SummaryTableSupport.displayText(statusText(row))
         );
     }

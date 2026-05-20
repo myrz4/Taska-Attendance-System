@@ -82,7 +82,7 @@ final class MonthlyReportPreviewSupport {
         Region headerSpacer = new Region();
         HBox.setHgrow(headerSpacer, Priority.ALWAYS);
 
-        Label badge = new Label("Attendance Report");
+        Label badge = new Label("Monthly Preview");
         badge.setStyle("-fx-background-color: #fff1cc; -fx-text-fill: #9a6700; -fx-font-size: 12px; -fx-font-weight: bold; -fx-padding: 8 14 8 14; -fx-background-radius: 999;");
 
         HBox header = new HBox(16, logo, titleBox, headerSpacer, badge);
@@ -116,29 +116,26 @@ final class MonthlyReportPreviewSupport {
         infoCard.setPadding(new Insets(20));
         infoCard.setStyle("-fx-background-color: white; -fx-background-radius: 22; -fx-border-color: #e6ebf2; -fx-border-radius: 22;");
 
-        Label performanceLabel = new Label("Performance: " + performance.toUpperCase());
-        performanceLabel.setFont(Font.font("Poppins", FontWeight.BOLD, 16));
-        if ("Good".equalsIgnoreCase(performance)) {
-            performanceLabel.setStyle(
-                "-fx-background-color: #eaf8ef; -fx-text-fill: #0d7a38; -fx-padding: 12 16 12 16; -fx-background-radius: 16;"
-            );
-        } else {
-            performanceLabel.setStyle(
-                "-fx-background-color: #fff0ee; -fx-text-fill: #c53b2a; -fx-padding: 12 16 12 16; -fx-background-radius: 16;"
-            );
-        }
-
         HBox metrics = new HBox(12,
             metricCard("Attendance", attendancePercent, "#fff5d9", "#9a6700"),
             metricCard("Present Days", String.valueOf(presentCount), "#ebf8ef", "#167c47"),
             metricCard("Absent Days", String.valueOf(absentCount), "#fff0ee", "#c53b2a"),
-            performanceLabel
+            metricCard(
+                "Performance",
+                performance == null ? "-" : performance.toUpperCase(),
+                "Good".equalsIgnoreCase(performance) ? "#eaf8ef" : "#fff0ee",
+                "Good".equalsIgnoreCase(performance) ? "#0d7a38" : "#c53b2a"
+            )
         );
         metrics.setAlignment(Pos.CENTER_LEFT);
 
         TableView<AttendanceRow> attendanceTable = MonthlyReportPreviewTableSupport.buildAttendanceTable(days);
 
-        VBox tableCard = new VBox(14, sectionTitle("Attendance Timeline"), attendanceTable);
+        Label helperText = new Label("Review the monthly timeline before saving the PDF. This preview matches the daily report presentation for a consistent export flow.");
+        helperText.setWrapText(true);
+        helperText.setStyle("-fx-font-size: 13px; -fx-text-fill: #6b7280;");
+
+        VBox tableCard = new VBox(14, sectionTitle("Attendance Timeline"), helperText, attendanceTable);
         tableCard.setPadding(new Insets(20));
         tableCard.setStyle("-fx-background-color: white; -fx-background-radius: 22; -fx-border-color: #e6ebf2; -fx-border-radius: 22;");
 

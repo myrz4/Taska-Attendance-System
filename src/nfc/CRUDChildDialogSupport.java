@@ -44,7 +44,9 @@ final class CRUDChildDialogSupport {
         AppThemeSupport.prepareDialog(
             dialog,
             isNew ? "Add New Child" : "Edit Child",
-            "Manage child identity, NFC registration, and billing configuration.",
+            isNew
+                ? "Manage child identity, NFC registration, and billing configuration."
+                : "Manage editable child identity, NFC registration, and admin fields.",
             AppThemeSupport.Tone.INFO
         );
 
@@ -309,33 +311,36 @@ final class CRUDChildDialogSupport {
         optionalNote.setWrapText(true);
         optionalGrid.add(optionalNote, 1, optionalRow);
 
-        VBox content = AppThemeSupport.createDialogContent(
-            AppThemeSupport.createFormSection(
-                "Basic Info",
-                "Capture the child registration profile and keep the NFC UID ready for attendance scanning.",
-                basicGrid
-            ),
-            AppThemeSupport.createFormSection(
-                "Identification",
-                "Store the exact child details from the registration form for admin review and family contact.",
-                identificationGrid
-            ),
-            AppThemeSupport.createFormSection(
-                "Office Use",
-                "Track the staff receiver, received date, receipt number, and cheque reference from the paper registration form.",
-                officeUseGrid
-            ),
-            AppThemeSupport.createFormSection(
+        java.util.List<javafx.scene.Node> sections = new java.util.ArrayList<>();
+        sections.add(AppThemeSupport.createFormSection(
+            "Basic Info",
+            "Capture the child registration profile and keep the NFC UID ready for attendance scanning.",
+            basicGrid
+        ));
+        sections.add(AppThemeSupport.createFormSection(
+            "Identification",
+            "Store the exact child details from the registration form for admin review and family contact.",
+            identificationGrid
+        ));
+        sections.add(AppThemeSupport.createFormSection(
+            "Office Use",
+            "Track the staff receiver, received date, receipt number, and cheque reference from the paper registration form.",
+            officeUseGrid
+        ));
+        if (isNew) {
+            sections.add(AppThemeSupport.createFormSection(
                 "Billing Plan",
                 "Preview the fixed Taska Zurah age-based policy that will be saved with this child.",
                 billingGrid
-            ),
-            AppThemeSupport.createFormSection(
-                "Optional Billing Controls",
-                "Use these toggles for approved absence-letter discounts and staff-child notes only.",
-                optionalGrid
-            )
-        );
+            ));
+        }
+        sections.add(AppThemeSupport.createFormSection(
+            "Optional Billing Controls",
+            "Use these toggles for approved absence-letter discounts and staff-child notes only.",
+            optionalGrid
+        ));
+
+        VBox content = AppThemeSupport.createDialogContent(sections.toArray(new javafx.scene.Node[0]));
         ScrollPane scrollPane = AppThemeSupport.wrapDialogContent(content);
 
         Rectangle2D visualBounds = Screen.getPrimary().getVisualBounds();

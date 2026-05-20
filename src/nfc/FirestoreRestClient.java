@@ -9,6 +9,8 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -198,6 +200,38 @@ public final class FirestoreRestClient {
         String url = FirestoreRestMutationSupport.appendUpdateMask(documentUrl(collectionId, docId), fields);
 
         JsonObject doc = FirestoreRestMutationSupport.createDocumentBody(fields);
+
+        HttpResponse<String> resp = send("PATCH", url, gson.toJson(doc));
+        if (resp.statusCode() < 200 || resp.statusCode() >= 300) {
+            throw new IOException("Firestore PATCH failed: " + resp.statusCode() + " " + resp.body());
+        }
+    }
+
+    public void patchDocumentMergeDeletingFields(
+        String collectionId,
+        String docId,
+        Map<String, Object> fields,
+        List<String> deleteFieldPaths)
+        throws IOException, InterruptedException {
+
+        List<String> deletePaths = deleteFieldPaths == null ? Collections.emptyList() : deleteFieldPaths;
+        if (deletePaths.isEmpty()) {
+            patchDocumentMerge(collectionId, docId, fields);
+            return;
+        }
+
+        LinkedHashSet<String> updateMaskPaths = new LinkedHashSet<>();
+        if (fields != null) {
+            updateMaskPaths.addAll(fields.keySet());
+        }
+        for (String deleteFieldPath : deletePaths) {
+            if (deleteFieldPath != null && !deleteFieldPath.isBlank()) {
+                updateMaskPaths.add(deleteFieldPath);
+            }
+        }
+
+        String url = FirestoreRestMutationSupport.appendUpdateMask(documentUrl(collectionId, docId), updateMaskPaths);
+        JsonObject doc = FirestoreRestMutationSupport.createDocumentBody(fields == null ? Collections.emptyMap() : fields);
 
         HttpResponse<String> resp = send("PATCH", url, gson.toJson(doc));
         if (resp.statusCode() < 200 || resp.statusCode() >= 300) {
