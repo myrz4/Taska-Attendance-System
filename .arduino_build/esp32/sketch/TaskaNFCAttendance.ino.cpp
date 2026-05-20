@@ -28,7 +28,7 @@
 #define SDA_PIN 21
 #define SCL_PIN 22
 #define BUZZER_PIN 26
-#define BUZZER_CH 0
+#define BUZZER_USE_TONE false
 #define BUZZER_FREQ 2000
 #define BUZZER_RES 8
 
@@ -37,55 +37,64 @@ Adafruit_PN532 nfc(SDA_PIN, SCL_PIN);
 FirebaseData fbdo;
 FirebaseAuth auth;
 FirebaseConfig config;
+bool buzzerPwmReady = false;
 
 // ---------------- Helper Functions ---------------
-#line 55 "C:\\Users\\zafri\\Downloads\\Taska Attendance System\\TaskaNFCAttendance\\TaskaNFCAttendance.ino"
+#line 64 "C:\\Users\\zafri\\Downloads\\Taska Attendance System\\TaskaNFCAttendance\\TaskaNFCAttendance.ino"
 void lcdSplash();
-#line 59 "C:\\Users\\zafri\\Downloads\\Taska Attendance System\\TaskaNFCAttendance\\TaskaNFCAttendance.ino"
+#line 68 "C:\\Users\\zafri\\Downloads\\Taska Attendance System\\TaskaNFCAttendance\\TaskaNFCAttendance.ino"
 String cleanString(String s);
-#line 66 "C:\\Users\\zafri\\Downloads\\Taska Attendance System\\TaskaNFCAttendance\\TaskaNFCAttendance.ino"
+#line 75 "C:\\Users\\zafri\\Downloads\\Taska Attendance System\\TaskaNFCAttendance\\TaskaNFCAttendance.ino"
 String extractDocumentIdFromName(const String &documentName);
-#line 74 "C:\\Users\\zafri\\Downloads\\Taska Attendance System\\TaskaNFCAttendance\\TaskaNFCAttendance.ino"
+#line 83 "C:\\Users\\zafri\\Downloads\\Taska Attendance System\\TaskaNFCAttendance\\TaskaNFCAttendance.ino"
 bool isHexDigitChar(char value);
-#line 78 "C:\\Users\\zafri\\Downloads\\Taska Attendance System\\TaskaNFCAttendance\\TaskaNFCAttendance.ino"
-String stripTrailingCrLfHex(String value);
 #line 87 "C:\\Users\\zafri\\Downloads\\Taska Attendance System\\TaskaNFCAttendance\\TaskaNFCAttendance.ino"
+String stripTrailingCrLfHex(String value);
+#line 96 "C:\\Users\\zafri\\Downloads\\Taska Attendance System\\TaskaNFCAttendance\\TaskaNFCAttendance.ino"
 String decodeAsciiHexUid(String value);
-#line 120 "C:\\Users\\zafri\\Downloads\\Taska Attendance System\\TaskaNFCAttendance\\TaskaNFCAttendance.ino"
+#line 129 "C:\\Users\\zafri\\Downloads\\Taska Attendance System\\TaskaNFCAttendance\\TaskaNFCAttendance.ino"
 String encodeAsciiHexUid(String value);
-#line 136 "C:\\Users\\zafri\\Downloads\\Taska Attendance System\\TaskaNFCAttendance\\TaskaNFCAttendance.ino"
+#line 145 "C:\\Users\\zafri\\Downloads\\Taska Attendance System\\TaskaNFCAttendance\\TaskaNFCAttendance.ino"
 void addUidCandidate(String *candidates, size_t capacity, size_t &count, String candidate);
-#line 154 "C:\\Users\\zafri\\Downloads\\Taska Attendance System\\TaskaNFCAttendance\\TaskaNFCAttendance.ino"
+#line 163 "C:\\Users\\zafri\\Downloads\\Taska Attendance System\\TaskaNFCAttendance\\TaskaNFCAttendance.ino"
 size_t buildUidLookupCandidates(const String &nfcUID, String *candidates, size_t capacity);
-#line 177 "C:\\Users\\zafri\\Downloads\\Taska Attendance System\\TaskaNFCAttendance\\TaskaNFCAttendance.ino"
+#line 186 "C:\\Users\\zafri\\Downloads\\Taska Attendance System\\TaskaNFCAttendance\\TaskaNFCAttendance.ino"
 bool childLookupHadError();
-#line 181 "C:\\Users\\zafri\\Downloads\\Taska Attendance System\\TaskaNFCAttendance\\TaskaNFCAttendance.ino"
+#line 190 "C:\\Users\\zafri\\Downloads\\Taska Attendance System\\TaskaNFCAttendance\\TaskaNFCAttendance.ino"
 void setChildLookupError(const String &message);
-#line 185 "C:\\Users\\zafri\\Downloads\\Taska Attendance System\\TaskaNFCAttendance\\TaskaNFCAttendance.ino"
+#line 194 "C:\\Users\\zafri\\Downloads\\Taska Attendance System\\TaskaNFCAttendance\\TaskaNFCAttendance.ino"
 bool queryChildDocumentByExactUid(const String &nfcUID, FirebaseJson &json, String &resolvedDocId);
-#line 285 "C:\\Users\\zafri\\Downloads\\Taska Attendance System\\TaskaNFCAttendance\\TaskaNFCAttendance.ino"
+#line 294 "C:\\Users\\zafri\\Downloads\\Taska Attendance System\\TaskaNFCAttendance\\TaskaNFCAttendance.ino"
 bool queryChildDocumentByUid(const String &nfcUID, FirebaseJson &json, String &resolvedDocId);
-#line 300 "C:\\Users\\zafri\\Downloads\\Taska Attendance System\\TaskaNFCAttendance\\TaskaNFCAttendance.ino"
+#line 309 "C:\\Users\\zafri\\Downloads\\Taska Attendance System\\TaskaNFCAttendance\\TaskaNFCAttendance.ino"
 String getUIDString(uint8_t *uid, uint8_t uidLength);
-#line 310 "C:\\Users\\zafri\\Downloads\\Taska Attendance System\\TaskaNFCAttendance\\TaskaNFCAttendance.ino"
+#line 319 "C:\\Users\\zafri\\Downloads\\Taska Attendance System\\TaskaNFCAttendance\\TaskaNFCAttendance.ino"
 String getIsoTimestamp();
-#line 324 "C:\\Users\\zafri\\Downloads\\Taska Attendance System\\TaskaNFCAttendance\\TaskaNFCAttendance.ino"
+#line 333 "C:\\Users\\zafri\\Downloads\\Taska Attendance System\\TaskaNFCAttendance\\TaskaNFCAttendance.ino"
 String getMidnightTimestamp();
-#line 336 "C:\\Users\\zafri\\Downloads\\Taska Attendance System\\TaskaNFCAttendance\\TaskaNFCAttendance.ino"
+#line 345 "C:\\Users\\zafri\\Downloads\\Taska Attendance System\\TaskaNFCAttendance\\TaskaNFCAttendance.ino"
 String getDateNow();
-#line 347 "C:\\Users\\zafri\\Downloads\\Taska Attendance System\\TaskaNFCAttendance\\TaskaNFCAttendance.ino"
+#line 356 "C:\\Users\\zafri\\Downloads\\Taska Attendance System\\TaskaNFCAttendance\\TaskaNFCAttendance.ino"
 void publishLatestScan(const String &nfcUID);
-#line 373 "C:\\Users\\zafri\\Downloads\\Taska Attendance System\\TaskaNFCAttendance\\TaskaNFCAttendance.ino"
+#line 382 "C:\\Users\\zafri\\Downloads\\Taska Attendance System\\TaskaNFCAttendance\\TaskaNFCAttendance.ino"
 String getActiveDate();
-#line 381 "C:\\Users\\zafri\\Downloads\\Taska Attendance System\\TaskaNFCAttendance\\TaskaNFCAttendance.ino"
+#line 390 "C:\\Users\\zafri\\Downloads\\Taska Attendance System\\TaskaNFCAttendance\\TaskaNFCAttendance.ino"
 void setup();
-#line 440 "C:\\Users\\zafri\\Downloads\\Taska Attendance System\\TaskaNFCAttendance\\TaskaNFCAttendance.ino"
+#line 456 "C:\\Users\\zafri\\Downloads\\Taska Attendance System\\TaskaNFCAttendance\\TaskaNFCAttendance.ino"
 void loop();
-#line 41 "C:\\Users\\zafri\\Downloads\\Taska Attendance System\\TaskaNFCAttendance\\TaskaNFCAttendance.ino"
-void beep(int ms = 120, int duty = 180) {
-  ledcWriteTone(BUZZER_CH, BUZZER_FREQ);
+#line 42 "C:\\Users\\zafri\\Downloads\\Taska Attendance System\\TaskaNFCAttendance\\TaskaNFCAttendance.ino"
+void beep(int ms = 120) {
+  if (!BUZZER_USE_TONE || !buzzerPwmReady) {
+    digitalWrite(BUZZER_PIN, HIGH);
+    delay(ms);
+    digitalWrite(BUZZER_PIN, LOW);
+    return;
+  }
+
+  ledcWriteTone(BUZZER_PIN, BUZZER_FREQ);
   delay(ms);
-  ledcWriteTone(BUZZER_CH, 0);
+  ledcWriteTone(BUZZER_PIN, 0);
+  digitalWrite(BUZZER_PIN, LOW);
 }
 
 void showLCD(const String &line1, const String &line2 = "") {
@@ -426,8 +435,15 @@ void setup() {
   Serial.begin(115200);
   delay(1000);
 
-  // Initialize buzzer (PWM)
-  ledcAttach(BUZZER_PIN, BUZZER_FREQ, BUZZER_RES);
+  // Initialize buzzer output
+  pinMode(BUZZER_PIN, OUTPUT);
+  digitalWrite(BUZZER_PIN, LOW);
+  if (BUZZER_USE_TONE) {
+    buzzerPwmReady = ledcAttach(BUZZER_PIN, BUZZER_FREQ, BUZZER_RES);
+  }
+  if (BUZZER_USE_TONE && !buzzerPwmReady) {
+    Serial.println("Buzzer PWM attach failed, using digital fallback");
+  }
   beep(150);
 
   Wire.begin(SDA_PIN, SCL_PIN);

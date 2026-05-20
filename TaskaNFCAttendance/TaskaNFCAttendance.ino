@@ -27,7 +27,7 @@
 #define SDA_PIN 21
 #define SCL_PIN 22
 #define BUZZER_PIN 26
-#define BUZZER_CH 0
+#define BUZZER_USE_TONE false
 #define BUZZER_FREQ 2000
 #define BUZZER_RES 8
 
@@ -36,12 +36,21 @@ Adafruit_PN532 nfc(SDA_PIN, SCL_PIN);
 FirebaseData fbdo;
 FirebaseAuth auth;
 FirebaseConfig config;
+bool buzzerPwmReady = false;
 
 // ---------------- Helper Functions ---------------
-void beep(int ms = 120, int duty = 180) {
-  ledcWriteTone(BUZZER_CH, BUZZER_FREQ);
+void beep(int ms = 120) {
+  if (!BUZZER_USE_TONE || !buzzerPwmReady) {
+    digitalWrite(BUZZER_PIN, HIGH);
+    delay(ms);
+    digitalWrite(BUZZER_PIN, LOW);
+    return;
+  }
+
+  ledcWriteTone(BUZZER_PIN, BUZZER_FREQ);
   delay(ms);
-  ledcWriteTone(BUZZER_CH, 0);
+  ledcWriteTone(BUZZER_PIN, 0);
+  digitalWrite(BUZZER_PIN, LOW);
 }
 
 void showLCD(const String &line1, const String &line2 = "") {
@@ -382,8 +391,15 @@ void setup() {
   Serial.begin(115200);
   delay(1000);
 
-  // Initialize buzzer (PWM)
-  ledcAttach(BUZZER_PIN, BUZZER_FREQ, BUZZER_RES);
+  // Initialize buzzer output
+  pinMode(BUZZER_PIN, OUTPUT);
+  digitalWrite(BUZZER_PIN, LOW);
+  if (BUZZER_USE_TONE) {
+    buzzerPwmReady = ledcAttach(BUZZER_PIN, BUZZER_FREQ, BUZZER_RES);
+  }
+  if (BUZZER_USE_TONE && !buzzerPwmReady) {
+    Serial.println("Buzzer PWM attach failed, using digital fallback");
+  }
   beep(150);
 
   Wire.begin(SDA_PIN, SCL_PIN);
