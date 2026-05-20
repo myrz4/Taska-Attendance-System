@@ -64,6 +64,8 @@ public class TeacherPayrollView extends VBox {
 
     private boolean loading;
     private long detailRequestVersion;
+    private boolean pendingAttendanceRefresh;
+    private String pendingAttendancePeriod = "";
 
     public TeacherPayrollView() {
         setSpacing(0);
@@ -173,6 +175,19 @@ public class TeacherPayrollView extends VBox {
 
     public void onShow() {
         loadSummary(true);
+    }
+
+    public void refreshAfterAttendanceMutation(String affectedPeriod) {
+        String displayedPeriod = displayedPeriod();
+        if (affectedPeriod != null && !affectedPeriod.isBlank() && !affectedPeriod.equals(displayedPeriod)) {
+            return;
+        }
+        if (loading) {
+            pendingAttendanceRefresh = true;
+            pendingAttendancePeriod = affectedPeriod == null ? "" : affectedPeriod;
+            return;
+        }
+        loadSummary(false);
     }
 
     private void configureTable() {
@@ -568,6 +583,25 @@ public class TeacherPayrollView extends VBox {
         statusFilter.setDisable(busy);
         updateActionState(table.getSelectionModel().getSelectedItem());
         statusLabel.setText(message == null ? "" : message);
+        if (!busy) {
+            flushPendingAttendanceRefresh();
+        }
+    }
+
+    private void flushPendingAttendanceRefresh() {
+        if (!pendingAttendanceRefresh || loading) {
+            return;
+        }
+
+        String affectedPeriod = pendingAttendancePeriod;
+        pendingAttendanceRefresh = false;
+        pendingAttendancePeriod = "";
+
+        String displayedPeriod = displayedPeriod();
+        if (!affectedPeriod.isBlank() && !affectedPeriod.equals(displayedPeriod)) {
+            return;
+        }
+        Platform.runLater(() -> loadSummary(false));
     }
 
     private void reselect(String payrollId) {
@@ -595,6 +629,11 @@ public class TeacherPayrollView extends VBox {
         }
         AppThemeSupport.showWarning(window(), "Invalid Month", "Use YYYY-MM, for example 2026-05.");
         return null;
+    }
+
+    private String displayedPeriod() {
+        String raw = periodField.getText() == null ? "" : periodField.getText().trim();
+        return raw.matches("\\d{4}-\\d{2}") ? raw : "";
     }
 
     private Window window() {

@@ -367,6 +367,20 @@ public class AdminDashboard extends javafx.application.Application {
         });
     }
 
+    public static void refreshTeacherPayrollPageIfVisible(String affectedPeriod) {
+        AdminDashboard current = instance;
+        if (current == null) {
+            return;
+        }
+
+        Platform.runLater(() -> {
+            if (!PAGE_TEACHER_PAYROLL.equals(current.activePageKey) || current.teacherPayrollView == null) {
+                return;
+            }
+            current.teacherPayrollView.refreshAfterAttendanceMutation(affectedPeriod);
+        });
+    }
+
     private static AdminDashboardContentSupport.DashboardActions newDashboardActions() {
         return new AdminDashboardContentSupport.DashboardActions() {
             @Override

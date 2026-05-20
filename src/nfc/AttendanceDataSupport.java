@@ -108,6 +108,10 @@ final class AttendanceDataSupport {
             return new AttendanceDataCache(children, date, value);
         }
 
+        AttendanceDataCache clearChildren() {
+            return new AttendanceDataCache(List.of(), null, List.of());
+        }
+
         @SuppressWarnings("unused")
         AttendanceDataCache clearAttendance() {
             return new AttendanceDataCache(children, null, List.of());

@@ -129,7 +129,7 @@ final class AdminDashboardUtilitySupport {
                     Platform.runLater(() -> showAlert("❌ Attendance update failed: " + result.reason(), Alert.AlertType.ERROR));
                     break;
             }
-            Platform.runLater(FirestoreService::refreshAfterAttendanceMutation);
+            Platform.runLater(() -> FirestoreService.refreshAfterAttendanceMutation(java.time.LocalDate.now()));
         } catch (RuntimeException | IOException | InterruptedException ex) {
             logger.log("handle NFC attendance", ex);
             String errorMessage = "❌ Firestore error: " + ex.getMessage();

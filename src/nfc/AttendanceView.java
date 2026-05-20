@@ -15,6 +15,7 @@ import javafx.util.Duration;
 public class AttendanceView {
 	private static AttendanceView currentInstance;
     private static volatile boolean pendingRefresh = false;
+    private static volatile boolean pendingChildrenRefresh = false;
     private static final String EMPTY_ATTENDANCE_FINGERPRINT = "<empty>";
 
     private static void logError(String context, Exception error) {
@@ -244,7 +245,7 @@ public class AttendanceView {
                 if (error != null) {
                     logError("load students failed", error instanceof Exception ? (Exception) error : new RuntimeException(error));
                     if (pendingRefresh) {
-                        requestAttendanceRefresh(date);
+                        requestPendingAttendanceRefresh(date);
                     }
                     return;
                 }
@@ -255,7 +256,7 @@ public class AttendanceView {
                 String nextFingerprint = fingerprintRecords(result.records);
                 if (nextFingerprint.equals(lastAttendanceFingerprint)) {
                     if (pendingRefresh) {
-                        requestAttendanceRefresh(date);
+                        requestPendingAttendanceRefresh(date);
                     }
                     return;
                 }
@@ -271,7 +272,7 @@ public class AttendanceView {
                 applyTableFilters();
 
                 if (pendingRefresh) {
-                    requestAttendanceRefresh(date);
+                    requestPendingAttendanceRefresh(date);
                 }
             }));
     }
@@ -398,7 +399,7 @@ public class AttendanceView {
         active = true;
         updateRealtimeRefreshState();
         if (pendingRefresh) {
-            requestAttendanceRefresh(datePicker == null ? null : datePicker.getValue());
+            requestPendingAttendanceRefresh(datePicker == null ? null : datePicker.getValue());
         }
     }
 
@@ -551,8 +552,23 @@ public class AttendanceView {
     }
 
     private void requestAttendanceRefresh(java.time.LocalDate date) {
-        attendanceDataCache = attendanceDataCache.clearAttendance();
+        requestAttendanceRefresh(date, false);
+    }
+
+    private void requestAttendanceRefresh(java.time.LocalDate date, boolean clearChildren) {
+        if (clearChildren) {
+            attendanceDataCache = attendanceDataCache.clearChildren();
+        } else {
+            attendanceDataCache = attendanceDataCache.clearAttendance();
+        }
         loadStudents(date != null ? date : (datePicker == null ? null : datePicker.getValue()));
+    }
+
+    private void requestPendingAttendanceRefresh(java.time.LocalDate date) {
+        boolean clearChildren = pendingChildrenRefresh;
+        pendingRefresh = false;
+        pendingChildrenRefresh = false;
+        requestAttendanceRefresh(date, clearChildren);
     }
 
     private boolean supportsBulkOverride(String action) {
@@ -609,7 +625,7 @@ public class AttendanceView {
                 if (result.failures.isEmpty()) {
                     if (result.successCount > 0) {
                         requestAttendanceRefresh(dialogResult.attendanceDate);
-                        AdminDashboard.updateDashboardData();
+                        FirestoreService.refreshAfterAttendanceMutation(dialogResult.attendanceDate);
                     }
                     new Alert(Alert.AlertType.INFORMATION, AttendanceOverrideSupport.overrideTitle(action) + " saved for " + result.successCount + " child(ren).").showAndWait();
                     return;
@@ -618,7 +634,7 @@ public class AttendanceView {
                 String failureText = String.join("\n", result.failures);
                 if (result.successCount > 0) {
                     requestAttendanceRefresh(dialogResult.attendanceDate);
-                    AdminDashboard.updateDashboardData();
+                    FirestoreService.refreshAfterAttendanceMutation(dialogResult.attendanceDate);
                     new Alert(Alert.AlertType.WARNING,
                         AttendanceOverrideSupport.overrideTitle(action) + " saved for " + result.successCount + " child(ren), but some updates failed:\n\n" + failureText
                     ).showAndWait();
@@ -839,6 +855,33 @@ public class AttendanceView {
                 currentInstance.updateChart(currentInstance.chart);
             }
             currentInstance.table.refresh();
+        });
+    }
+
+    public static void refreshRoster() {
+        if (currentInstance == null) {
+            pendingRefresh = true;
+            pendingChildrenRefresh = true;
+            return;
+        }
+        if (!currentInstance.active) {
+            pendingRefresh = true;
+            pendingChildrenRefresh = true;
+            return;
+        }
+
+        Platform.runLater(() -> {
+            if (currentInstance.attendanceLoadInFlight) {
+                pendingRefresh = true;
+                pendingChildrenRefresh = true;
+                return;
+            }
+
+            pendingChildrenRefresh = false;
+            currentInstance.requestAttendanceRefresh(
+                currentInstance.datePicker == null ? null : currentInstance.datePicker.getValue(),
+                true
+            );
         });
     }
 

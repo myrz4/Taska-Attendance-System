@@ -34,6 +34,7 @@ public class ChildrenView extends javafx.scene.layout.VBox {
             () -> CRUDDialogs.showRegistrationWizard(() -> {
                 reload();
                 ParentsPane.refreshOpenPane();
+                FirestoreService.refreshAfterRosterMutation();
             })
         );
 
@@ -73,7 +74,10 @@ public class ChildrenView extends javafx.scene.layout.VBox {
     }
 
     private void showEdit(Child c) {
-        CRUDDialogs.showChildDialog(c, false, () -> reload());
+        CRUDDialogs.showChildDialog(c, false, () -> {
+            reload();
+            FirestoreService.refreshAfterRosterMutation();
+        });
     }
 
     private void showDetails(Child child) {
@@ -86,6 +90,7 @@ public class ChildrenView extends javafx.scene.layout.VBox {
             client.deleteDocument("children", c.getChildId());
 
             System.out.println("🗑 Deleted child " + c.getChildId());
+            FirestoreService.refreshAfterRosterMutation();
         } catch (java.io.IOException | InterruptedException | IllegalStateException ex) {
             logError("failed to delete child", ex);
             new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.ERROR,
